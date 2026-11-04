@@ -23,7 +23,7 @@ export const MainLayout: React.FC = () => {
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+        <main className="min-w-0 flex-1 overflow-y-auto pb-20 md:pb-0">
           <div className="md:hidden px-4 pt-3">
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="gap-2">
               <Menu className="w-5 h-5" />

@@ -18,16 +18,16 @@ export const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-white to-gray-50 flex flex-col justify-between">
       {/* Top Navbar */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-sm font-bold text-lg">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-2 min-w-0">
+            <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-sm font-bold text-lg">
               MC
             </div>
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-indigo-700 to-blue-600 bg-clip-text text-transparent">
+            <span className="hidden sm:inline font-extrabold text-xl tracking-tight whitespace-nowrap bg-gradient-to-r from-indigo-700 to-blue-600 bg-clip-text text-transparent">
               MigrantConnect
             </span>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex shrink-0 items-center space-x-1 sm:space-x-3">
             {isAuthenticated ? (
               <Link to={ROUTES.DASHBOARD}>
                 <Button variant="primary">Enter Dashboard</Button>
@@ -55,8 +55,8 @@ export const LandingPage: React.FC = () => {
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-700 mb-6">
             <span>✨ Built for India’s Relocating Professionals & Students</span>
           </div>
-          <h1 className="text-4xl sm:text-6xl font-extrabold text-gray-950 tracking-tight leading-tight">
-            Find your roots, <br />
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-950 tracking-tight leading-tight">
+            Find your roots, <br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
               wherever you relocate.
             </span>
@@ -82,7 +82,7 @@ export const LandingPage: React.FC = () => {
             </Button>
           </div>
 
-          <div className="mt-8 text-xs text-gray-500 flex items-center justify-center gap-6">
+          <div className="mt-8 text-xs text-gray-500 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <span className="flex items-center"><Shield className="w-4 h-4 mr-1 text-emerald-500" /> Privacy First Location</span>
             <span className="flex items-center"><Users className="w-4 h-4 mr-1 text-indigo-500" /> 10+ Native Languages</span>
             <span className="flex items-center"><Heart className="w-4 h-4 mr-1 text-rose-500" /> Community Moderated</span>
@@ -90,7 +90,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-14 sm:mt-20">
           <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-xs hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-6">
               <MapPin className="w-6 h-6" />

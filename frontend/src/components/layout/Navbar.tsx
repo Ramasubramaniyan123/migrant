@@ -32,7 +32,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           <Link to={ROUTES.DASHBOARD} className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-sm font-bold text-lg">MC</div>
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-indigo-700 to-blue-600 bg-clip-text text-transparent hidden xs:inline">MigrantConnect</span>
+            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-indigo-700 to-blue-600 bg-clip-text text-transparent hidden sm:inline">MigrantConnect</span>
           </Link>
 
           <nav className="hidden lg:flex items-center space-x-1">

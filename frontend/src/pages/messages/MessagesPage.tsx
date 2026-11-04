@@ -63,6 +63,7 @@ export const MessagesPage: React.FC = () => {
   ]);
 
   const [selectedConversationId, setSelectedConversationId] = useState<string>('conv-1');
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(initialMessages as any[]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -99,23 +100,30 @@ export const MessagesPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100vh-12rem)] min-h-[500px] bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs flex flex-col md:flex-row">
-      <ConversationList
-        conversations={conversations}
-        selectedId={selectedConversationId}
-        onSelect={(id) => setSelectedConversationId(id)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
-      {activeConversation && (
-        <ChatWindow
-          conversation={activeConversation}
-          messages={activeMessages}
-          currentUserId={currentUserId}
-          onSendMessage={handleSendMessage}
+    <div className="max-w-7xl mx-auto h-[calc(100dvh-16rem)] min-h-[320px] md:h-[calc(100vh-12rem)] md:min-h-[500px] bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs flex flex-col md:flex-row">
+      <div className={`${mobileChatOpen ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col md:flex md:flex-none`}>
+        <ConversationList
+          conversations={conversations}
+          selectedId={selectedConversationId}
+          onSelect={(id) => {
+            setSelectedConversationId(id);
+            setMobileChatOpen(true);
+          }}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
+      </div>
+      {activeConversation && (
+        <div className={`${mobileChatOpen ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col md:flex`}>
+          <ChatWindow
+            conversation={activeConversation}
+            messages={activeMessages}
+            currentUserId={currentUserId}
+            onSendMessage={handleSendMessage}
+            onBack={() => setMobileChatOpen(false)}
+          />
+        </div>
       )}
     </div>
   );
 };
-
