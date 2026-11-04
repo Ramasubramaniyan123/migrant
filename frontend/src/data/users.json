@@ -1,0 +1,323 @@
+[
+  {
+    "id": "user-demo",
+    "email": "demo@connect.in",
+    "firstName": "Arun",
+    "lastName": "Selvam",
+    "fullName": "Arun Selvam",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Arun",
+    "bio": "Software engineer from Tenkasi, Tamil Nadu. New to Gurugram and looking for Tamil conversations, weekend cricket, and filter coffee friends.",
+    "profession": "Software Engineer",
+    "role": "user",
+    "currentLocation": {
+      "city": "Gurugram",
+      "state": "Haryana",
+      "locality": "Cyber City",
+      "latitude": 28.4950,
+      "longitude": 77.0826
+    },
+    "hometown": {
+      "city": "Tenkasi",
+      "state": "Tamil Nadu",
+      "district": "Tenkasi",
+      "latitude": 8.9594,
+      "longitude": 77.3146
+    },
+    "motherTongue": "Tamil",
+    "additionalLanguages": [
+      { "name": "Tamil", "code": "ta", "nativeName": "தமிழ்", "proficiency": "native" },
+      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" },
+      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "intermediate" }
+    ],
+    "languages": ["Tamil", "English", "Hindi"],
+    "interests": ["Cricket", "Technology", "Food", "Movies"],
+    "livingSituation": "Rented Apartment",
+    "privacySettings": {
+      "profileVisibility": "everyone",
+      "showDateOfBirth": true,
+      "showHometown": true,
+      "showExactLocality": true,
+      "showProfession": true,
+      "appearInDiscovery": true,
+      "appearInHometownSearch": true,
+      "showDistance": true,
+      "locationAccuracy": "exact"
+    },
+    "connectionCount": 12,
+    "postCount": 4,
+    "isOnline": true,
+    "onboardingComplete": true,
+    "joinedDate": "2024-01-01",
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2026-11-04T12:00:00Z"
+  },
+  {
+    "id": "user-admin",
+    "email": "admin@connect.in",
+    "firstName": "Maya",
+    "lastName": "Kapoor",
+    "fullName": "Maya Kapoor",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Maya",
+    "bio": "Community operations lead at MigrantConnect. Helping people feel at home in Millennium City.",
+    "profession": "Community Lead & Admin",
+    "role": "admin",
+    "currentLocation": {
+      "city": "Gurugram",
+      "state": "Haryana",
+      "locality": "Sector 29",
+      "latitude": 28.4682,
+      "longitude": 77.0634
+    },
+    "hometown": {
+      "city": "Delhi",
+      "state": "Delhi",
+      "district": "New Delhi",
+      "latitude": 28.6139,
+      "longitude": 77.2090
+    },
+    "motherTongue": "Hindi",
+    "additionalLanguages": [
+      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "native" },
+      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" },
+      { "name": "Punjabi", "code": "pa", "nativeName": "ਪੰਜਾਬੀ", "proficiency": "intermediate" }
+    ],
+    "languages": ["Hindi", "English", "Punjabi"],
+    "interests": ["Reading", "Food", "Travelling"],
+    "livingSituation": "Own House",
+    "privacySettings": {
+      "profileVisibility": "everyone",
+      "showDateOfBirth": false,
+      "showHometown": true,
+      "showExactLocality": true,
+      "showProfession": true,
+      "appearInDiscovery": true,
+      "appearInHometownSearch": true,
+      "showDistance": true,
+      "locationAccuracy": "general"
+    },
+    "connectionCount": 45,
+    "postCount": 18,
+    "isOnline": true,
+    "onboardingComplete": true,
+    "joinedDate": "2023-11-10",
+    "createdAt": "2023-11-10T00:00:00Z",
+    "updatedAt": "2026-11-04T12:00:00Z"
+  },
+  {
+    "id": "u-priya",
+    "email": "priya.karthik@example.com",
+    "firstName": "Priya",
+    "lastName": "Karthik",
+    "fullName": "Priya Karthik",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
+    "bio": "Product designer from Madurai missing home-style jigarthanda and Sunday temple visits. Always up for badminton and design chats.",
+    "profession": "Senior Product Designer",
+    "role": "user",
+    "currentLocation": {
+      "city": "Gurugram",
+      "state": "Haryana",
+      "locality": "DLF Phase 2",
+      "latitude": 28.4890,
+      "longitude": 77.0890
+    },
+    "hometown": {
+      "city": "Madurai",
+      "state": "Tamil Nadu",
+      "district": "Madurai",
+      "latitude": 9.9252,
+      "longitude": 78.1198
+    },
+    "motherTongue": "Tamil",
+    "additionalLanguages": [
+      { "name": "Tamil", "code": "ta", "nativeName": "தமிழ்", "proficiency": "native" },
+      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
+    ],
+    "languages": ["Tamil", "English"],
+    "interests": ["Photography", "Movies", "Food", "Design"],
+    "livingSituation": "PG",
+    "privacySettings": {
+      "profileVisibility": "everyone",
+      "showDateOfBirth": false,
+      "showHometown": true,
+      "showExactLocality": true,
+      "showProfession": true,
+      "appearInDiscovery": true,
+      "appearInHometownSearch": true,
+      "showDistance": true,
+      "locationAccuracy": "exact"
+    },
+    "approximateDistance": "0.8 km away",
+    "distanceFromCurrentUser": 0.8,
+    "connectionCount": 20,
+    "postCount": 6,
+    "isOnline": true,
+    "connectionStatus": "pending-received",
+    "onboardingComplete": true,
+    "joinedDate": "2024-02-14",
+    "createdAt": "2024-02-14T00:00:00Z",
+    "updatedAt": "2026-11-04T10:00:00Z"
+  },
+  {
+    "id": "u-suresh",
+    "email": "suresh.varma@example.com",
+    "firstName": "Suresh",
+    "lastName": "Varma",
+    "fullName": "Suresh Varma",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh",
+    "bio": "DevOps Engineer from Visakhapatnam. Huge cricket fanatic and weekend cyclist around Aravali Biodiversity Park.",
+    "profession": "DevOps Engineer",
+    "role": "user",
+    "currentLocation": {
+      "city": "Gurugram",
+      "state": "Haryana",
+      "locality": "Sector 29",
+      "latitude": 28.4682,
+      "longitude": 77.0634
+    },
+    "hometown": {
+      "city": "Visakhapatnam",
+      "state": "Andhra Pradesh",
+      "district": "Visakhapatnam",
+      "latitude": 17.6868,
+      "longitude": 83.2185
+    },
+    "motherTongue": "Telugu",
+    "additionalLanguages": [
+      { "name": "Telugu", "code": "te", "nativeName": "తెలుగు", "proficiency": "native" },
+      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "advanced" },
+      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
+    ],
+    "languages": ["Telugu", "Hindi", "English"],
+    "interests": ["Cricket", "Cycling", "Gaming", "Technology"],
+    "livingSituation": "Rented Apartment",
+    "privacySettings": {
+      "profileVisibility": "everyone",
+      "showDateOfBirth": true,
+      "showHometown": true,
+      "showExactLocality": true,
+      "showProfession": true,
+      "appearInDiscovery": true,
+      "appearInHometownSearch": true,
+      "showDistance": true,
+      "locationAccuracy": "exact"
+    },
+    "approximateDistance": "2.1 km away",
+    "distanceFromCurrentUser": 2.1,
+    "connectionCount": 18,
+    "postCount": 9,
+    "isOnline": false,
+    "connectionStatus": "connected",
+    "onboardingComplete": true,
+    "joinedDate": "2024-01-20",
+    "createdAt": "2024-01-20T00:00:00Z",
+    "updatedAt": "2026-11-04T08:00:00Z"
+  },
+  {
+    "id": "u-karthik",
+    "email": "karthik.raman@example.com",
+    "firstName": "Karthik",
+    "lastName": "Raman",
+    "fullName": "Karthik Raman",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Karthik",
+    "bio": "Financial Analyst from Tenkasi, Tamil Nadu. Looking for hometown buddies in Gurugram!",
+    "profession": "Financial Analyst",
+    "role": "user",
+    "currentLocation": {
+      "city": "Gurugram",
+      "state": "Haryana",
+      "locality": "DLF Phase 1",
+      "latitude": 28.4790,
+      "longitude": 77.0940
+    },
+    "hometown": {
+      "city": "Tenkasi",
+      "state": "Tamil Nadu",
+      "district": "Tenkasi",
+      "latitude": 8.9594,
+      "longitude": 77.3146
+    },
+    "motherTongue": "Tamil",
+    "additionalLanguages": [
+      { "name": "Tamil", "code": "ta", "nativeName": "தமிழ்", "proficiency": "native" },
+      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
+    ],
+    "languages": ["Tamil", "English"],
+    "interests": ["Cricket", "Stocks", "Food", "Travelling"],
+    "livingSituation": "Rented Apartment",
+    "privacySettings": {
+      "profileVisibility": "everyone",
+      "showDateOfBirth": true,
+      "showHometown": true,
+      "showExactLocality": true,
+      "showProfession": true,
+      "appearInDiscovery": true,
+      "appearInHometownSearch": true,
+      "showDistance": true,
+      "locationAccuracy": "exact"
+    },
+    "approximateDistance": "1.4 km away",
+    "distanceFromCurrentUser": 1.4,
+    "connectionCount": 15,
+    "postCount": 3,
+    "isOnline": true,
+    "connectionStatus": "not-connected",
+    "onboardingComplete": true,
+    "joinedDate": "2024-03-01",
+    "createdAt": "2024-03-01T00:00:00Z",
+    "updatedAt": "2026-11-04T09:30:00Z"
+  },
+  {
+    "id": "u-ananya",
+    "email": "ananya.sharma@example.com",
+    "firstName": "Ananya",
+    "lastName": "Sharma",
+    "fullName": "Ananya Sharma",
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya",
+    "bio": "Marketing Strategist from Lucknow. Fond of Awadhi cuisine, book clubs, and cultural arts.",
+    "profession": "Marketing Strategist",
+    "role": "user",
+    "currentLocation": {
+      "city": "Gurugram",
+      "state": "Haryana",
+      "locality": "Sector 56",
+      "latitude": 28.4280,
+      "longitude": 77.1050
+    },
+    "hometown": {
+      "city": "Lucknow",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "latitude": 26.8467,
+      "longitude": 80.9462
+    },
+    "motherTongue": "Hindi",
+    "additionalLanguages": [
+      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "native" },
+      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
+    ],
+    "languages": ["Hindi", "English"],
+    "interests": ["Reading", "Food", "Art", "Writing"],
+    "livingSituation": "Rented Apartment",
+    "privacySettings": {
+      "profileVisibility": "everyone",
+      "showDateOfBirth": false,
+      "showHometown": true,
+      "showExactLocality": true,
+      "showProfession": true,
+      "appearInDiscovery": true,
+      "appearInHometownSearch": true,
+      "showDistance": true,
+      "locationAccuracy": "exact"
+    },
+    "approximateDistance": "4.2 km away",
+    "distanceFromCurrentUser": 4.2,
+    "connectionCount": 31,
+    "postCount": 14,
+    "isOnline": false,
+    "connectionStatus": "not-connected",
+    "onboardingComplete": true,
+    "joinedDate": "2024-01-05",
+    "createdAt": "2024-01-05T00:00:00Z",
+    "updatedAt": "2026-11-04T11:00:00Z"
+  }
+]

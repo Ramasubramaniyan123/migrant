@@ -1,0 +1,68 @@
+﻿[
+  {
+    "id": "lang_tamil",
+    "name": "Tamil",
+    "code": "ta",
+    "nativeName": "தமிழ்"
+  },
+  {
+    "id": "lang_telugu",
+    "name": "Telugu",
+    "code": "te",
+    "nativeName": "తెలుగు"
+  },
+  {
+    "id": "lang_malayalam",
+    "name": "Malayalam",
+    "code": "ml",
+    "nativeName": "മലയാളം"
+  },
+  {
+    "id": "lang_kannada",
+    "name": "Kannada",
+    "code": "kn",
+    "nativeName": "ಕನ್ನಡ"
+  },
+  {
+    "id": "lang_hindi",
+    "name": "Hindi",
+    "code": "hi",
+    "nativeName": "हिन्दी"
+  },
+  {
+    "id": "lang_marathi",
+    "name": "Marathi",
+    "code": "mr",
+    "nativeName": "मराठी"
+  },
+  {
+    "id": "lang_bengali",
+    "name": "Bengali",
+    "code": "bn",
+    "nativeName": "বাংলা"
+  },
+  {
+    "id": "lang_odia",
+    "name": "Odia",
+    "code": "or",
+    "nativeName": "ଓଡ଼ିଆ"
+  },
+  {
+    "id": "lang_punjabi",
+    "name": "Punjabi",
+    "code": "pa",
+    "nativeName": "ਪੰਜਾਬੀ"
+  },
+  {
+    "id": "lang_gujarati",
+    "name": "Gujarati",
+    "code": "gu",
+    "nativeName": "ગુજરાતી"
+  },
+  {
+    "id": "lang_english",
+    "name": "English",
+    "code": "en",
+    "nativeName": "English"
+  }
+]

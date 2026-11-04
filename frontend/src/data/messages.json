@@ -1,0 +1,42 @@
+[
+  {
+    "id": "msg-1",
+    "conversationId": "conv-1",
+    "senderId": "u-priya",
+    "receiverId": "user-demo",
+    "content": "Vanakkam Arun! Saw that you also moved from Tenkasi to Gurugram. Are you working in Cyber City?",
+    "status": "read",
+    "timestamp": "2026-11-03T16:20:00Z",
+    "createdAt": "2026-11-03T16:20:00Z"
+  },
+  {
+    "id": "msg-2",
+    "conversationId": "conv-1",
+    "senderId": "user-demo",
+    "receiverId": "u-priya",
+    "content": "Vanakkam Priya! Yes, I joined an engineering team at DLF Cyber City Building 10. How long have you been in Gurugram?",
+    "status": "read",
+    "timestamp": "2026-11-03T16:25:00Z",
+    "createdAt": "2026-11-03T16:25:00Z"
+  },
+  {
+    "id": "msg-3",
+    "conversationId": "conv-1",
+    "senderId": "u-priya",
+    "receiverId": "user-demo",
+    "content": "About 7 months now! Still getting used to the winter weather, but finding Tamil folks nearby has made it so much better.",
+    "status": "delivered",
+    "timestamp": "2026-11-03T16:32:00Z",
+    "createdAt": "2026-11-03T16:32:00Z"
+  },
+  {
+    "id": "msg-4",
+    "conversationId": "conv-2",
+    "senderId": "u-suresh",
+    "receiverId": "user-demo",
+    "content": "Hey Arun! Are you up for tennis-ball cricket this Sunday at Sector 29? We have a fun group playing every weekend.",
+    "status": "delivered",
+    "timestamp": "2026-11-04T08:10:00Z",
+    "createdAt": "2026-11-04T08:10:00Z"
+  }
+]

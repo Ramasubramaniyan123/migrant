@@ -1,0 +1,71 @@
+[
+  {
+    "id": "notif-1",
+    "userId": "user-demo",
+    "type": "connection_request",
+    "title": "New Connection Request",
+    "message": "Priya Karthik from Madurai wants to connect with you",
+    "preview": "Product Designer from Madurai living in DLF Phase 2",
+    "data": {
+      "requesterId": "u-priya",
+      "requesterName": "Priya Karthik"
+    },
+    "actorId": "u-priya",
+    "actor": {
+      "id": "u-priya",
+      "fullName": "Priya Karthik",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya"
+    },
+    "read": false,
+    "isRead": false,
+    "actionUrl": "/connections",
+    "timestamp": "2026-11-04T08:00:00Z",
+    "createdAt": "2026-11-04T08:00:00Z"
+  },
+  {
+    "id": "notif-2",
+    "userId": "user-demo",
+    "type": "new_message",
+    "title": "New Message",
+    "message": "Priya Karthik sent you a message: 'About 7 months now! Still getting used to...'",
+    "preview": "About 7 months now! Still getting used to...",
+    "data": {
+      "conversationId": "conv-1",
+      "senderId": "u-priya"
+    },
+    "actorId": "u-priya",
+    "actor": {
+      "id": "u-priya",
+      "fullName": "Priya Karthik",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya"
+    },
+    "read": false,
+    "isRead": false,
+    "actionUrl": "/messages",
+    "timestamp": "2026-11-04T07:30:00Z",
+    "createdAt": "2026-11-04T07:30:00Z"
+  },
+  {
+    "id": "notif-3",
+    "userId": "user-demo",
+    "type": "community_invite",
+    "title": "Community Activity",
+    "message": "New post in Gurugram Tamil Sangam: 'Any authentic filter coffee recommendations...'",
+    "preview": "Any authentic filter coffee recommendations...",
+    "data": {
+      "communityId": "comm-tamil",
+      "postId": "post-1"
+    },
+    "actorId": "u-priya",
+    "actor": {
+      "id": "u-priya",
+      "fullName": "Priya Karthik",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya"
+    },
+    "read": true,
+    "isRead": true,
+    "actionUrl": "/communities/comm-tamil",
+    "timestamp": "2026-11-03T18:45:00Z",
+    "createdAt": "2026-11-03T18:45:00Z"
+  }
+]
