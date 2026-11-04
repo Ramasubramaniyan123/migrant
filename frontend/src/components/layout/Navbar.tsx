@@ -9,7 +9,6 @@ import {
   Settings,
   ShieldAlert,
   LogOut,
-  User as UserIcon,
 } from 'lucide-react';
 import { Avatar } from '@/components/common/Avatar';
 import { Button } from '@/components/common/Button';

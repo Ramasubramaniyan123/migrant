@@ -3,12 +3,9 @@ import { Link } from 'react-router-dom';
 import {
   MapPin,
   Compass,
-  Briefcase,
   Languages,
-  Calendar,
   Sparkles,
   Edit,
-  ShieldCheck,
   Home,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';

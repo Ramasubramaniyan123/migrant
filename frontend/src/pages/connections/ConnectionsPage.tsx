@@ -97,7 +97,7 @@ export const ConnectionsPage: React.FC = () => {
       {activeTab === 'sent' && (
         <SentRequests
           requests={sentRequests}
-          onCancel={(id) => {
+          onCancel={() => {
             alert('Request cancelled');
           }}
         />

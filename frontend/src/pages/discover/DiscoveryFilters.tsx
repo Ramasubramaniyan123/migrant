@@ -1,7 +1,6 @@
 import React from 'react';
-import { Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Search, RotateCcw } from 'lucide-react';
 import { LANGUAGES, LOCALITIES } from '@/data/constants';
-import { Button } from '@/components/common/Button';
 import type { DiscoveryFiltersState } from '@/hooks/useDiscovery';
 
 interface DiscoveryFiltersProps {

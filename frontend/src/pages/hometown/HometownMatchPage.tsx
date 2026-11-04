@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Compass, MapPin, Sparkles, Filter } from 'lucide-react';
+import { Compass, MapPin } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserContext } from '@/context/UserContext';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { UserCard } from '@/components/shared/UserCard';
-import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { STATES, HOMETOWNS } from '@/data/constants';
 

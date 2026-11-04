@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, CheckCheck, Trash2, UserPlus, MessageSquare, Heart, Users } from 'lucide-react';
 import { Button } from '@/components/common/Button';
-import { Avatar } from '@/components/common/Avatar';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useNotificationContext } from '@/context/NotificationContext';
 import type { NotificationType } from '@/types';

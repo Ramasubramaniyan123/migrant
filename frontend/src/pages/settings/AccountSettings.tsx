@@ -5,7 +5,7 @@ import { Input } from '@/components/common/Input';
 import { useAuth } from '@/hooks/useAuth';
 
 export const AccountSettings: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CommunityCard } from './CommunityCard';
 import { CreatePostModal } from './CreatePostModal';
 import { Button } from '@/components/common/Button';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import communitiesData from '@/data/communities.json';
 import { LANGUAGES } from '@/data/constants';
 import type { Community } from '@/types';
@@ -120,8 +120,8 @@ export const CommunitiesPage: React.FC = () => {
       <CreatePostModal
         isOpen={isPostModalOpen}
         onClose={() => setIsPostModalOpen(false)}
-        onSubmit={(req) => {
-          alert(`Post submitted to community!`);
+        onSubmit={() => {
+          alert('Post submitted to community!');
         }}
       />
     </div>

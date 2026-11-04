@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Users, MessageSquare, Plus, ArrowLeft, ShieldCheck, MapPin } from 'lucide-react';
+import { Users, Plus, ArrowLeft, MapPin } from 'lucide-react';
 import { CommunityFeed } from './CommunityFeed';
 import { CreatePostModal } from './CreatePostModal';
 import { Button } from '@/components/common/Button';

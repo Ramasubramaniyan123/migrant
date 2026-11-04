@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   Users,
   Compass,
-  MapPin,
   MessageSquare,
   Sparkles,
   ArrowRight,
@@ -14,7 +13,6 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useUserContext } from '@/context/UserContext';
 import { useConnectionContext } from '@/context/ConnectionContext';
-import { UserCard } from '@/components/shared/UserCard';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { ROUTES } from '@/utils/constants';

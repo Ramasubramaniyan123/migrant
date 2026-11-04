@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Eye, MapPin, Check } from 'lucide-react';
+import { Shield, Check } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { useAuth } from '@/hooks/useAuth';
 import type { PrivacySettings as PrivacySettingsType } from '@/types';

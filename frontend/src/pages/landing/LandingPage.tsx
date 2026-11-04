@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Compass, Users, MapPin, MessageSquare, Shield, ArrowRight, Heart } from 'lucide-react';
+import { Compass, Users, MapPin, Shield, ArrowRight, Heart } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { ROUTES } from '@/utils/constants';
 import { useAuth } from '@/hooks/useAuth';

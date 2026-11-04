@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Shield, Ban, CheckCircle, Trash2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Avatar } from '@/components/common/Avatar';
-import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
 import { useUserContext } from '@/context/UserContext';
 import type { User } from '@/types';
 

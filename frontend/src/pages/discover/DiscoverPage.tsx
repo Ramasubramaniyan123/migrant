@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, Map, Users } from 'lucide-react';
+import { LayoutGrid, Map } from 'lucide-react';
 import { DiscoveryFilters } from './DiscoveryFilters';
 import { PeopleGrid } from './PeopleGrid';
 import { NearbyMap } from './NearbyMap';

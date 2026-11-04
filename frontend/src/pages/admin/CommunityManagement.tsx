@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import initialCommunities from '@/data/communities.json';

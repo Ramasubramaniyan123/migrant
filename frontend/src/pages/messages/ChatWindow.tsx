@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, MapPin, Compass } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Avatar } from '@/components/common/Avatar';
 import { Button } from '@/components/common/Button';
 import type { Conversation, Message } from '@/types';

@@ -1,5 +1,4 @@
 import React from 'react';
-import { X, Clock } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Avatar } from '@/components/common/Avatar';
 import { Badge } from '@/components/common/Badge';

@@ -24,7 +24,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const menuItems = [
+  interface MenuItem {
+    path: string;
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+  }
+
+  const menuItems: MenuItem[] = [
     { path: ROUTES.DASHBOARD, icon: Compass, label: 'Feed & Updates' },
     { path: ROUTES.DISCOVER, icon: Users, label: 'Discover People' },
     { path: ROUTES.HOMETOWN, icon: MapPin, label: 'Hometown Match' },

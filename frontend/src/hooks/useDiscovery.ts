@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useUserContext } from '@/context/UserContext';
-import type { User } from '@/types';
 
 export interface DiscoveryFiltersState {
   searchQuery: string;

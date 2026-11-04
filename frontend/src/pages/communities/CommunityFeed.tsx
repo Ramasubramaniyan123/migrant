@@ -3,7 +3,6 @@ import { Heart, MessageCircle, Send, Share2 } from 'lucide-react';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import type { Post } from '@/types';
-import { useAuth } from '@/hooks/useAuth';
 
 interface CommunityFeedProps {
   posts: Post[];
@@ -16,7 +15,6 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({
   onLikePost,
   onAddComment,
 }) => {
-  const { user } = useAuth();
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
 
   const handleCommentSubmit = (postId: string, e: React.FormEvent) => {

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { STORAGE_KEYS } from '@/utils/constants';
-import type { User, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
+import type { User, LoginRequest, RegisterRequest } from '@/types';
 import usersData from '@/data/users.json';
 
 interface AuthContextType {

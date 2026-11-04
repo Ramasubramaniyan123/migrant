@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, ShieldCheck, Compass, Users } from 'lucide-react';
+import { MapPin, ShieldCheck, Compass } from 'lucide-react';
 import type { User } from '@/types';
 
 interface NearbyMapProps {

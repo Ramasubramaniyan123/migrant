@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, User, Bell, Key } from 'lucide-react';
+import { Shield, Key } from 'lucide-react';
 import { PrivacySettings } from './PrivacySettings';
 import { AccountSettings } from './AccountSettings';
 

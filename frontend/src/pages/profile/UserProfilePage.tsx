@@ -4,7 +4,6 @@ import {
   MapPin,
   Compass,
   ArrowLeft,
-  Languages,
   MessageSquare,
   Sparkles,
   Home,
