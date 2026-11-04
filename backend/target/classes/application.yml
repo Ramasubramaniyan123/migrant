@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: migrant-community-platform
+  profiles:
+    active: dev
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-jwt-key-change-this-in-production}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+logging:
+  level:
+    com.migrantcommunity: INFO
