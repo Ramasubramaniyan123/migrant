@@ -91,31 +91,32 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 p-6 sm:p-8 text-white shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-700 via-purple-600 to-blue-600 p-6 sm:p-8 text-white shadow-xl animate-slideInUp">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-700/0 via-white/10 to-indigo-700/0 animate-gradient" />
         <div className="relative z-10 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <Badge variant="primary" size="sm" className="bg-white/20 text-white border-0 backdrop-blur-xs">
+            <Badge variant="primary" size="sm" className="bg-white/20 text-white border-0 backdrop-blur-sm animate-fadeIn animate-delay-100">
               📍 Based in {user?.currentLocation?.locality || 'Cyber City'}, Gurugram
             </Badge>
-            <Badge variant="primary" size="sm" className="bg-white/20 text-white border-0 backdrop-blur-xs">
+            <Badge variant="primary" size="sm" className="bg-white/20 text-white border-0 backdrop-blur-sm animate-fadeIn animate-delay-200">
               🗣 Native {motherTongue}
             </Badge>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight animate-slideInUp animate-delay-100">
             Vanakkam, {displayName}!
           </h1>
-          <p className="mt-2 text-indigo-100 text-sm sm:text-base leading-relaxed">
+          <p className="mt-2 text-indigo-100 text-sm sm:text-base leading-relaxed animate-slideInUp animate-delay-200">
             There are <strong className="text-white font-semibold">{hometownMatches.length} people</strong> from {hometownState} living in Gurugram within 5km of you.
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-wrap gap-3 animate-slideInUp animate-delay-300">
             <Link to={ROUTES.HOMETOWN}>
-              <Button size="sm" className="bg-white text-indigo-700 hover:bg-indigo-50 font-semibold shadow-xs">
+              <Button size="sm" className="bg-white text-indigo-700 hover:bg-indigo-50 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105">
                 View {hometownCity} Matches
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
               </Button>
             </Link>
             <Link to={ROUTES.DISCOVER}>
-              <Button variant="outline" size="sm" className="border-white/40 text-white hover:bg-white/10">
+              <Button variant="outline" size="sm" className="border-white/40 text-white hover:bg-white/10 hover:border-white/60 transition-all hover:scale-105">
                 Explore Proximity Map
               </Button>
             </Link>
@@ -127,12 +128,12 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           to={ROUTES.CONNECTIONS}
-          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-indigo-300 shadow-xs hover:shadow-sm transition-all"
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-indigo-400 shadow-md hover:shadow-xl transition-all duration-300 card-hover animate-slideInUp animate-delay-100"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Connections</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-              <Users className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+              <Users className="w-5 h-5" />
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-gray-900">{connections.length}</p>
@@ -143,12 +144,12 @@ export const DashboardPage: React.FC = () => {
 
         <Link
           to={ROUTES.HOMETOWN}
-          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-indigo-300 shadow-xs hover:shadow-sm transition-all"
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-amber-400 shadow-md hover:shadow-xl transition-all duration-300 card-hover animate-slideInUp animate-delay-200"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Hometown Matches</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-              <Compass className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30">
+              <Compass className="w-5 h-5" />
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-gray-900">{hometownMatches.length}</p>
@@ -157,12 +158,12 @@ export const DashboardPage: React.FC = () => {
 
         <Link
           to={ROUTES.COMMUNITIES}
-          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-indigo-300 shadow-xs hover:shadow-sm transition-all"
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-emerald-400 shadow-md hover:shadow-xl transition-all duration-300 card-hover animate-slideInUp animate-delay-300"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Active Communities</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+              <Sparkles className="w-5 h-5" />
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-gray-900">{communitiesData.length}</p>
@@ -171,12 +172,12 @@ export const DashboardPage: React.FC = () => {
 
         <Link
           to={ROUTES.MESSAGES}
-          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-indigo-300 shadow-xs hover:shadow-sm transition-all"
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-400 shadow-md hover:shadow-xl transition-all duration-300 card-hover animate-slideInUp animate-delay-400"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Active Chats</span>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-              <MessageSquare className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+              <MessageSquare className="w-5 h-5" />
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-gray-900">2</p>
@@ -189,13 +190,13 @@ export const DashboardPage: React.FC = () => {
         {/* Left 2 Cols: Feed */}
         <div className="lg:col-span-2 space-y-6">
           {/* Post Creation Box */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-md hover:shadow-lg transition-all duration-300 animate-slideInUp">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-gray-900">Post to Community</span>
               <select
                 value={selectedCommunity}
                 onChange={(e) => setSelectedCommunity(e.target.value)}
-                className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 text-gray-700 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
               >
                 {communitiesData.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -210,7 +211,7 @@ export const DashboardPage: React.FC = () => {
                 onChange={(e) => setNewPostContent(e.target.value)}
                 rows={2}
                 placeholder="Share a recommendation, ask for housing help, or organize a meetup..."
-                className="w-full text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                className="w-full text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none transition-all"
               />
               <div className="mt-2.5 flex items-center justify-between">
                 <span className="text-xs text-gray-400">Be respectful and friendly</span>
@@ -218,7 +219,8 @@ export const DashboardPage: React.FC = () => {
                   type="submit"
                   size="sm"
                   disabled={!newPostContent.trim()}
-                  className="bg-indigo-600 hover:bg-indigo-700"
+                  variant="gradient"
+                  className="shadow-md hover:shadow-lg transition-all hover:scale-105"
                 >
                   <Send className="w-3.5 h-3.5 mr-1.5" />
                   Post
@@ -230,24 +232,28 @@ export const DashboardPage: React.FC = () => {
           {/* Posts Feed */}
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-gray-900">Community Updates</h2>
-            {posts.map((post: any) => (
-              <div key={post.id} className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs hover:border-gray-300 transition-colors">
+            {posts.map((post: any, index) => (
+              <div
+                key={post.id}
+                className="bg-white rounded-xl border border-gray-200 p-5 shadow-md hover:shadow-xl transition-all duration-300 card-hover animate-slideInUp"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <img
                       src={post.author?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'}
                       alt={post.author?.fullName}
-                      className="w-10 h-10 rounded-full bg-gray-100 object-cover"
+                      className="w-10 h-10 rounded-full bg-gray-100 object-cover ring-2 ring-indigo-100 hover:ring-indigo-300 transition-all cursor-pointer"
                     />
                     <div>
-                      <h4 className="font-semibold text-gray-900 text-sm">{post.author?.fullName}</h4>
+                      <h4 className="font-semibold text-gray-900 text-sm hover:text-indigo-600 transition-colors cursor-pointer">{post.author?.fullName}</h4>
                       <p className="text-xs text-gray-500">
                         {post.author?.hometown || post.communityName || 'Community Member'}
                       </p>
                     </div>
                   </div>
                   {post.communityName && (
-                    <Badge variant="secondary" size="sm" className="text-xs">
+                    <Badge variant="secondary" size="sm" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
                       {post.communityName}
                     </Badge>
                   )}
@@ -259,22 +265,22 @@ export const DashboardPage: React.FC = () => {
                   <img
                     src={post.imageUrl}
                     alt="Post attachment"
-                    className="mt-3 rounded-lg w-full max-h-72 object-cover"
+                    className="mt-3 rounded-lg w-full max-h-72 object-cover hover:scale-[1.02] transition-transform cursor-pointer"
                   />
                 )}
 
                 <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                   <button
                     onClick={() => handleLikePost(post.id)}
-                    className={`flex items-center space-x-1.5 transition-colors ${
+                    className={`flex items-center space-x-1.5 transition-all hover:scale-105 ${
                       post.isLikedByCurrentUser ? 'text-rose-600 font-semibold' : 'hover:text-gray-900'
                     }`}
                   >
-                    <Heart className={`w-4 h-4 ${post.isLikedByCurrentUser ? 'fill-rose-600' : ''}`} />
+                    <Heart className={`w-4 h-4 ${post.isLikedByCurrentUser ? 'fill-rose-600 animate-heartbeat' : ''}`} />
                     <span>{post.likes || post.likeCount || 0} Likes</span>
                   </button>
 
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 hover:text-indigo-600 transition-colors cursor-pointer">
                     <MessageCircle className="w-4 h-4" />
                     <span>{post.comments?.length || post.commentCount || 0} Comments</span>
                   </div>
@@ -284,7 +290,7 @@ export const DashboardPage: React.FC = () => {
                 {post.comments && post.comments.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-50 space-y-2">
                     {post.comments.map((comment: any) => (
-                      <div key={comment.id} className="bg-gray-50 rounded-lg p-2.5 text-xs text-gray-700">
+                      <div key={comment.id} className="bg-gray-50 rounded-lg p-2.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors">
                         <span className="font-semibold text-gray-900 mr-2">{comment.author?.fullName}:</span>
                         <span>{comment.content}</span>
                       </div>

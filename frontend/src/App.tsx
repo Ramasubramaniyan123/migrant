@@ -3,20 +3,23 @@ import { AuthProvider } from '@/context/AuthContext';
 import { UserProvider } from '@/context/UserContext';
 import { ConnectionProvider } from '@/context/ConnectionContext';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { ToastProvider } from '@/components/common/Toast';
 import { AppRoutes } from '@/routes/AppRoutes';
 
 export function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <UserProvider>
-          <ConnectionProvider>
-            <NotificationProvider>
-              <AppRoutes />
-            </NotificationProvider>
-          </ConnectionProvider>
-        </UserProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <UserProvider>
+            <ConnectionProvider>
+              <NotificationProvider>
+                <AppRoutes />
+              </NotificationProvider>
+            </ConnectionProvider>
+          </UserProvider>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }
