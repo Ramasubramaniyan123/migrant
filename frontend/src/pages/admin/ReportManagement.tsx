@@ -1,115 +1,169 @@
-import React, { useState } from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
-import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
+import { useMemo, useState } from 'react'
+import { useUsers } from '@/hooks/useUsers'
+import { fullName } from '@/services/userService'
+import { formatRelativeTime } from '@/utils/formatters'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
 
-interface ReportItem {
-  id: string;
-  reporterName: string;
-  reportedTarget: string;
-  targetType: 'USER' | 'POST';
-  reason: string;
-  description: string;
-  status: 'PENDING' | 'RESOLVED' | 'DISMISSED';
-  createdAt: string;
+type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED'
+
+interface Report {
+  id: number
+  reporterId: number
+  targetUserId: number
+  reason: string
+  details: string
+  status: ReportStatus
+  createdAt: string
 }
 
-export const ReportManagement: React.FC = () => {
-  const [reports, setReports] = useState<ReportItem[]>([
-    {
-      id: 'rep-1',
-      reporterName: 'Priya Karthik',
-      reportedTarget: 'Commercial Rental Spam Post',
-      targetType: 'POST',
-      reason: 'Spam / Commercial Brokerage',
-      description: 'Multiple unverified broker posts advertising PG rooms without locality accuracy.',
-      status: 'PENDING',
-      createdAt: '2026-11-03T14:20:00Z',
-    },
-    {
-      id: 'rep-2',
-      reporterName: 'Suresh Varma',
-      reportedTarget: 'Fake Profile (Cyber City)',
-      targetType: 'USER',
-      reason: 'Fake Identity / Bot',
-      description: 'Suspicious profile asking for bank transfers for shared apartment deposit.',
-      status: 'PENDING',
-      createdAt: '2026-11-04T07:15:00Z',
-    },
-  ]);
+/** Seed reports — mock moderation queue for the prototype. */
+const SEED_REPORTS: Report[] = [
+  {
+    id: 1,
+    reporterId: 5,
+    targetUserId: 3,
+    reason: 'Spam',
+    details: 'Repeated job-posting links in the community feed.',
+    status: 'OPEN',
+    createdAt: '2026-11-04T07:20:00Z',
+  },
+  {
+    id: 2,
+    reporterId: 10,
+    targetUserId: 7,
+    reason: 'Harassment',
+    details: 'Unwanted repeated connection requests after being declined.',
+    status: 'OPEN',
+    createdAt: '2026-11-03T19:05:00Z',
+  },
+  {
+    id: 3,
+    reporterId: 2,
+    targetUserId: 12,
+    reason: 'Inappropriate content',
+    details: 'Profile bio flagged by a community moderator.',
+    status: 'RESOLVED',
+    createdAt: '2026-11-01T11:40:00Z',
+  },
+  {
+    id: 4,
+    reporterId: 9,
+    targetUserId: 4,
+    reason: 'Fake profile',
+    details: 'Suspected duplicate account sharing the same photos.',
+    status: 'DISMISSED',
+    createdAt: '2026-10-29T15:10:00Z',
+  },
+]
 
-  const handleUpdateStatus = (id: string, newStatus: 'RESOLVED' | 'DISMISSED') => {
-    setReports((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
-    );
-  };
+const STATUS_VARIANTS: Record<ReportStatus, 'warning' | 'success' | 'neutral'> = {
+  OPEN: 'warning',
+  RESOLVED: 'success',
+  DISMISSED: 'neutral',
+}
+
+/** Moderation queue for abuse reports. */
+export default function ReportManagement() {
+  const { users, isLoading } = useUsers()
+  const [reports, setReports] = useState<Report[]>(SEED_REPORTS)
+  const [filter, setFilter] = useState<'ALL' | ReportStatus>('OPEN')
+
+  const nameOf = (id: number) => {
+    const user = users.find((row) => row.id === id)
+    return user ? fullName(user) : `Member #${id}`
+  }
+
+  const rows = useMemo(
+    () => (filter === 'ALL' ? reports : reports.filter((report) => report.status === filter)),
+    [filter, reports],
+  )
+
+  const setStatus = (id: number, status: ReportStatus) => {
+    setReports((prev) => prev.map((report) => (report.id === id ? { ...report, status } : report)))
+  }
+
+  const filters: Array<'ALL' | ReportStatus> = ['OPEN', 'RESOLVED', 'DISMISSED', 'ALL']
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-4">
-      <div>
-        <h3 className="text-base font-bold text-gray-900">Abuse Reports & Moderation Queue</h3>
-        <p className="text-xs text-gray-500">Review community violations, spam reports, and safety alerts.</p>
+    <div className="mx-auto w-full max-w-4xl space-y-6">
+      <header>
+        <h1 className="page-title">Reports</h1>
+        <p className="muted mt-1">
+          {reports.filter((report) => report.status === 'OPEN').length} open reports awaiting review
+        </p>
+      </header>
+
+      <div className="flex gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+        {filters.map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setFilter(value)}
+            className={
+              'whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition ' +
+              (filter === value ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-100')
+            }
+          >
+            {value === 'ALL' ? 'All' : value.charAt(0) + value.slice(1).toLowerCase()}
+          </button>
+        ))}
       </div>
 
-      <div className="space-y-3">
-        {reports.map((report) => {
-          const isPending = report.status === 'PENDING';
-          return (
-            <div
-              key={report.id}
-              className="p-4 rounded-xl border border-gray-100 bg-gray-50/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-xs text-gray-900">{report.reportedTarget}</span>
-                  <Badge variant={report.targetType === 'POST' ? 'secondary' : 'warning'} size="sm" className="text-[10px]">
-                    {report.targetType}
-                  </Badge>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      report.status === 'RESOLVED'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : report.status === 'DISMISSED'
-                        ? 'bg-gray-200 text-gray-700'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {report.status}
-                  </span>
+      {isLoading ? (
+        <Loader label="Loading reports…" />
+      ) : rows.length === 0 ? (
+        <EmptyState title="Nothing to review" description="No reports match this filter." />
+      ) : (
+        <ul className="space-y-3">
+          {rows.map((report) => (
+            <li key={report.id} className="card space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-sm font-semibold text-slate-900">{report.reason}</h2>
+                    <Badge variant={STATUS_VARIANTS[report.status]} size="sm">
+                      {report.status}
+                    </Badge>
+                  </div>
+                  <p className="muted mt-1">{report.details}</p>
                 </div>
-                <p className="text-xs text-gray-600 font-medium">Reason: {report.reason}</p>
-                <p className="text-xs text-gray-500">{report.description}</p>
-                <p className="text-[10px] text-gray-400">
-                  Reported by {report.reporterName} on {new Date(report.createdAt).toLocaleDateString()}
-                </p>
+                <span className="text-xs text-slate-400">
+                  {formatRelativeTime(report.createdAt)}
+                </span>
               </div>
 
-              {isPending && (
-                <div className="flex items-center space-x-2 self-end sm:self-center shrink-0">
-                  <Button
-                    size="sm"
-                    onClick={() => handleUpdateStatus(report.id, 'RESOLVED')}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-xs py-1 px-3"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                    Take Action
+              <dl className="grid gap-2 text-xs sm:grid-cols-2">
+                <div className="rounded-lg bg-slate-50 px-3 py-2">
+                  <dt className="text-slate-500">Reported member</dt>
+                  <dd className="font-medium text-slate-800">{nameOf(report.targetUserId)}</dd>
+                </div>
+                <div className="rounded-lg bg-slate-50 px-3 py-2">
+                  <dt className="text-slate-500">Reported by</dt>
+                  <dd className="font-medium text-slate-800">{nameOf(report.reporterId)}</dd>
+                </div>
+              </dl>
+
+              {report.status === 'OPEN' ? (
+                <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                  <Button size="sm" onClick={() => setStatus(report.id, 'RESOLVED')}>
+                    Mark resolved
                   </Button>
                   <Button
-                    variant="outline"
                     size="sm"
-                    onClick={() => handleUpdateStatus(report.id, 'DISMISSED')}
-                    className="text-xs py-1 px-3"
+                    variant="ghost"
+                    onClick={() => setStatus(report.id, 'DISMISSED')}
                   >
-                    <XCircle className="w-3.5 h-3.5 mr-1 text-gray-400" />
                     Dismiss
                   </Button>
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
-  );
-};
-
+  )
+}

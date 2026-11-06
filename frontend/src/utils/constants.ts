@@ -1,55 +1,77 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
-export const ROUTES = {
-  HOME: '/',
-  LOGIN: '/login',
-  REGISTER: '/register',
-  FORGOT_PASSWORD: '/forgot-password',
-  ONBOARDING: '/onboarding',
-  DASHBOARD: '/dashboard',
-  APP: '/app',
-  DISCOVER: '/discover',
-  HOMETOWN: '/hometown',
-  COMMUNITIES: '/communities',
-  COMMUNITY_DETAILS: '/communities/:id',
-  CONNECTIONS: '/connections',
-  MESSAGES: '/messages',
-  CONVERSATION: '/messages/:id',
-  PROFILE: '/profile',
-  EDIT_PROFILE: '/profile/edit',
-  USER_PROFILE: '/profile/:id',
-  NOTIFICATIONS: '/notifications',
-  SETTINGS: '/settings',
-  ADMIN: '/admin',
-} as const;
+export const USE_MOCK_DATA = (import.meta.env.VITE_USE_MOCK_DATA ?? 'true') === 'true'
 
-export const CONNECTION_STATUS = {
-  PENDING: 'pending',
-  ACCEPTED: 'accepted',
-  REJECTED: 'rejected',
-  BLOCKED: 'blocked',
-} as const;
-
-export const LANGUAGE_PROFICIENCY = {
-  BASIC: 'basic',
-  INTERMEDIATE: 'intermediate',
-  ADVANCED: 'advanced',
-  NATIVE: 'native',
-} as const;
-
-export const NOTIFICATION_TYPES = {
-  CONNECTION_REQUEST: 'connection_request',
-  CONNECTION_ACCEPTED: 'connection_accepted',
-  CONNECTION_REJECTED: 'connection_rejected',
-  NEW_MESSAGE: 'new_message',
-  POST_LIKE: 'post_like',
-  POST_COMMENT: 'post_comment',
-  COMMUNITY_INVITE: 'community_invite',
-  SYSTEM: 'system',
-} as const;
+export const APP_NAME = 'Migrant Community Platform'
 
 export const STORAGE_KEYS = {
-  TOKEN: 'auth_token',
-  USER: 'user_data',
-  ONBOARDING_COMPLETE: 'onboarding_complete',
-} as const;
+  authUser: 'mcp.auth.user',
+  authToken: 'mcp.auth.token',
+  onboarding: 'mcp.onboarding',
+  language: 'mcp.ui.language',
+  theme: 'mcp.ui.theme',
+} as const
+
+export const ROUTES = {
+  landing: '/',
+  login: '/login',
+  register: '/register',
+  forgotPassword: '/forgot-password',
+  onboarding: '/onboarding',
+  dashboard: '/dashboard',
+  discover: '/discover',
+  hometown: '/hometown',
+  communities: '/communities',
+  communityDetails: (id: number | string) => `/communities/${id}`,
+  connections: '/connections',
+  messages: '/messages',
+  profile: '/profile',
+  editProfile: '/profile/edit',
+  userProfile: (id: number | string) => `/profile/${id}`,
+  notifications: '/notifications',
+  settings: '/settings',
+  admin: '/admin',
+  adminUsers: '/admin/users',
+  adminReports: '/admin/reports',
+  adminCommunities: '/admin/communities',
+} as const
+
+export const PROFICIENCY_LABELS: Record<string, string> = {
+  BEGINNER: 'Beginner',
+  INTERMEDIATE: 'Intermediate',
+  ADVANCED: 'Advanced',
+  NATIVE: 'Native',
+}
+
+export const MATCH_REASON_LABELS: Record<string, string> = {
+  HOMETOWN: 'Same hometown',
+  LANGUAGE: 'Shared language',
+  LOCATION: 'Nearby',
+  INTERESTS: 'Shared interests',
+}
+
+export const NOTIFICATION_LABELS: Record<string, string> = {
+  CONNECTION_REQUEST: 'Connection request',
+  MESSAGE: 'New message',
+  COMMUNITY_INVITE: 'Community invite',
+  POST_LIKE: 'Post liked',
+  COMMENT: 'New comment',
+}
+
+export const INTEREST_OPTIONS = [
+  'Cooking',
+  'Music',
+  'Cricket',
+  'Football',
+  'Travel',
+  'Fitness',
+  'Movies',
+  'Reading',
+  'Photography',
+  'Tech',
+  'Language exchange',
+  'Volunteering',
+  'Study groups',
+  'Job hunting',
+  'Parenting',
+]

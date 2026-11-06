@@ -1,210 +1,180 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/common/Button';
-import { BasicInfoStep } from './BasicInfoStep';
-import { LanguageStep } from './LanguageStep';
-import { HometownStep } from './HometownStep';
-import { LocationStep } from './LocationStep';
-import { InterestsStep } from './InterestsStep';
-import { useAuth } from '@/hooks/useAuth';
-import { useUserContext } from '@/context/UserContext';
-import { ROUTES } from '@/utils/constants';
-import type { MotherTongue, LivingSituation } from '@/types';
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Button from '@/components/common/Button'
+import { useAuth } from '@/hooks/useAuth'
+import type { OnboardingFormData, User, UserProfile } from '@/types/user.types'
+import { ROUTES } from '@/utils/constants'
+import BasicInfoStep from './BasicInfoStep'
+import HometownStep from './HometownStep'
+import InterestsStep from './InterestsStep'
+import LanguageStep from './LanguageStep'
+import LocationStep from './LocationStep'
 
-export const OnboardingPage: React.FC = () => {
-  const { user, updateUser } = useAuth();
-  const { updateCurrentUserProfile } = useUserContext();
-  const navigate = useNavigate();
+const TOTAL_STEPS = 5
+const STEP_TITLES = ['About you', 'Languages', 'Hometown', 'Location', 'Interests']
 
-  const [step, setStep] = useState(1);
+/** Seeds the wizard from the signed-in user's existing profile where available. */
+function buildInitialForm(user: User | null): OnboardingFormData {
+  const profile = user?.profile
+  const primaryLanguageId = profile?.languages.find((entry) => entry.isPrimary)?.languageId
 
-  // Form state initialized with user's data or defaults
-  const [fullName, setFullName] = useState(user?.fullName || 'Arun Selvam');
-  const [profession, setProfession] = useState(user?.profession || 'Software Engineer');
-  const [bio, setBio] = useState(user?.bio || '');
-  const [dob, setDob] = useState(user?.dateOfBirth || '1998-04-12');
-  const [avatar, setAvatar] = useState(
-    user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arun'
-  );
+  return {
+    firstName: profile?.firstName ?? '',
+    lastName: profile?.lastName ?? '',
+    dateOfBirth: profile?.dateOfBirth ?? '',
+    gender: profile?.gender ?? '',
+    bio: profile?.bio ?? '',
+    languageIds: profile?.languages.map((entry) => entry.languageId) ?? [],
+    primaryLanguageId,
+    hometownCountry: profile?.hometownCountry ?? '',
+    hometownCity: profile?.hometownCity ?? '',
+    currentCountry: profile?.currentCountry ?? '',
+    currentCity: profile?.currentCity ?? '',
+    latitude: profile?.latitude,
+    longitude: profile?.longitude,
+    shareExactLocation: profile?.privacy.showExactLocation ?? false,
+    interests: profile?.interests ?? [],
+  }
+}
 
-  const [motherTongue, setMotherTongue] = useState<MotherTongue>(
-    (user?.motherTongue as MotherTongue) || 'Tamil'
-  );
-  const [additionalLanguages, setAdditionalLanguages] = useState<string[]>(
-    user?.additionalLanguages?.map((l) => l.name) || ['English', 'Hindi']
-  );
+/** Minimal per-step requirements used to gate the Next button. */
+function isStepValid(step: number, data: OnboardingFormData): boolean {
+  switch (step) {
+    case 0:
+      return Boolean(data.firstName.trim() && data.lastName.trim())
+    case 1:
+      return data.languageIds.length > 0
+    case 2:
+      return Boolean(data.hometownCity.trim() && data.hometownCountry.trim())
+    case 3:
+      return Boolean(data.currentCity.trim() && data.currentCountry.trim())
+    case 4:
+      return data.interests.length > 0
+    default:
+      return true
+  }
+}
 
-  const [homeState, setHomeState] = useState(user?.hometown?.state || 'Tamil Nadu');
-  const [hometown, setHometown] = useState(user?.hometown?.city || 'Tenkasi');
-  const [district, setDistrict] = useState(user?.hometown?.district || 'Tenkasi');
+/** Multi-step onboarding wizard shown right after registration. */
+export default function OnboardingPage() {
+  const navigate = useNavigate()
+  const { user, completeOnboarding } = useAuth()
 
-  const [currentCity] = useState('Gurugram');
-  const [locality, setLocality] = useState(user?.currentLocation?.locality || 'Cyber City');
-  const [livingSituation, setLivingSituation] = useState<LivingSituation>(
-    user?.livingSituation || 'Rented Apartment'
-  );
+  const [form, setForm] = useState<OnboardingFormData>(() => buildInitialForm(user))
+  const [step, setStep] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [interests, setInterests] = useState<string[]>(
-    user?.interests || ['Cricket', 'Technology', 'Food']
-  );
+  useEffect(() => {
+    if (!user) navigate(ROUTES.login, { replace: true })
+  }, [user, navigate])
 
-  const handleNext = () => setStep((s) => Math.min(5, s + 1));
-  const handleBack = () => setStep((s) => Math.max(1, s - 1));
+  const handleChange = useCallback((patch: Partial<OnboardingFormData>) => {
+    setForm((current) => ({ ...current, ...patch }))
+  }, [])
 
-  const handleComplete = () => {
-    const updatedProfile = {
-      fullName,
-      firstName: fullName.split(' ')[0] || fullName,
-      lastName: fullName.split(' ').slice(1).join(' ') || '',
-      profession,
-      bio,
-      dateOfBirth: dob,
-      avatar,
-      motherTongue,
-      additionalLanguages: additionalLanguages.map((name) => ({
-        name,
-        code: name.slice(0, 2).toLowerCase(),
-        proficiency: 'advanced' as const,
+  const canProceed = isStepValid(step, form)
+  const isLastStep = step === TOTAL_STEPS - 1
+  const progress = ((step + 1) / TOTAL_STEPS) * 100
+
+  async function handleFinish() {
+    if (!user) {
+      navigate(ROUTES.login, { replace: true })
+      return
+    }
+
+    const patch: Partial<UserProfile> = {
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      dateOfBirth: form.dateOfBirth || undefined,
+      gender: form.gender || undefined,
+      bio: form.bio.trim() || undefined,
+      hometownCity: form.hometownCity.trim(),
+      hometownCountry: form.hometownCountry.trim(),
+      currentCity: form.currentCity.trim(),
+      currentCountry: form.currentCountry.trim(),
+      latitude: form.latitude,
+      longitude: form.longitude,
+      interests: form.interests,
+      languages: form.languageIds.map((id) => ({
+        languageId: id,
+        proficiency: 'INTERMEDIATE',
+        isPrimary: id === form.primaryLanguageId,
       })),
-      languages: [motherTongue, ...additionalLanguages],
-      hometown: {
-        city: hometown,
-        state: homeState,
-        district,
+      privacy: {
+        ...user.profile.privacy,
+        showExactLocation: form.shareExactLocation,
       },
-      currentLocation: {
-        city: currentCity,
-        state: 'Haryana',
-        locality,
-      },
-      livingSituation,
-      interests,
-      onboardingComplete: true,
-    };
+    }
 
-    updateUser(updatedProfile as any);
-    updateCurrentUserProfile(updatedProfile as any);
-    navigate(ROUTES.DASHBOARD);
-  };
+    setIsSubmitting(true)
+    try {
+      await completeOnboarding(patch)
+      navigate(ROUTES.dashboard, { replace: true })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
-  const stepTitles = [
-    'Basic Profile',
-    'Native Languages',
-    'Hometown Roots',
-    'Current Locality',
-    'Interests & Hobbies',
-  ];
+  function handleNext() {
+    if (isLastStep) {
+      void handleFinish()
+      return
+    }
+    setStep((current) => Math.min(current + 1, TOTAL_STEPS - 1))
+  }
+
+  function renderStep() {
+    switch (step) {
+      case 0:
+        return <BasicInfoStep data={form} onChange={handleChange} />
+      case 1:
+        return <LanguageStep data={form} onChange={handleChange} />
+      case 2:
+        return <HometownStep data={form} onChange={handleChange} />
+      case 3:
+        return <LocationStep data={form} onChange={handleChange} />
+      default:
+        return <InterestsStep data={form} onChange={handleChange} />
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50/60 to-blue-50 py-10 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <span className="font-extrabold text-2xl bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
-            MigrantConnect
-          </span>
-          <h1 className="text-2xl font-bold text-gray-900 mt-2">Welcome to the Community</h1>
-          <p className="text-xs text-gray-500 mt-1">Complete your quick profile to unlock matching</p>
-        </div>
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+      <div className="mb-6">
+        <p className="text-sm font-medium text-brand-700">Setting up your profile</p>
+        <h1 className="page-title mt-1">Let&apos;s help people find you</h1>
+        <p className="muted mt-1">
+          Step {step + 1} of {TOTAL_STEPS} · {STEP_TITLES[step]}
+        </p>
+      </div>
 
-        {/* Stepper bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between text-xs font-semibold text-gray-600 mb-2">
-            <span>Step {step} of 5: {stepTitles[step - 1]}</span>
-            <span>{Math.round((step / 5) * 100)}%</span>
-          </div>
-          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-indigo-600 transition-all duration-300 rounded-full"
-              style={{ width: `${(step / 5) * 100}%` }}
-            />
-          </div>
-        </div>
+      <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-brand-600 transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
-        {/* Card Content */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100">
-          {step === 1 && (
-            <BasicInfoStep
-              fullName={fullName}
-              profession={profession}
-              bio={bio}
-              dob={dob}
-              avatar={avatar}
-              onChange={(f) => {
-                if (f.fullName !== undefined) setFullName(f.fullName);
-                if (f.profession !== undefined) setProfession(f.profession);
-                if (f.bio !== undefined) setBio(f.bio);
-                if (f.dob !== undefined) setDob(f.dob);
-                if (f.avatar !== undefined) setAvatar(f.avatar);
-              }}
-            />
-          )}
+      <div className="card">{renderStep()}</div>
 
-          {step === 2 && (
-            <LanguageStep
-              motherTongue={motherTongue}
-              additionalLanguages={additionalLanguages}
-              onChange={(f) => {
-                if (f.motherTongue) setMotherTongue(f.motherTongue);
-                if (f.additionalLanguages) setAdditionalLanguages(f.additionalLanguages);
-              }}
-            />
-          )}
-
-          {step === 3 && (
-            <HometownStep
-              homeState={homeState}
-              hometown={hometown}
-              district={district}
-              onChange={(f) => {
-                if (f.homeState) setHomeState(f.homeState);
-                if (f.hometown) setHometown(f.hometown);
-                if (f.district) setDistrict(f.district);
-              }}
-            />
-          )}
-
-          {step === 4 && (
-            <LocationStep
-              currentCity={currentCity}
-              locality={locality}
-              livingSituation={livingSituation}
-              onChange={(f) => {
-                if (f.locality) setLocality(f.locality);
-                if (f.livingSituation) setLivingSituation(f.livingSituation);
-              }}
-            />
-          )}
-
-          {step === 5 && (
-            <InterestsStep
-              selectedInterests={interests}
-              onChange={(newInterests) => setInterests(newInterests)}
-            />
-          )}
-
-          {/* Stepper controls */}
-          <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
-            {step > 1 ? (
-              <Button variant="outline" size="sm" onClick={handleBack}>
-                ← Back
-              </Button>
-            ) : (
-              <div />
-            )}
-
-            {step < 5 ? (
-              <Button size="sm" onClick={handleNext} className="bg-indigo-600 hover:bg-indigo-700">
-                Continue →
-              </Button>
-            ) : (
-              <Button size="sm" onClick={handleComplete} className="bg-emerald-600 hover:bg-emerald-700">
-                Complete Setup & Go to Feed 🎉
-              </Button>
-            )}
-          </div>
-        </div>
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={step === 0 || isSubmitting}
+          onClick={() => setStep((current) => Math.max(current - 1, 0))}
+        >
+          Back
+        </Button>
+        <Button
+          type="button"
+          disabled={!canProceed}
+          isLoading={isSubmitting}
+          onClick={handleNext}
+        >
+          {isLastStep ? 'Finish and explore' : 'Next'}
+        </Button>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,46 +1,26 @@
-import React from 'react';
-import { Button } from './Button';
+import type { ReactNode } from 'react'
 
 interface EmptyStateProps {
-  icon?: React.ReactNode;
-  title: string;
-  description?: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  illustration?: React.ReactNode;
-  className?: string;
+  title: string
+  description?: string
+  icon?: ReactNode
+  action?: ReactNode
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({
-  icon,
-  title,
-  description,
-  actionLabel,
-  onAction,
-  illustration,
-  className,
-}) => {
+/** Centered placeholder shown when a list, search or page has no content. */
+export default function EmptyState({ title, description, icon, action }: EmptyStateProps) {
   return (
-    <div className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className ?? ''}`}>
-      {illustration ? (
-        <div className="mb-6 animate-float">{illustration}</div>
-      ) : icon ? (
-        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-6">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+      {icon ? (
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
           {icon}
         </div>
       ) : null}
-
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-
-      {description && (
-        <p className="text-sm text-gray-500 max-w-sm mb-6">{description}</p>
-      )}
-
-      {actionLabel && onAction && (
-        <Button variant="primary" size="sm" onClick={onAction}>
-          {actionLabel}
-        </Button>
-      )}
+      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+      {description ? (
+        <p className="mt-1 max-w-sm text-sm text-slate-500">{description}</p>
+      ) : null}
+      {action ? <div className="mt-5">{action}</div> : null}
     </div>
-  );
-};
+  )
+}

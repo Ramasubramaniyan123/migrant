@@ -1,49 +1,53 @@
-import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
-import { clsx } from '@/utils/helpers';
+import type { FormEvent } from 'react'
+import { cn } from '@/utils/helpers'
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
-  placeholder?: string;
-  className?: string;
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  onSubmit?: () => void
+  className?: string
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({
-  onSearch,
-  placeholder = 'Search...',
+/** Search input with a magnifier icon and an optional submit handler. */
+export default function SearchBar({
+  value,
+  onChange,
+  placeholder = 'Search…',
+  onSubmit,
   className,
-}) => {
-  const [query, setQuery] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(query);
-  };
-
-  const handleClear = () => {
-    setQuery('');
-    onSearch('');
-  };
+}: SearchBarProps) {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    onSubmit?.()
+  }
 
   return (
-    <form onSubmit={handleSubmit} className={clsx('relative', className)}>
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder={placeholder}
-        className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-      {query && (
-        <button
-          type="button"
-          onClick={handleClear}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+    <form role="search" onSubmit={handleSubmit} className={cn('relative', className)}>
+      <span
+        className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"
+        aria-hidden="true"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
         >
-          <X className="w-5 h-5" />
-        </button>
-      )}
+          <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3" />
+        </svg>
+      </span>
+      <input
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand-500 focus-visible:outline-none"
+      />
     </form>
-  );
-};
+  )
+}

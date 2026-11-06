@@ -1,59 +1,37 @@
-export const debounce = <T extends (...args: unknown[]) => unknown>(
-  func: T,
-  wait: number
-): ((...args: Parameters<T>) => void) => {
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  return (...args: Parameters<T>) => {
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
+/** Joins truthy class names. Small local replacement for `clsx`. */
+export function cn(...classes: Array<string | false | null | undefined>): string {
+  return classes.filter(Boolean).join(' ')
+}
 
-export const throttle = <T extends (...args: unknown[]) => unknown>(
-  func: T,
-  limit: number
-): ((...args: Parameters<T>) => void) => {
-  let inThrottle = false;
-  return (...args: Parameters<T>) => {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-};
+/** Resolves after `ms` milliseconds. Used to simulate API latency. */
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
-export const generateId = (): string => {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-};
+export function unique<T>(values: T[]): T[] {
+  return Array.from(new Set(values))
+}
 
-export const capitalizeFirstLetter = (str: string): string => {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1);
-};
+export function groupBy<T, K extends string | number>(
+  values: T[],
+  keyFn: (value: T) => K,
+): Record<K, T[]> {
+  return values.reduce<Record<K, T[]>>(
+    (acc, value) => {
+      const key = keyFn(value)
+      acc[key] = acc[key] ?? []
+      acc[key].push(value)
+      return acc
+    },
+    {} as Record<K, T[]>,
+  )
+}
 
-export const shuffleArray = <T>(array: T[]): T[] => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
+/** Creates a deep copy so mock data mutations never leak between screens. */
+export function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
 
-export const groupBy = <T, K extends keyof T>(array: T[], key: K): Record<string, T[]> => {
-  return array.reduce((result, item) => {
-    const groupKey = String(item[key]);
-    if (!result[groupKey]) {
-      result[groupKey] = [];
-    }
-    result[groupKey].push(item);
-    return result;
-  }, {} as Record<string, T[]>);
-};
-
-export const clsx = (...classes: (string | boolean | undefined | null)[]): string => {
-  return classes.filter(Boolean).join(' ');
-};
-
-export const cn = clsx;
+export function sortBy<T>(values: T[], keyFn: (value: T) => number, dir: 'asc' | 'desc' = 'asc'): T[] {
+  return [...values].sort((a, b) => (dir === 'asc' ? keyFn(a) - keyFn(b) : keyFn(b) - keyFn(a)))
+}

@@ -1,79 +1,79 @@
-import React from 'react';
-import { LOCALITIES } from '@/data/constants';
-import type { LivingSituation } from '@/types';
+import Button from '@/components/common/Button'
+import Input from '@/components/common/Input'
+import LocationBadge from '@/components/shared/LocationBadge'
+import type { OnboardingFormData } from '@/types/user.types'
 
-interface LocationStepProps {
-  currentCity: string;
-  locality: string;
-  livingSituation: LivingSituation;
-  onChange: (fields: { currentCity?: string; locality?: string; livingSituation?: LivingSituation }) => void;
+interface StepProps {
+  data: OnboardingFormData
+  onChange: (patch: Partial<OnboardingFormData>) => void
 }
 
-export const LocationStep: React.FC<LocationStepProps> = ({
-  currentCity,
-  locality,
-  livingSituation,
-  onChange,
-}) => {
-  const livingOptions: LivingSituation[] = ['PG', 'Hostel', 'Rented Apartment', 'Own House'];
+/** Plausible demo coordinates (Dubai) used when the member opts into approximate location. */
+const DEMO_COORDINATES = { latitude: 25.2048, longitude: 55.2708 }
+
+/** Step 4 of onboarding: where the member lives now and how precisely to share it. */
+export default function LocationStep({ data, onChange }: StepProps) {
+  const hasCoordinates = data.latitude !== undefined && data.longitude !== undefined
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Current Location</h2>
-        <p className="text-xs text-gray-500 mt-1">
-          Where you are currently residing or working. Proximity is kept private and approximate.
-        </p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Current City</label>
-        <input
-          type="text"
-          value={currentCity}
-          disabled
-          className="w-full px-3 py-2 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg text-sm cursor-not-allowed font-medium"
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="Current country"
+          placeholder="United Arab Emirates"
+          value={data.currentCountry}
+          onChange={(event) => onChange({ currentCountry: event.target.value })}
         />
-        <p className="text-[11px] text-gray-400 mt-1">Prototype pilot currently live in Gurugram (NCR)</p>
+        <Input
+          label="Current city"
+          placeholder="Dubai"
+          value={data.currentCity}
+          onChange={(event) => onChange({ currentCity: event.target.value })}
+        />
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Locality / Sector</label>
-        <select
-          value={locality}
-          onChange={(e) => onChange({ locality: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          {LOCALITIES.map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Living Situation</label>
-        <div className="grid grid-cols-2 gap-2.5">
-          {livingOptions.map((option) => {
-            const isSelected = livingSituation === option;
-            return (
-              <button
-                type="button"
-                key={option}
-                onClick={() => onChange({ livingSituation: option })}
-                className={`p-3 rounded-xl border text-xs font-medium text-left transition-all ${
-                  isSelected
-                    ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 ring-2 ring-indigo-300'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-white'
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
+      <div className="rounded-lg border border-slate-200 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-slate-800">Approximate location</p>
+            <p className="muted mt-0.5">We fuzz your coordinates so nobody can pinpoint you.</p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              onChange({
+                latitude: DEMO_COORDINATES.latitude,
+                longitude: DEMO_COORDINATES.longitude,
+              })
+            }
+          >
+            {hasCoordinates ? 'Refresh approximate location' : 'Use approximate location'}
+          </Button>
         </div>
+
+        <div className="mt-4">
+          <LocationBadge
+            city={data.currentCity || undefined}
+            country={data.currentCountry || undefined}
+            approximate
+          />
+        </div>
+
+        <label className="mt-4 flex items-start gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600"
+            checked={data.shareExactLocation}
+            onChange={(event) => onChange({ shareExactLocation: event.target.checked })}
+          />
+          <span>
+            Share my exact location with accepted connections only. Leaving this off keeps your
+            location approximate.
+          </span>
+        </label>
       </div>
     </div>
-  );
-};
+  )
+}

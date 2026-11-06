@@ -1,81 +1,75 @@
-import React from 'react';
-import { Input } from '@/components/common/Input';
-import { Avatar } from '@/components/common/Avatar';
+import Input, { Textarea } from '@/components/common/Input'
+import type { Gender, OnboardingFormData } from '@/types/user.types'
 
-interface BasicInfoStepProps {
-  fullName: string;
-  profession: string;
-  bio: string;
-  dob: string;
-  avatar: string;
-  onChange: (fields: Partial<{ fullName: string; profession: string; bio: string; dob: string; avatar: string }>) => void;
+interface StepProps {
+  data: OnboardingFormData
+  onChange: (patch: Partial<OnboardingFormData>) => void
 }
 
-export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
-  fullName,
-  profession,
-  bio,
-  dob,
-  avatar,
-  onChange,
-}) => {
+const GENDER_OPTIONS: Array<{ value: Gender; label: string }> = [
+  { value: 'MALE', label: 'Male' },
+  { value: 'FEMALE', label: 'Female' },
+  { value: 'OTHER', label: 'Other' },
+  { value: 'PREFER_NOT_TO_SAY', label: 'Prefer not to say' },
+]
+
+const MAX_BIO_LENGTH = 300
+
+/** Step 1 of onboarding: the basics that make a profile feel human. */
+export default function BasicInfoStep({ data, onChange }: StepProps) {
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Basic Information</h2>
-        <p className="text-xs text-gray-500 mt-1">Tell fellow community members who you are</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="First name"
+          placeholder="Aarav"
+          value={data.firstName}
+          onChange={(event) => onChange({ firstName: event.target.value })}
+        />
+        <Input
+          label="Last name"
+          placeholder="Sharma"
+          value={data.lastName}
+          onChange={(event) => onChange({ lastName: event.target.value })}
+        />
       </div>
 
-      <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-        <Avatar src={avatar} name={fullName || 'User'} size="xl" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="Date of birth"
+          type="date"
+          value={data.dateOfBirth}
+          onChange={(event) => onChange({ dateOfBirth: event.target.value })}
+        />
         <div>
-          <label className="text-xs font-semibold text-gray-700 block mb-1">Avatar Preview</label>
-          <button
-            type="button"
-            onClick={() => {
-              const seed = Math.random().toString(36).substring(7);
-              onChange({ avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}` });
-            }}
-            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+          <label htmlFor="gender" className="block text-sm font-medium text-slate-700">
+            Gender
+          </label>
+          <select
+            id="gender"
+            value={data.gender}
+            onChange={(event) => onChange({ gender: event.target.value as Gender | '' })}
+            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
           >
-            Generate New Avatar 🎲
-          </button>
+            <option value="">Select…</option>
+            {GENDER_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      <Input
-        label="Full Name"
-        value={fullName}
-        onChange={(e) => onChange({ fullName: e.target.value })}
-        placeholder="e.g. Arun Selvam"
-        required
+      <Textarea
+        label="Short bio"
+        rows={4}
+        maxLength={MAX_BIO_LENGTH}
+        placeholder="Tell people a little about you — what brought you here and what you enjoy."
+        value={data.bio}
+        hint={`${data.bio.length}/${MAX_BIO_LENGTH} characters`}
+        onChange={(event) => onChange({ bio: event.target.value })}
       />
-
-      <Input
-        label="Profession / Current Role"
-        value={profession}
-        onChange={(e) => onChange({ profession: e.target.value })}
-        placeholder="e.g. Software Engineer, Designer, Student"
-        required
-      />
-
-      <Input
-        type="date"
-        label="Date of Birth"
-        value={dob}
-        onChange={(e) => onChange({ dob: e.target.value })}
-      />
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Brief Bio</label>
-        <textarea
-          rows={3}
-          value={bio}
-          onChange={(e) => onChange({ bio: e.target.value })}
-          placeholder="Share where you moved from, your interests, or what brings you to Gurugram..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-        />
-      </div>
     </div>
-  );
-};
+  )
+}

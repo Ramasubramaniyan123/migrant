@@ -1,0 +1,27 @@
+# ---- Java / Maven ----
+target/
+*.class
+.mvn/
+
+# ---- Node ----
+node_modules/
+dist/
+*.local
+
+# ---- Environment files ----
+.env
+.env.local
+backend/.env
+
+# ---- IDE ----
+.idea/
+.vscode/*
+!.vscode/launch.json
+*.iml
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log

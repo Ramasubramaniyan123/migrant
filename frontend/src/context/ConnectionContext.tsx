@@ -1,189 +1,183 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import type { Connection, ConnectionUser } from '@/types';
-import usersData from '@/data/users.json';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import type {
+  Connection,
+  ConnectionStatus,
+  MatchReason,
+} from '@/types/connection.types'
+import { connectionService } from '@/services/connectionService'
+import { useAuthContext } from './AuthContext'
 
-interface ConnectionContextType {
-  connections: Connection[];
-  receivedRequests: Connection[];
-  sentRequests: Connection[];
-  pendingRequests: number;
-  sendRequest: (targetUserId: string, message?: string) => Promise<void>;
-  acceptRequest: (connectionIdOrUserId: string) => Promise<void>;
-  rejectRequest: (connectionIdOrUserId: string) => Promise<void>;
-  removeConnection: (connectionIdOrUserId: string) => Promise<void>;
-  getConnectionStatus: (userId: string) => 'not-connected' | 'pending-sent' | 'pending-received' | 'connected';
+interface ConnectionContextValue {
+  connections: Connection[]
+  receivedRequests: Connection[]
+  sentRequests: Connection[]
+  accepted: Connection[]
+  incomingCount: number
+  isLoading: boolean
+  refresh: () => Promise<void>
+  sendRequest: (receiverId: number, matchScore: number, matchedBy: MatchReason) => Promise<void>
+  accept: (connectionId: number) => Promise<void>
+  reject: (connectionId: number) => Promise<void>
+  cancel: (connectionId: number) => Promise<void>
+  remove: (connectionId: number) => Promise<void>
+  getStatus: (otherUserId: number) => ConnectionStatus | null
+  isConnected: (otherUserId: number) => boolean
+  acceptedUserIds: number[]
 }
 
-const ConnectionContext = createContext<ConnectionContextType | undefined>(undefined);
+const ConnectionContext = createContext<ConnectionContextValue | undefined>(undefined)
 
-export const ConnectionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [connections, setConnections] = useState<Connection[]>(() => {
-    const saved = localStorage.getItem('migrant_connections');
-    if (saved) return JSON.parse(saved);
-    return [
-      {
-        id: 'conn-suresh',
-        userId: 'u-suresh',
-        requesterId: 'u-suresh',
-        receiverId: 'user-demo',
-        status: 'accepted',
-        connectedDate: '2026-10-20T10:00:00Z',
-        createdAt: '2026-10-18T10:00:00Z',
-        updatedAt: '2026-10-20T10:00:00Z',
-        user: {
-          id: 'u-suresh',
-          fullName: 'Suresh Varma',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh',
-          motherTongue: 'Telugu',
-          hometown: 'Visakhapatnam, Andhra Pradesh',
-          profession: 'DevOps Engineer',
-          approximateDistance: '2.1 km away',
-          sharedInterests: ['Cricket', 'Technology'],
-        },
-      },
-    ];
-  });
+export function ConnectionProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuthContext()
+  const [connections, setConnections] = useState<Connection[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const [receivedRequests, setReceivedRequests] = useState<Connection[]>(() => {
-    const saved = localStorage.getItem('migrant_received_requests');
-    if (saved) return JSON.parse(saved);
-    return [
-      {
-        id: 'req-priya',
-        userId: 'u-priya',
-        requesterId: 'u-priya',
-        receiverId: 'user-demo',
-        status: 'pending',
-        requestSentDate: '2026-11-04T08:00:00Z',
-        message: 'Hi Arun, saw that we are both from Tamil Nadu and living in DLF Phase 2. Would love to connect!',
-        createdAt: '2026-11-04T08:00:00Z',
-        updatedAt: '2026-11-04T08:00:00Z',
-        user: {
-          id: 'u-priya',
-          fullName: 'Priya Karthik',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
-          motherTongue: 'Tamil',
-          hometown: 'Madurai, Tamil Nadu',
-          profession: 'Senior Product Designer',
-          approximateDistance: '0.8 km away',
-          sharedInterests: ['Photography', 'Food'],
-        },
-      },
-    ];
-  });
+  const userId = user?.id
 
-  const [sentRequests, setSentRequests] = useState<Connection[]>(() => {
-    const saved = localStorage.getItem('migrant_sent_requests');
-    if (saved) return JSON.parse(saved);
-    return [];
-  });
+  const refresh = useCallback(async () => {
+    if (!userId) {
+      setConnections([])
+      setIsLoading(false)
+      return
+    }
+    setIsLoading(true)
+    try {
+      setConnections(await connectionService.getForUser(userId))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [userId])
 
   useEffect(() => {
-    localStorage.setItem('migrant_connections', JSON.stringify(connections));
-  }, [connections]);
+    void refresh()
+  }, [refresh])
 
-  useEffect(() => {
-    localStorage.setItem('migrant_received_requests', JSON.stringify(receivedRequests));
-  }, [receivedRequests]);
+  const receivedRequests = useMemo(
+    () =>
+      userId
+        ? connections.filter((row) => row.receiverId === userId && row.status === 'PENDING')
+        : [],
+    [connections, userId],
+  )
 
-  useEffect(() => {
-    localStorage.setItem('migrant_sent_requests', JSON.stringify(sentRequests));
-  }, [sentRequests]);
+  const sentRequests = useMemo(
+    () =>
+      userId
+        ? connections.filter((row) => row.requesterId === userId && row.status === 'PENDING')
+        : [],
+    [connections, userId],
+  )
 
-  const findUserAsConnectionUser = (userId: string): ConnectionUser => {
-    const found = (usersData as any[]).find((u) => u.id === userId);
-    return {
-      id: userId,
-      fullName: found?.fullName || 'Community Member',
-      avatar: found?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
-      motherTongue: typeof found?.motherTongue === 'string' ? found.motherTongue : (found?.motherTongue?.name || 'Language'),
-      hometown: found?.hometown?.city ? `${found.hometown.city}, ${found.hometown.state}` : 'Hometown',
-      profession: found?.profession || 'Professional',
-      approximateDistance: found?.approximateDistance || 'Nearby',
-      sharedInterests: found?.interests || [],
-    };
-  };
+  const accepted = useMemo(
+    () => connections.filter((row) => row.status === 'ACCEPTED'),
+    [connections],
+  )
 
-  const sendRequest = async (targetUserId: string, message?: string) => {
-    const newRequest: Connection = {
-      id: `req-${Date.now()}`,
-      userId: targetUserId,
-      requesterId: 'user-demo',
-      receiverId: targetUserId,
-      status: 'pending',
-      requestSentDate: new Date().toISOString(),
-      message,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      user: findUserAsConnectionUser(targetUserId),
-    };
-    setSentRequests((prev) => [...prev, newRequest]);
-  };
+  const acceptedUserIds = useMemo(
+    () =>
+      userId
+        ? accepted.map((row) => (row.requesterId === userId ? row.receiverId : row.requesterId))
+        : [],
+    [accepted, userId],
+  )
 
-  const acceptRequest = async (connectionIdOrUserId: string) => {
-    const req = receivedRequests.find((r) => r.id === connectionIdOrUserId || r.userId === connectionIdOrUserId || r.requesterId === connectionIdOrUserId);
-    if (!req) return;
+  const sendRequest = useCallback(
+    async (receiverId: number, matchScore: number, matchedBy: MatchReason) => {
+      if (!userId) return
+      await connectionService.sendRequest(userId, receiverId, matchScore, matchedBy)
+      await refresh()
+    },
+    [refresh, userId],
+  )
 
-    setReceivedRequests((prev) => prev.filter((r) => r.id !== req.id));
+  const accept = useCallback(
+    async (connectionId: number) => {
+      await connectionService.acceptRequest(connectionId)
+      await refresh()
+    },
+    [refresh],
+  )
 
-    const newConnection: Connection = {
-      ...req,
-      status: 'accepted',
-      connectedDate: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setConnections((prev) => [...prev, newConnection]);
-  };
+  const reject = useCallback(
+    async (connectionId: number) => {
+      await connectionService.rejectRequest(connectionId)
+      await refresh()
+    },
+    [refresh],
+  )
 
-  const rejectRequest = async (connectionIdOrUserId: string) => {
-    setReceivedRequests((prev) =>
-      prev.filter((r) => r.id !== connectionIdOrUserId && r.userId !== connectionIdOrUserId && r.requesterId !== connectionIdOrUserId)
-    );
-  };
+  const cancel = useCallback(
+    async (connectionId: number) => {
+      await connectionService.cancelRequest(connectionId)
+      await refresh()
+    },
+    [refresh],
+  )
 
-  const removeConnection = async (connectionIdOrUserId: string) => {
-    setConnections((prev) =>
-      prev.filter((c) => c.id !== connectionIdOrUserId && c.userId !== connectionIdOrUserId)
-    );
-  };
+  const remove = useCallback(
+    async (connectionId: number) => {
+      await connectionService.removeConnection(connectionId)
+      await refresh()
+    },
+    [refresh],
+  )
 
-  const getConnectionStatus = (userId: string): 'not-connected' | 'pending-sent' | 'pending-received' | 'connected' => {
-    if (connections.some((c) => c.userId === userId || c.requesterId === userId || c.receiverId === userId)) {
-      return 'connected';
-    }
-    if (receivedRequests.some((r) => r.userId === userId || r.requesterId === userId)) {
-      return 'pending-received';
-    }
-    if (sentRequests.some((s) => s.userId === userId || s.receiverId === userId)) {
-      return 'pending-sent';
-    }
-    return 'not-connected';
-  };
+  const getStatus = useCallback(
+    (otherUserId: number): ConnectionStatus | null => {
+      if (!userId) return null
+      return connectionService.statusBetween(userId, otherUserId)?.status ?? null
+    },
+    [userId],
+  )
 
-  return (
-    <ConnectionContext.Provider
-      value={{
-        connections,
-        receivedRequests,
-        sentRequests,
-        pendingRequests: receivedRequests.length,
-        sendRequest,
-        acceptRequest,
-        rejectRequest,
-        removeConnection,
-        getConnectionStatus,
-      }}
-    >
-      {children}
-    </ConnectionContext.Provider>
-  );
-};
+  const value = useMemo<ConnectionContextValue>(
+    () => ({
+      connections,
+      receivedRequests,
+      sentRequests,
+      accepted,
+      incomingCount: receivedRequests.length,
+      isLoading,
+      refresh,
+      sendRequest,
+      accept,
+      reject,
+      cancel,
+      remove,
+      getStatus,
+      isConnected: (otherUserId: number) => acceptedUserIds.includes(otherUserId),
+      acceptedUserIds,
+    }),
+    [
+      accept,
+      accepted,
+      acceptedUserIds,
+      cancel,
+      connections,
+      getStatus,
+      isLoading,
+      receivedRequests,
+      refresh,
+      reject,
+      remove,
+      sendRequest,
+      sentRequests,
+    ],
+  )
 
-export const useConnectionContext = () => {
-  const context = useContext(ConnectionContext);
-  if (!context) {
-    throw new Error('useConnectionContext must be used within a ConnectionProvider');
-  }
-  return context;
-};
+  return <ConnectionContext.Provider value={value}>{children}</ConnectionContext.Provider>
+}
+
+export function useConnectionContext(): ConnectionContextValue {
+  const context = useContext(ConnectionContext)
+  if (!context) throw new Error('useConnectionContext must be used inside a ConnectionProvider')
+  return context
+}

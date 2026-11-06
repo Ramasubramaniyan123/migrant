@@ -1,3 +1,6 @@
-import { useAuth as useAuthContext } from '@/context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext'
 
-export const useAuth = useAuthContext;
+/** Convenience hook around `AuthContext`. */
+export function useAuth() {
+  return useAuthContext()
+}

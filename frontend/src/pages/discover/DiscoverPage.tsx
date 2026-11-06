@@ -1,84 +1,106 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, Map } from 'lucide-react';
-import { DiscoveryFilters } from './DiscoveryFilters';
-import { PeopleGrid } from './PeopleGrid';
-import { NearbyMap } from './NearbyMap';
-import { useDiscovery } from '@/hooks/useDiscovery';
-import { useConnectionContext } from '@/context/ConnectionContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import type { DiscoveredUser } from '@/types/connection.types'
+import { messageService } from '@/services/messageService'
+import { useAuth } from '@/hooks/useAuth'
+import { useConnections } from '@/hooks/useConnections'
+import { useDiscovery } from '@/hooks/useDiscovery'
+import { ROUTES } from '@/utils/constants'
+import Button from '@/components/common/Button'
+import DiscoveryFilters from './DiscoveryFilters'
+import NearbyMap from './NearbyMap'
+import PeopleGrid from './PeopleGrid'
 
-export const DiscoverPage: React.FC = () => {
-  const { user } = useAuth();
-  const { users, filters, updateFilters, resetFilters } = useDiscovery();
-  const { sendRequest, acceptRequest, rejectRequest } = useConnectionContext();
-  const navigate = useNavigate();
+const NEARBY_RADIUS_KM = 25
 
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+/** People discovery screen: filters, result grid and a proximity overview. */
+export default function DiscoverPage() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { filters, results, isLoading, error, setFilters, resetFilters } = useDiscovery()
+  const { sendRequest } = useConnections()
+
+  const [busyId, setBusyId] = useState<number | null>(null)
+  const [showMap, setShowMap] = useState(true)
+
+  const userId = user?.id
+
+  const handleConnect = useCallback(
+    async (target: DiscoveredUser) => {
+      setBusyId(target.id)
+      try {
+        await sendRequest(target.id, target.matchScore, target.matchReason)
+      } finally {
+        setBusyId(null)
+      }
+    },
+    [sendRequest],
+  )
+
+  const handleMessage = useCallback(
+    async (target: DiscoveredUser) => {
+      if (!userId) return
+      const conversation = await messageService.getOrCreateConversation(userId, target.id)
+      navigate(`${ROUTES.messages}/${conversation.id}`)
+    },
+    [navigate, userId],
+  )
+
+  const nearby = results.filter(
+    (person) => person.distanceKm !== undefined && person.distanceKm <= NEARBY_RADIUS_KM,
+  )
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            Discover Migrants Nearby
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Connect with people from your state or speaking your language across Gurugram.
-          </p>
-        </div>
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <header>
+        <h1 className="page-title">Discover people</h1>
+        <p className="muted mt-1">
+          {isLoading ? 'Searching…' : `${results.length} people match your filters`}
+        </p>
+      </header>
 
-        {/* View Toggle */}
-        <div className="inline-flex rounded-xl bg-gray-100 p-1 border border-gray-200 self-start sm:self-auto">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              viewMode === 'grid'
-                ? 'bg-white text-indigo-700 shadow-xs'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Cards</span>
-          </button>
-          <button
-            onClick={() => setViewMode('map')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              viewMode === 'map'
-                ? 'bg-white text-indigo-700 shadow-xs'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Map className="w-3.5 h-3.5" />
-            <span>Proximity Map</span>
-          </button>
+      <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <DiscoveryFilters
+            filters={filters}
+            onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
+            onReset={resetFilters}
+          />
+        </aside>
+
+        <div className="space-y-6">
+          {error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Matches</h2>
+            <Button variant="ghost" size="sm" onClick={() => setShowMap((open) => !open)}>
+              {showMap ? 'Hide map' : 'Show map'}
+            </Button>
+          </div>
+
+          {showMap ? (
+            <NearbyMap
+              people={nearby}
+              radiusKm={NEARBY_RADIUS_KM}
+              activeUserId={busyId ?? undefined}
+              onSelect={(person) => navigate(ROUTES.userProfile(person.id))}
+            />
+          ) : null}
+
+          <PeopleGrid
+            users={results}
+            isLoading={isLoading}
+            busyId={busyId}
+            onConnect={(person) => void handleConnect(person)}
+            onMessage={(person) => void handleMessage(person)}
+            onViewProfile={(person) => navigate(ROUTES.userProfile(person.id))}
+          />
         </div>
       </div>
-
-      {/* Discovery Filters Bar */}
-      <DiscoveryFilters
-        filters={filters}
-        onFilterChange={updateFilters}
-        onReset={resetFilters}
-        resultCount={users.length}
-      />
-
-      {/* Content: Map or Grid */}
-      {viewMode === 'map' ? (
-        <NearbyMap
-          users={users}
-          currentLocality={user?.currentLocation?.locality || 'Cyber City'}
-          onSelectUser={(userId) => navigate(`/profile/${userId}`)}
-        />
-      ) : (
-        <PeopleGrid
-          users={users}
-          onConnect={(id) => sendRequest(id)}
-          onAccept={(id) => acceptRequest(id)}
-          onReject={(id) => rejectRequest(id)}
-        />
-      )}
     </div>
-  );
-};
+  )
+}

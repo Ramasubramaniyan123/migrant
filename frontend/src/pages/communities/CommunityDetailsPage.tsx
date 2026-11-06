@@ -1,244 +1,166 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Users, Plus, ArrowLeft, MapPin } from 'lucide-react';
-import { CommunityFeed } from './CommunityFeed';
-import { CreatePostModal } from './CreatePostModal';
-import { Button } from '@/components/common/Button';
-import { Badge } from '@/components/common/Badge';
-import { UserCard } from '@/components/shared/UserCard';
-import { useUserContext } from '@/context/UserContext';
-import { useAuth } from '@/hooks/useAuth';
-import communitiesData from '@/data/communities.json';
-import initialPosts from '@/data/posts.json';
-import type { Community, Post, CreatePostRequest } from '@/types';
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import type { Community, Post } from '@/types/community.types'
+import { communityService } from '@/services/communityService'
+import { languageById } from '@/services/userService'
+import { useAuth } from '@/hooks/useAuth'
+import { ROUTES } from '@/utils/constants'
+import { formatCount } from '@/utils/formatters'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
+import LocationBadge from '@/components/shared/LocationBadge'
+import CommunityFeed from './CommunityFeed'
+import CreatePostModal from './CreatePostModal'
 
-export const CommunityDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
-  const { users } = useUserContext();
+/** Detail view for a single community: header, membership controls and its feed. */
+export default function CommunityDetailsPage() {
+  const { communityId: communityIdParam } = useParams<{ communityId: string }>()
+  const communityId = Number(communityIdParam)
+  const { user } = useAuth()
+  const userId = user?.id
 
-  const [community, setCommunity] = useState<Community | undefined>(() =>
-    (communitiesData as any[]).find((c) => c.id === id) || (communitiesData as any[])[0]
-  );
+  const [community, setCommunity] = useState<Community | null>(null)
+  const [posts, setPosts] = useState<Post[]>([])
+  const [isMember, setIsMember] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isNotFound, setIsNotFound] = useState(false)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [posts, setPosts] = useState<Post[]>(() =>
-    (initialPosts as any[]).filter((p) => p.communityId === (id || 'comm-tamil'))
-  );
+  const loadPosts = useCallback(async () => {
+    if (!Number.isFinite(communityId)) return
+    setPosts(await communityService.getPosts(communityId))
+  }, [communityId])
 
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'posts' | 'members'>('posts');
+  useEffect(() => {
+    let cancelled = false
 
-  if (!community) {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-bold text-gray-900">Community Not Found</h2>
-        <Link to="/communities" className="text-indigo-600 hover:underline mt-2 inline-block">
-          ← Back to Communities
-        </Link>
-      </div>
-    );
+    const load = async () => {
+      if (!Number.isFinite(communityId)) {
+        setIsNotFound(true)
+        setIsLoading(false)
+        return
+      }
+      setIsLoading(true)
+      setIsNotFound(false)
+      try {
+        const row = await communityService.getCommunityById(communityId)
+        if (cancelled) return
+        setCommunity(row)
+        const feed = await communityService.getPosts(communityId)
+        if (cancelled) return
+        setPosts(feed)
+        if (userId) {
+          const member = await communityService.isMember(userId, communityId)
+          if (!cancelled) setIsMember(member)
+        } else {
+          setIsMember(false)
+        }
+      } catch {
+        if (!cancelled) setIsNotFound(true)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [communityId, userId])
+
+  const toggleMembership = async () => {
+    if (!userId || !community) return
+    if (isMember) {
+      await communityService.leaveCommunity(userId, community.id)
+    } else {
+      await communityService.joinCommunity(userId, community.id)
+    }
+    const [updated, member] = await Promise.all([
+      communityService.getCommunityById(community.id),
+      communityService.isMember(userId, community.id),
+    ])
+    setCommunity(updated)
+    setIsMember(member)
   }
 
-  const handleJoinToggle = () => {
-    setCommunity((prev) => {
-      if (!prev) return prev;
-      const isMember = !prev.isMember;
-      return {
-        ...prev,
-        isMember,
-        memberCount: isMember ? prev.memberCount + 1 : prev.memberCount - 1,
-      };
-    });
-  };
+  const handleCreatePost = async (content: string, imageUrl?: string | null) => {
+    if (!userId || !community) return
+    setIsSubmitting(true)
+    try {
+      await communityService.createPost(community.id, userId, content, imageUrl ?? null)
+      await loadPosts()
+      setIsCreateOpen(false)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
-  const handleCreatePost = (req: CreatePostRequest) => {
-    const newPost: Post = {
-      id: `post-${Date.now()}`,
-      communityId: community.id,
-      communityName: community.name,
-      authorId: user?.id || 'user-demo',
-      author: {
-        id: user?.id || 'user-demo',
-        fullName: user?.fullName || 'Arun Selvam',
-        avatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arun',
-        motherTongue: typeof user?.motherTongue === 'string' ? user.motherTongue : 'Tamil',
-        hometown: user?.hometown ? `${user.hometown.city}, ${user.hometown.state}` : 'Hometown',
-      },
-      content: req.content,
-      imageUrl: req.imageUrl,
-      likeCount: 0,
-      likes: 0,
-      commentCount: 0,
-      comments: [],
-      isLikedByCurrentUser: false,
-      createdAt: new Date().toISOString(),
-    };
-    setPosts([newPost, ...posts]);
-  };
+  if (isLoading) {
+    return <Loader label="Loading community…" />
+  }
 
-  const handleLikePost = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const isLiked = p.isLikedByCurrentUser;
-          return {
-            ...p,
-            isLikedByCurrentUser: !isLiked,
-            likeCount: isLiked ? p.likeCount - 1 : p.likeCount + 1,
-            likes: isLiked ? (p.likes || 1) - 1 : (p.likes || 0) + 1,
-          };
-        }
-        return p;
-      })
-    );
-  };
+  if (isNotFound || !community) {
+    return (
+      <div className="mx-auto w-full max-w-3xl">
+        <EmptyState
+          title="Community not found"
+          description="This community may have been removed or the link is incorrect."
+          action={
+            <Link to={ROUTES.communities}>
+              <Button variant="secondary">Back to communities</Button>
+            </Link>
+          }
+        />
+      </div>
+    )
+  }
 
-  const handleAddComment = (postId: string, content: string) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const newComment = {
-            id: `c-${Date.now()}`,
-            postId,
-            authorId: user?.id || 'user-demo',
-            author: {
-              id: user?.id || 'user-demo',
-              fullName: user?.fullName || 'Arun Selvam',
-              avatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arun',
-            },
-            content,
-            likeCount: 0,
-            createdAt: new Date().toISOString(),
-          };
-          const updatedComments = [...(p.comments || []), newComment];
-          return {
-            ...p,
-            comments: updatedComments,
-            commentCount: updatedComments.length,
-          };
-        }
-        return p;
-      })
-    );
-  };
-
-  // Simulated members from users context
-  const members = users.slice(0, 6);
+  const language = languageById(community.languageId)
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Back button */}
-      <Link
-        to="/communities"
-        className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-indigo-600 transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-        Back to Communities
+    <div className="mx-auto w-full max-w-4xl space-y-6">
+      <Link to={ROUTES.communities} className="inline-flex items-center gap-1 text-sm text-brand-700 hover:underline">
+        ← Back to communities
       </Link>
 
-      {/* Banner & Header */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-        <div className="h-48 sm:h-64 w-full bg-slate-900 relative">
-          {community.bannerImage && (
-            <img
-              src={community.bannerImage}
-              alt={community.name}
-              className="w-full h-full object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-          <div className="absolute bottom-4 left-6 right-6 text-white flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <Badge variant="primary" size="sm" className="bg-white/20 backdrop-blur-xs text-white border-0">
-                  {typeof community.language === 'string' ? community.language : (community.language as any)?.name}
-                </Badge>
-                {community.languageNative && (
-                  <span className="text-xs text-white/80 font-medium">({community.languageNative})</span>
-                )}
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{community.name}</h1>
-              <div className="flex items-center space-x-4 text-xs text-white/80 mt-2 font-medium">
-                <span className="flex items-center">
-                  <Users className="w-3.5 h-3.5 mr-1" />
-                  {community.memberCount} Members
-                </span>
-                <span className="flex items-center">
-                  <MapPin className="w-3.5 h-3.5 mr-1" />
-                  {community.city || 'Gurugram'}, {community.state || 'Haryana'}
-                </span>
-              </div>
+      <header className="card space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="page-title">{community.name}</h1>
+              {language && <Badge variant="neutral">{language.name}</Badge>}
+              {!community.isPublic && <Badge variant="warning">Private</Badge>}
             </div>
-
-            <div className="flex items-center space-x-3">
-              <Button
-                variant={community.isMember ? 'outline' : 'primary'}
-                onClick={handleJoinToggle}
-                className={community.isMember ? 'bg-white/10 text-white border-white/40 hover:bg-white/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-md'}
-              >
-                {community.isMember ? 'Joined Member ✓' : 'Join Circle'}
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => setIsPostModalOpen(true)}
-                className="bg-white text-indigo-700 hover:bg-indigo-50 font-semibold"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Post
-              </Button>
-            </div>
+            <p className="text-sm text-slate-600">{community.description}</p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button variant={isMember ? 'secondary' : 'primary'} onClick={() => void toggleMembership()}>
+              {isMember ? 'Leave community' : 'Join community'}
+            </Button>
+            {isMember && <Button onClick={() => setIsCreateOpen(true)}>New post</Button>}
           </div>
         </div>
 
-        {/* Community About & Tabs */}
-        <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <p className="text-sm text-gray-600 max-w-3xl leading-relaxed">
-            {community.description}
-          </p>
-          <div className="flex rounded-lg bg-gray-100 p-1 border border-gray-200 self-start">
-            <button
-              onClick={() => setActiveTab('posts')}
-              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'posts' ? 'bg-white text-indigo-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Feed Posts ({posts.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('members')}
-              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'members' ? 'bg-white text-indigo-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Members ({members.length})
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-sm text-slate-600">
+          <LocationBadge city={community.locationCity} country={community.locationCountry} />
+          <span>{formatCount(community.memberCount)} members</span>
         </div>
-      </div>
+      </header>
 
-      {/* Main Tab Content */}
-      {activeTab === 'posts' ? (
-        <CommunityFeed
-          posts={posts}
-          onLikePost={handleLikePost}
-          onAddComment={handleAddComment}
-        />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {members.map((m) => (
-            <UserCard key={m.id} user={m} />
-          ))}
-        </div>
-      )}
+      <CommunityFeed posts={posts} onLike={async (post) => {
+        await communityService.likePost(post.id)
+        await loadPosts()
+      }} canInteract={isMember} />
 
-      {/* Create Post Modal */}
       <CreatePostModal
-        isOpen={isPostModalOpen}
-        onClose={() => setIsPostModalOpen(false)}
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
         onSubmit={handleCreatePost}
-        defaultCommunityId={community.id}
+        isSubmitting={isSubmitting}
       />
     </div>
-  );
-};
-
+  )
+}

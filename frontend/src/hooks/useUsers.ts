@@ -1,5 +1,6 @@
-import { useUserContext } from '@/context/UserContext';
+import { useUserContext } from '@/context/UserContext'
 
-export const useUsers = () => {
-  return useUserContext();
-};
+/** Directory-style access to every user known to the app. */
+export function useUsers() {
+  return useUserContext()
+}

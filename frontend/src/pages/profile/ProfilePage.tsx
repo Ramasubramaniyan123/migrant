@@ -1,165 +1,187 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import {
-  MapPin,
-  Compass,
-  Languages,
-  Sparkles,
-  Edit,
-  Home,
-} from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { Avatar } from '@/components/common/Avatar';
-import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
-import { ROUTES } from '@/utils/constants';
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { communityService } from '@/services/communityService'
+import { languageById } from '@/services/userService'
+import { useAuth } from '@/hooks/useAuth'
+import { useConnections } from '@/hooks/useConnections'
+import { PROFICIENCY_LABELS, ROUTES } from '@/utils/constants'
+import { formatDate } from '@/utils/formatters'
+import Avatar from '@/components/common/Avatar'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
+import LocationBadge from '@/components/shared/LocationBadge'
 
-export const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+const PRIVACY_LABELS: Record<string, string> = {
+  showHometown: 'Hometown visible',
+  showExactLocation: 'Exact location shared',
+  allowConnectionRequests: 'Open to connection requests',
+  showOnlineStatus: 'Online status visible',
+}
+
+/** Read-only overview of the signed-in user's own profile. */
+export default function ProfilePage() {
+  const { user, isLoading } = useAuth()
+  const { accepted } = useConnections()
+  const [communityCount, setCommunityCount] = useState(0)
+
+  const userId = user?.id
+
+  useEffect(() => {
+    if (!userId) return
+    void communityService
+      .getMembershipsForUser(userId)
+      .then((rows) => setCommunityCount(rows.length))
+      .catch(() => setCommunityCount(0))
+  }, [userId])
+
+  if (isLoading) {
+    return <Loader fullScreen label="Loading profile…" />
+  }
 
   if (!user) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-sm text-gray-500">Please log in to view your profile.</p>
-      </div>
-    );
+      <EmptyState
+        title="Sign in required"
+        description="Please sign in to view your profile."
+        action={
+          <Link to={ROUTES.login}>
+            <Button>Go to sign in</Button>
+          </Link>
+        }
+      />
+    )
   }
 
-  const motherTongue = typeof user.motherTongue === 'string' ? user.motherTongue : (user.motherTongue as any)?.name || 'Tamil';
-  const hometownCity = user.hometown?.city || 'Tenkasi';
-  const hometownState = user.hometown?.state || 'Tamil Nadu';
-  const locality = user.currentLocation?.locality || 'Cyber City';
+  const { profile } = user
+  const fullNameValue = `${profile.firstName} ${profile.lastName}`.trim()
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Profile Header Card */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-        <div className="h-36 bg-gradient-to-r from-indigo-600 via-indigo-700 to-blue-700" />
-        <div className="px-6 pb-6 pt-0 relative">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between -mt-16 sm:-mt-14 mb-4 gap-4">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end space-y-3 sm:space-y-0 sm:space-x-4">
-              <div className="w-24 h-24 rounded-2xl ring-4 ring-white bg-white shadow-md overflow-hidden">
-                <Avatar
-                  src={user.avatar || user.photo}
-                  name={user.fullName}
-                  size="xl"
-                  className="w-full h-full rounded-2xl"
-                />
+    <div className="mx-auto w-full max-w-4xl space-y-6">
+      <section className="card">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <Avatar name={fullNameValue} src={profile.avatarUrl} size="xl" />
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="page-title">{fullNameValue}</h1>
+                {user.isVerified && <Badge variant="success">Verified</Badge>}
               </div>
-              <div className="text-center sm:text-left">
-                <div className="flex items-center space-x-2 justify-center sm:justify-start">
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">{user.fullName}</h1>
-                  <Badge variant="primary" size="sm" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
-                    {user.role === 'admin' ? 'Community Admin' : 'Verified Migrant'}
-                  </Badge>
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">{user.profession || 'Professional'}</p>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                {profile.currentCity && (
+                  <LocationBadge city={profile.currentCity} country={profile.currentCountry} approximate />
+                )}
+                {profile.hometownCity && (
+                  <span className="text-slate-500">
+                    From {[profile.hometownCity, profile.hometownCountry].filter(Boolean).join(', ')}
+                  </span>
+                )}
               </div>
+              {profile.bio && <p className="max-w-xl text-sm text-slate-600">{profile.bio}</p>}
             </div>
-
-            <Link to={ROUTES.EDIT_PROFILE}>
-              <Button size="sm" variant="outline" className="border-gray-300 text-xs text-gray-700 shadow-xs">
-                <Edit className="w-3.5 h-3.5 mr-1.5" />
-                Edit Profile
-              </Button>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Link to={ROUTES.editProfile}>
+              <Button>Edit profile</Button>
+            </Link>
+            <Link to={ROUTES.settings}>
+              <Button variant="ghost">Settings</Button>
             </Link>
           </div>
+        </div>
+      </section>
 
-          {/* Bio */}
-          <p className="text-sm text-gray-700 leading-relaxed max-w-2xl mt-4">
-            {user.bio || 'New member building community connections in Gurugram.'}
-          </p>
-
-          {/* Key Facts */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-6 border-t border-gray-100 text-xs text-gray-600">
-            <div className="flex items-center space-x-2">
-              <Compass className="w-4 h-4 text-indigo-600 shrink-0" />
-              <span>Hometown: <strong className="text-gray-900 font-semibold">{hometownCity}, {hometownState}</strong></span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Current: <strong className="text-gray-900 font-semibold">{locality}, Gurugram</strong></span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Languages className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Mother Tongue: <strong className="text-gray-900 font-semibold">{motherTongue}</strong></span>
-            </div>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="card text-center">
+          <p className="text-2xl font-semibold text-slate-900">{accepted.length}</p>
+          <p className="muted">Connections</p>
+        </div>
+        <div className="card text-center">
+          <p className="text-2xl font-semibold text-slate-900">{communityCount}</p>
+          <p className="muted">Communities joined</p>
+        </div>
+        <div className="card text-center">
+          <p className="text-2xl font-semibold text-slate-900">{profile.languages.length}</p>
+          <p className="muted">Languages</p>
         </div>
       </div>
 
-      {/* Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Languages & Dialects */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs space-y-4">
-          <h3 className="font-bold text-gray-900 text-sm flex items-center">
-            <Languages className="w-4 h-4 mr-2 text-indigo-600" />
-            Languages Spoken
-          </h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-100">
-              <span className="text-xs font-bold text-indigo-950">{motherTongue}</span>
-              <span className="text-[11px] font-semibold text-indigo-700">Native Tongue</span>
-            </div>
-            {user.additionalLanguages?.map((l) => (
-              <div key={l.name} className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100">
-                <span className="text-xs font-medium text-gray-800">{l.name}</span>
-                <span className="text-[11px] text-gray-500 capitalize">{l.proficiency || 'fluent'}</span>
-              </div>
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Languages</h2>
+        {profile.languages.length === 0 ? (
+          <p className="muted">No languages added yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {profile.languages.map((entry) => {
+              const language = languageById(entry.languageId)
+              if (!language) return null
+              return (
+                <span
+                  key={entry.languageId}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700"
+                >
+                  {language.name}
+                  <span className="text-xs text-slate-500">{PROFICIENCY_LABELS[entry.proficiency]}</span>
+                  {entry.isPrimary && <Badge variant="brand" size="sm">Primary</Badge>}
+                </span>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Interests</h2>
+        {profile.interests.length === 0 ? (
+          <p className="muted">No interests added yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {profile.interests.map((interest) => (
+              <Badge key={interest} variant="neutral" size="md">
+                {interest}
+              </Badge>
             ))}
-            {(!user.additionalLanguages || user.additionalLanguages.length === 0) && (
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100">
-                <span className="text-xs font-medium text-gray-800">English</span>
-                <span className="text-[11px] text-gray-500">Professional</span>
-              </div>
-            )}
           </div>
-        </div>
+        )}
+      </section>
 
-        {/* Living & Relocation Status */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs space-y-4">
-          <h3 className="font-bold text-gray-900 text-sm flex items-center">
-            <Home className="w-4 h-4 mr-2 text-emerald-600" />
-            Relocation & Housing
-          </h3>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50">
-              <span className="text-gray-500">Living Arrangement:</span>
-              <span className="font-semibold text-gray-900">{user.livingSituation || 'Rented Apartment'}</span>
-            </div>
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50">
-              <span className="text-gray-500">District Origin:</span>
-              <span className="font-semibold text-gray-900">{user.hometown?.district || hometownCity}</span>
-            </div>
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50">
-              <span className="text-gray-500">Member Since:</span>
-              <span className="font-semibold text-gray-900">{user.joinedDate || '2024'}</span>
-            </div>
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">About</h2>
+        <dl className="space-y-2 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Email</dt>
+            <dd className="font-medium text-slate-800">{user.email}</dd>
           </div>
-        </div>
-      </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Member since</dt>
+            <dd className="font-medium text-slate-800">{formatDate(user.createdAt)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Verification</dt>
+            <dd>
+              {user.isVerified ? <Badge variant="success">Verified</Badge> : <Badge variant="warning">Unverified</Badge>}
+            </dd>
+          </div>
+        </dl>
+      </section>
 
-      {/* Interests Card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs space-y-3">
-        <h3 className="font-bold text-gray-900 text-sm flex items-center">
-          <Sparkles className="w-4 h-4 mr-2 text-amber-500" />
-          Passions & Interests
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {user.interests?.map((interest) => (
-            <span
-              key={interest}
-              className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium"
-            >
-              {interest}
-            </span>
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Privacy</h2>
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {Object.entries(profile.privacy).map(([key, value]) => (
+            <li key={key} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm">
+              <span className="text-slate-600">{PRIVACY_LABELS[key] ?? key}</span>
+              <Badge variant={value ? 'success' : 'neutral'} size="sm">
+                {value ? 'On' : 'Off'}
+              </Badge>
+            </li>
           ))}
-          {(!user.interests || user.interests.length === 0) && (
-            <span className="text-xs text-gray-400">No interests added yet.</span>
-          )}
-        </div>
-      </div>
+        </ul>
+        <Link to={ROUTES.settings} className="text-sm font-medium text-brand-700 hover:underline">
+          Manage privacy settings →
+        </Link>
+      </section>
     </div>
-  );
-};
-
+  )
+}

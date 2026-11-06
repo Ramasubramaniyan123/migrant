@@ -1,178 +1,123 @@
-import React, { useState } from 'react';
-import { KeyRound, Bell, AlertTriangle, Check } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuth'
+import { formatDate } from '@/utils/formatters'
+import Button from '@/components/common/Button'
+import Input from '@/components/common/Input'
+import Loader from '@/components/common/Loader'
+import Modal from '@/components/common/Modal'
 
-export const AccountSettings: React.FC = () => {
-  const { logout } = useAuth();
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordMsg, setPasswordMsg] = useState('');
+/** Account details, display-name editing and session controls. */
+export default function AccountSettings() {
+  const { user, updateProfile, logout, isLoading } = useAuth()
+  const navigate = useNavigate()
 
-  // Email notifications
-  const [emailDigest, setEmailDigest] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [savedNotifs, setSavedNotifs] = useState(false);
+  const [firstName, setFirstName] = useState(user?.profile.firstName ?? '')
+  const [lastName, setLastName] = useState(user?.profile.lastName ?? '')
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-  const handlePasswordUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword.length < 8) {
-      setPasswordMsg('New password must be at least 8 characters.');
-      return;
+  if (isLoading) {
+    return <Loader label="Loading account…" />
+  }
+
+  if (!user) {
+    return <p className="muted">Sign in to manage your account.</p>
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      await updateProfile({
+        firstName: firstName.trim() || user.profile.firstName,
+        lastName: lastName.trim(),
+      })
+    } finally {
+      setIsSaving(false)
     }
-    if (newPassword !== confirmPassword) {
-      setPasswordMsg('Passwords do not match.');
-      return;
-    }
-    setPasswordMsg('Password updated successfully!');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setPasswordMsg(''), 3000);
-  };
+  }
+
+  const handleSignOut = () => {
+    void logout().then(() => navigate('/'))
+  }
 
   return (
     <div className="space-y-6">
-      {/* Password Change */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center mb-1">
-          <KeyRound className="w-5 h-5 mr-2 text-indigo-600" />
-          Security & Password
-        </h2>
-        <p className="text-xs text-gray-500 mb-6">Update your account login credentials</p>
+      <section className="card space-y-4">
+        <h2 className="text-base font-semibold text-slate-900">Profile details</h2>
 
-        <form onSubmit={handlePasswordUpdate} className="space-y-4 max-w-md">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            type="password"
-            label="Current Password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="••••••••"
-            required
+            label="First name"
+            value={firstName}
+            onChange={(event) => setFirstName(event.target.value)}
           />
           <Input
-            type="password"
-            label="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="••••••••"
-            helperText="At least 8 characters"
-            required
+            label="Last name"
+            value={lastName}
+            onChange={(event) => setLastName(event.target.value)}
           />
-          <Input
-            type="password"
-            label="Confirm New Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-          />
-
-          {passwordMsg && (
-            <p className={`text-xs p-2.5 rounded-lg ${passwordMsg.includes('success') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-              {passwordMsg}
-            </p>
-          )}
-
-          <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-            Update Password
-          </Button>
-        </form>
-      </div>
-
-      {/* Notifications Preferences */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center mb-1">
-          <Bell className="w-5 h-5 mr-2 text-indigo-600" />
-          Email Notifications
-        </h2>
-        <p className="text-xs text-gray-500 mb-6">Choose how frequently you hear from your communities</p>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-            <div>
-              <p className="text-xs font-bold text-gray-900">Weekly Community Digest</p>
-              <p className="text-[11px] text-gray-500">Summary of upcoming festivals, meetups, and new members from your hometown</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setEmailDigest(!emailDigest);
-                setSavedNotifs(true);
-                setTimeout(() => setSavedNotifs(false), 2000);
-              }}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                emailDigest ? 'bg-indigo-600 justify-end' : 'bg-gray-300 justify-start'
-              }`}
-            >
-              <div className="w-4 h-4 rounded-full bg-white shadow-xs" />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-            <div>
-              <p className="text-xs font-bold text-gray-900">Immediate Connection Requests</p>
-              <p className="text-[11px] text-gray-500">Email alerts when someone sends you a message or connection request</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setEmailAlerts(!emailAlerts);
-                setSavedNotifs(true);
-                setTimeout(() => setSavedNotifs(false), 2000);
-              }}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                emailAlerts ? 'bg-indigo-600 justify-end' : 'bg-gray-300 justify-start'
-              }`}
-            >
-              <div className="w-4 h-4 rounded-full bg-white shadow-xs" />
-            </button>
-          </div>
         </div>
 
-        {savedNotifs && (
-          <p className="mt-3 text-xs text-emerald-600 font-semibold flex items-center">
-            <Check className="w-3.5 h-3.5 mr-1" /> Preferences saved!
-          </p>
-        )}
-      </div>
+        <Input label="Email address" value={user.email} readOnly hint="Email cannot be changed in the demo." />
 
-      {/* Danger Zone */}
-      <div className="bg-white rounded-2xl border border-red-200 p-6 sm:p-8 shadow-xs">
-        <h2 className="text-lg font-bold text-red-600 flex items-center mb-1">
-          <AlertTriangle className="w-5 h-5 mr-2" />
-          Danger Zone
-        </h2>
-        <p className="text-xs text-gray-500 mb-4">
-          Permanently remove your account and purge all location records from the directory.
-        </p>
+        <dl className="space-y-1 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Member since</dt>
+            <dd className="font-medium text-slate-800">{formatDate(user.createdAt)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Role</dt>
+            <dd className="font-medium text-slate-800">{user.role === 'ADMIN' ? 'Administrator' : 'Member'}</dd>
+          </div>
+        </dl>
 
+        <div className="flex justify-end">
+          <Button onClick={() => void handleSave()} isLoading={isSaving}>
+            Save changes
+          </Button>
+        </div>
+      </section>
+
+      <section className="card space-y-4">
+        <h2 className="text-base font-semibold text-slate-900">Session</h2>
         <div className="flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={logout}
-            className="text-xs border-gray-300 text-gray-700"
-          >
-            Log Out of All Sessions
+          <Button variant="secondary" onClick={handleSignOut}>
+            Sign out
           </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => {
-              if (confirm('Are you sure you want to delete your profile? This cannot be undone.')) {
-                logout();
-              }
-            }}
-            className="text-xs"
-          >
-            Delete Account
+          <Button variant="danger" onClick={() => setIsDeleteOpen(true)}>
+            Delete account
           </Button>
         </div>
-      </div>
-    </div>
-  );
-};
+      </section>
 
+      <Modal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        title="Delete account"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setIsDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setIsDeleteOpen(false)
+                handleSignOut()
+              }}
+            >
+              Delete and sign out
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          This prototype keeps everything in memory, so deleting your account simply clears the demo
+          session.
+        </p>
+      </Modal>
+    </div>
+  )
+}

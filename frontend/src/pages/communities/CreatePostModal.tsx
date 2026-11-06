@@ -1,106 +1,79 @@
-import React, { useState } from 'react';
-import { Modal } from '@/components/common/Modal';
-import { Button } from '@/components/common/Button';
-import { Image, Send } from 'lucide-react';
-import communitiesData from '@/data/communities.json';
-import type { CreatePostRequest } from '@/types';
+import { useEffect, useState } from 'react'
+import Button from '@/components/common/Button'
+import Input, { Textarea } from '@/components/common/Input'
+import Modal from '@/components/common/Modal'
 
 interface CreatePostModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (post: CreatePostRequest) => void;
-  defaultCommunityId?: string;
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (content: string, imageUrl?: string | null) => Promise<void> | void
+  isSubmitting?: boolean
 }
 
-export const CreatePostModal: React.FC<CreatePostModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  defaultCommunityId = 'comm-tamil',
-}) => {
-  const [communityId, setCommunityId] = useState(defaultCommunityId);
-  const [content, setContent] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [showImageInput, setShowImageInput] = useState(false);
+const MAX_LENGTH = 600
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim()) return;
+/** Modal composer for creating a community post with an optional image link. */
+export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmitting = false }: CreatePostModalProps) {
+  const [content, setContent] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [error, setError] = useState('')
 
-    onSubmit({
-      communityId,
-      content,
-      imageUrl: imageUrl.trim() || undefined,
-    });
+  useEffect(() => {
+    if (isOpen) {
+      setContent('')
+      setImageUrl('')
+      setError('')
+    }
+  }, [isOpen])
 
-    setContent('');
-    setImageUrl('');
-    setShowImageInput(false);
-    onClose();
-  };
+  const handleSubmit = async () => {
+    if (!content.trim()) {
+      setError('Write something before posting.')
+      return
+    }
+    setError('')
+    await onSubmit(content.trim(), imageUrl.trim() || null)
+  }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create Community Post" size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Target Community</label>
-          <select
-            value={communityId}
-            onChange={(e) => setCommunityId(e.target.value)}
-            className="w-full text-xs border border-gray-200 rounded-lg p-2.5 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            {communitiesData.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.language})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Your Post</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={4}
-            placeholder="Write what's on your mind, questions about the locality, or meetup ideas..."
-            className="w-full text-sm border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            required
-          />
-        </div>
-
-        {showImageInput ? (
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Image URL</label>
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/photo-..."
-              className="w-full text-xs border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowImageInput(true)}
-            className="flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            <Image className="w-3.5 h-3.5 mr-1" />
-            Attach Image URL
-          </button>
-        )}
-
-        <div className="pt-3 border-t border-gray-100 flex items-center justify-end space-x-2">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create a post"
+      size="md"
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700" disabled={!content.trim()}>
-            <Send className="w-3.5 h-3.5 mr-1.5" />
-            Publish Post
+          <Button onClick={() => void handleSubmit()} isLoading={isSubmitting} disabled={!content.trim()}>
+            Post
           </Button>
         </div>
-      </form>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <Textarea
+            label="What do you want to share?"
+            value={content}
+            onChange={(event) => setContent(event.target.value.slice(0, MAX_LENGTH))}
+            rows={5}
+            maxLength={MAX_LENGTH}
+            error={error}
+          />
+          <p className="mt-1 text-right text-xs text-slate-400">
+            {content.length}/{MAX_LENGTH}
+          </p>
+        </div>
+        <Input
+          label="Image URL"
+          hint="Optional — paste a link to an image."
+          value={imageUrl}
+          onChange={(event) => setImageUrl(event.target.value)}
+          placeholder="https://…"
+        />
+      </div>
     </Modal>
-  );
-};
+  )
+}

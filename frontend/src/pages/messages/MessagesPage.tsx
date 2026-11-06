@@ -1,129 +1,102 @@
-import React, { useState } from 'react';
-import { ConversationList } from './ConversationList';
-import { ChatWindow } from './ChatWindow';
-import { useAuth } from '@/hooks/useAuth';
-import initialMessages from '@/data/messages.json';
-import type { Conversation, Message } from '@/types';
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import type { ConversationSummary } from '@/types/message.types'
+import { messageService } from '@/services/messageService'
+import { useAuth } from '@/hooks/useAuth'
+import { ROUTES } from '@/utils/constants'
+import { cn } from '@/utils/helpers'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
+import ChatWindow from './ChatWindow'
+import ConversationList from './ConversationList'
 
-export const MessagesPage: React.FC = () => {
-  const { user } = useAuth();
-  const currentUserId = user?.id || 'user-demo';
+/** Two-pane messages screen that keeps the active conversation in the URL. */
+export default function MessagesPage() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { conversationId: conversationIdParam } = useParams<{ conversationId: string }>()
+  const userId = user?.id
 
-  const [conversations] = useState<Conversation[]>([
-    {
-      id: 'conv-1',
-      participantId: 'u-priya',
-      participant: {
-        id: 'u-priya',
-        fullName: 'Priya Karthik',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
-        motherTongue: 'Tamil',
-        hometown: 'Madurai',
-        isOnline: true,
-      },
-      lastMessage: {
-        id: 'msg-3',
-        conversationId: 'conv-1',
-        senderId: 'u-priya',
-        receiverId: 'user-demo',
-        content: 'About 7 months now! Still getting used to the winter weather...',
-        status: 'delivered',
-        timestamp: '2026-11-03T16:32:00Z',
-        createdAt: '2026-11-03T16:32:00Z',
-      },
-      unreadCount: 1,
-      createdAt: '2026-11-03T16:00:00Z',
-      updatedAt: '2026-11-03T16:32:00Z',
-    },
-    {
-      id: 'conv-2',
-      participantId: 'u-suresh',
-      participant: {
-        id: 'u-suresh',
-        fullName: 'Suresh Varma',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh',
-        motherTongue: 'Telugu',
-        hometown: 'Visakhapatnam',
-        isOnline: false,
-      },
-      lastMessage: {
-        id: 'msg-4',
-        conversationId: 'conv-2',
-        senderId: 'u-suresh',
-        receiverId: 'user-demo',
-        content: 'Hey Arun! Are you up for tennis-ball cricket this Sunday at Sector 29?',
-        status: 'delivered',
-        timestamp: '2026-11-04T08:10:00Z',
-        createdAt: '2026-11-04T08:10:00Z',
-      },
-      unreadCount: 0,
-      createdAt: '2026-11-04T08:00:00Z',
-      updatedAt: '2026-11-04T08:10:00Z',
-    },
-  ]);
+  const [summaries, setSummaries] = useState<ConversationSummary[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const [selectedConversationId, setSelectedConversationId] = useState<string>('conv-1');
-  const [mobileChatOpen, setMobileChatOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>(initialMessages as any[]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const loadSummaries = useCallback(async () => {
+    if (!userId) {
+      setSummaries([])
+      setIsLoading(false)
+      return
+    }
+    setIsLoading(true)
+    try {
+      setSummaries(await messageService.getConversations(userId))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [userId])
 
-  const activeConversation = conversations.find((c) => c.id === selectedConversationId) || conversations[0];
-  const activeMessages = messages.filter((m) => m.conversationId === selectedConversationId);
+  useEffect(() => {
+    void loadSummaries()
+  }, [loadSummaries])
 
-  const handleSendMessage = (text: string) => {
-    const newMsg: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: selectedConversationId,
-      senderId: currentUserId,
-      receiverId: activeConversation.participantId,
-      content: text,
-      status: 'sent',
-      timestamp: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, newMsg]);
+  const selectedId = conversationIdParam ? Number(conversationIdParam) : undefined
 
-    // Simulated auto-reply after 1.5 seconds for engaging prototype experience
-    setTimeout(() => {
-      const replyMsg: Message = {
-        id: `msg-${Date.now() + 1}`,
-        conversationId: selectedConversationId,
-        senderId: activeConversation.participantId,
-        receiverId: currentUserId,
-        content: `Sounds great! Let's definitely catch up near DLF Cyber Hub this weekend 👍`,
-        status: 'delivered',
-        timestamp: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, replyMsg]);
-    }, 1500);
-  };
+  const activeSummary = useMemo(
+    () => summaries.find((summary) => summary.conversation.id === selectedId),
+    [selectedId, summaries],
+  )
+
+  const handleSelect = (conversationId: number) => {
+    navigate(`${ROUTES.messages}/${conversationId}`)
+  }
 
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100dvh-16rem)] min-h-[320px] md:h-[calc(100vh-12rem)] md:min-h-[500px] bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs flex flex-col md:flex-row">
-      <div className={`${mobileChatOpen ? 'hidden' : 'flex'} min-h-0 flex-1 flex-col md:flex md:flex-none`}>
-        <ConversationList
-          conversations={conversations}
-          selectedId={selectedConversationId}
-          onSelect={(id) => {
-            setSelectedConversationId(id);
-            setMobileChatOpen(true);
-          }}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
-      </div>
-      {activeConversation && (
-        <div className={`${mobileChatOpen ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col md:flex`}>
-          <ChatWindow
-            conversation={activeConversation}
-            messages={activeMessages}
-            currentUserId={currentUserId}
-            onSendMessage={handleSendMessage}
-            onBack={() => setMobileChatOpen(false)}
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 lg:h-[calc(100vh-9rem)] lg:flex-row">
+      <aside
+        className={cn(
+          'card overflow-hidden p-0 lg:w-80 lg:shrink-0',
+          selectedId ? 'hidden lg:block' : 'block',
+        )}
+      >
+        <div className="border-b border-slate-100 px-4 py-3">
+          <h1 className="text-base font-semibold text-slate-900">Messages</h1>
+        </div>
+        <div className="h-[60vh] lg:h-[calc(100%-3.25rem)]">
+          <ConversationList
+            summaries={summaries}
+            activeConversationId={selectedId}
+            isLoading={isLoading}
+            onSelect={handleSelect}
           />
         </div>
-      )}
+      </aside>
+
+      <section className={cn('card min-w-0 flex-1 overflow-hidden p-0', selectedId ? 'block' : 'hidden lg:block')}>
+        {selectedId && activeSummary ? (
+          <ChatWindow
+            conversationId={selectedId}
+            peerId={activeSummary.peerId}
+            onSent={() => void loadSummaries()}
+          />
+        ) : selectedId ? (
+          <div className="flex h-full min-h-[60vh] items-center justify-center">
+            {isLoading ? (
+              <Loader label="Opening conversation…" />
+            ) : (
+              <EmptyState
+                title="Conversation unavailable"
+                description="This conversation could not be found."
+              />
+            )}
+          </div>
+        ) : (
+          <div className="hidden h-full items-center justify-center lg:flex">
+            <EmptyState
+              title="Select a conversation"
+              description="Choose a chat from the list to start messaging."
+            />
+          </div>
+        )}
+      </section>
     </div>
-  );
-};
+  )
+}

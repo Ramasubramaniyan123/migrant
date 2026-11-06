@@ -1,24 +1,24 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        brand: {
+          50: '#eef6ff',
+          100: '#d9ebff',
+          200: '#bcdcff',
+          300: '#8ec6ff',
+          400: '#59a6ff',
+          500: '#3385ff',
+          600: '#1f66f5',
+          700: '#1a51e1',
+          800: '#1c43b6',
+          900: '#1c3c8f',
         },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
     },
   },

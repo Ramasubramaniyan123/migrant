@@ -1,135 +1,142 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import { Avatar } from '@/components/common/Avatar';
-import { useUserContext } from '@/context/UserContext';
-import type { User } from '@/types';
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { fullName } from '@/services/userService'
+import { useUsers } from '@/hooks/useUsers'
+import { ROUTES } from '@/utils/constants'
+import { formatDate } from '@/utils/formatters'
+import Avatar from '@/components/common/Avatar'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
+import SearchBar from '@/components/shared/SearchBar'
 
-export const UserManagement: React.FC = () => {
-  const { users } = useUserContext();
-  const [userList, setUserList] = useState<User[]>(users);
-  const [search, setSearch] = useState('');
+type StatusFilter = 'all' | 'active' | 'disabled'
 
-  const filtered = userList.filter((u) =>
-    u.fullName.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    u.profession?.toLowerCase().includes(search.toLowerCase())
-  );
+const STATUS_TABS: Array<{ key: StatusFilter; label: string }> = [
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
+  { key: 'disabled', label: 'Disabled' },
+]
 
-  const handleToggleRole = (userId: string) => {
-    setUserList((prev) =>
-      prev.map((u) => {
-        if (u.id === userId) {
-          return { ...u, role: u.role === 'admin' ? 'user' : 'admin' };
-        }
-        return u;
+/** Admin table for browsing members and toggling their access. */
+export default function UserManagement() {
+  const { users, isLoading } = useUsers()
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<StatusFilter>('all')
+  const [overrides, setOverrides] = useState<Record<number, boolean>>({})
+
+  const rows = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return users
+      .map((user) => ({ user, active: overrides[user.id] ?? user.isActive }))
+      .filter(({ user, active }) => {
+        if (status === 'active' && !active) return false
+        if (status === 'disabled' && active) return false
+        if (!query) return true
+        const name = fullName(user).toLowerCase()
+        return name.includes(query) || user.email.toLowerCase().includes(query)
       })
-    );
-  };
+      .sort((a, b) => Date.parse(b.user.createdAt) - Date.parse(a.user.createdAt))
+  }, [users, search, status, overrides])
 
-  const handleToggleStatus = (userId: string) => {
-    setUserList((prev) =>
-      prev.map((u) => {
-        if (u.id === userId) {
-          const isActive = u.privacy?.profileVisibility !== 'private';
-          return {
-            ...u,
-            privacy: {
-              ...u.privacy,
-              profileVisibility: isActive ? 'private' : 'public',
-              locationVisibility: 'approximate',
-              pauseDiscovery: isActive,
-            },
-          };
-        }
-        return u;
-      })
-    );
-  };
+  const toggleActive = (id: number, current: boolean) => {
+    setOverrides((prev) => ({ ...prev, [id]: !current }))
+  }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs space-y-4 p-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h3 className="text-base font-bold text-gray-900">User Moderation & Access Control</h3>
-          <p className="text-xs text-gray-500">Manage registered migrant members and administrative roles.</p>
-        </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search member..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <header>
+        <h1 className="page-title">User management</h1>
+        <p className="muted mt-1">{rows.length} of {users.length} members shown</p>
+      </header>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by name or email"
+          className="sm:max-w-sm"
+        />
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setStatus(tab.key)}
+              className={
+                'rounded-md px-4 py-1.5 text-sm font-medium transition ' +
+                (status === tab.key ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-100')
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-gray-600">
-          <thead className="bg-gray-50 text-gray-700 uppercase font-semibold text-[10px] tracking-wider border-y border-gray-200">
-            <tr>
-              <th className="py-3 px-4">Member</th>
-              <th className="py-3 px-4">Hometown</th>
-              <th className="py-3 px-4">Locality</th>
-              <th className="py-3 px-4">Role</th>
-              <th className="py-3 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filtered.map((u) => {
-              const isAdmin = u.role === 'admin';
-              return (
-                <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center space-x-3">
-                      <Avatar src={u.avatar || u.photo} name={u.fullName} size="sm" />
-                      <div>
-                        <div className="font-bold text-gray-900">{u.fullName}</div>
-                        <div className="text-[11px] text-gray-400">{u.email}</div>
+      {isLoading ? (
+        <Loader label="Loading members…" />
+      ) : rows.length === 0 ? (
+        <EmptyState title="No members found" description="Try a different search term or filter." />
+      ) : (
+        <div className="card overflow-x-auto p-0">
+          <table className="w-full min-w-[40rem] text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th scope="col" className="px-4 py-3 font-medium">Member</th>
+                <th scope="col" className="px-4 py-3 font-medium">Role</th>
+                <th scope="col" className="px-4 py-3 font-medium">Joined</th>
+                <th scope="col" className="px-4 py-3 font-medium">Status</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {rows.map(({ user, active }) => {
+                const name = fullName(user)
+                return (
+                  <tr key={user.id} className="align-middle">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={name} src={user.profile.avatarUrl} size="sm" />
+                        <div className="min-w-0">
+                          <Link
+                            to={ROUTES.userProfile(user.id)}
+                            className="block truncate font-medium text-slate-900 hover:underline"
+                          >
+                            {name}
+                          </Link>
+                          <span className="block truncate text-xs text-slate-500">{user.email}</span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    {u.hometown?.city ? `${u.hometown.city}, ${u.hometown.state}` : 'Not set'}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    {u.currentLocation?.locality || 'Cyber City'}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        isAdmin
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {u.role.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleRole(u.id)}
-                      className="text-xs text-indigo-600 hover:text-indigo-900 font-semibold"
-                    >
-                      {isAdmin ? 'Demote' : 'Make Admin'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(u.id)}
-                      className="text-xs text-amber-600 hover:text-amber-800 font-semibold ml-2"
-                    >
-                      Toggle Status
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={user.role === 'ADMIN' ? 'brand' : 'neutral'} size="sm">
+                        {user.role === 'ADMIN' ? 'Admin' : 'Member'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{formatDate(user.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={active ? 'success' : 'danger'} size="sm">
+                        {active ? 'Active' : 'Disabled'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button
+                        size="sm"
+                        variant={active ? 'ghost' : 'secondary'}
+                        onClick={() => toggleActive(user.id, active)}
+                      >
+                        {active ? 'Disable' : 'Enable'}
+                      </Button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
-  );
-};
-
+  )
+}

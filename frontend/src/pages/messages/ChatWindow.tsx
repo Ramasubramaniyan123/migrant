@@ -1,105 +1,146 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Send } from 'lucide-react';
-import { Avatar } from '@/components/common/Avatar';
-import { Button } from '@/components/common/Button';
-import type { Conversation, Message } from '@/types';
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import type { KeyboardEvent } from 'react'
+import type { Message } from '@/types/message.types'
+import { messageService } from '@/services/messageService'
+import { fullName } from '@/services/userService'
+import { useAuth } from '@/hooks/useAuth'
+import { useUsers } from '@/hooks/useUsers'
+import { ROUTES } from '@/utils/constants'
+import { formatClockTime } from '@/utils/formatters'
+import { cn } from '@/utils/helpers'
+import Avatar from '@/components/common/Avatar'
+import Button from '@/components/common/Button'
+import { Textarea } from '@/components/common/Input'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
 
 interface ChatWindowProps {
-  conversation: Conversation;
-  messages: Message[];
-  currentUserId: string;
-  onSendMessage: (content: string) => void;
-  onBack: () => void;
+  conversationId: number
+  peerId: number
+  onSent?: () => void
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({
-  conversation,
-  messages,
-  currentUserId,
-  onSendMessage,
-  onBack,
-}) => {
-  const [inputText, setInputText] = useState('');
-  const p = conversation.participant;
+/** Message thread with a composer for a single conversation. */
+export default function ChatWindow({ conversationId, peerId, onSent }: ChatWindowProps) {
+  const { user } = useAuth()
+  const { getUserById } = useUsers()
+  const currentUserId = user?.id
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputText.trim()) return;
-    onSendMessage(inputText);
-    setInputText('');
-  };
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [draft, setDraft] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+
+  const loadMessages = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const thread = await messageService.getMessages(conversationId)
+      setMessages(thread)
+      if (currentUserId) {
+        await messageService.markConversationRead(conversationId, currentUserId)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [conversationId, currentUserId])
+
+  useEffect(() => {
+    void loadMessages()
+  }, [loadMessages])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const peer = getUserById(peerId)
+  const peerName = peer ? fullName(peer) : 'Unknown member'
+  const hometown = [peer?.profile.hometownCity, peer?.profile.hometownCountry].filter(Boolean).join(', ')
+
+  const handleSend = async () => {
+    const content = draft.trim()
+    if (!content || !currentUserId) return
+    setIsSending(true)
+    try {
+      await messageService.sendMessage(conversationId, currentUserId, content)
+      setDraft('')
+      await loadMessages()
+      onSent?.()
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      void handleSend()
+    }
+  }
+
+  if (!currentUserId) {
+    return <EmptyState title="Sign in required" description="Please sign in to read your messages." />
+  }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gray-50/50">
-      {/* Top Header */}
-      <div className="p-3 sm:p-4 bg-white border-b border-gray-200 flex items-center justify-between">
-        <div className="flex min-w-0 items-center space-x-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="md:hidden shrink-0 p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg"
-            aria-label="Back to conversations"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <Avatar src={p?.avatar} name={p?.fullName || 'User'} size="md" />
-          <div className="min-w-0">
-            <h3 className="font-bold text-sm text-gray-900">{p?.fullName}</h3>
-            <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-gray-500">
-              {p?.motherTongue && <span>{p.motherTongue}</span>}
-              {p?.hometown && <span>• {p.hometown}</span>}
-              <span className="text-emerald-600 font-medium">
-                {p?.isOnline ? '• Online' : '• Offline'}
-              </span>
-            </div>
-          </div>
+    <div className="flex h-full flex-col overflow-hidden">
+      <header className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+        <Avatar name={peerName} src={peer?.profile.avatarUrl} size="md" />
+        <div className="min-w-0">
+          <Link to={ROUTES.userProfile(peerId)} className="truncate text-sm font-semibold text-slate-900 hover:underline">
+            {peerName}
+          </Link>
+          {hometown && <p className="truncate text-xs text-slate-500">From {hometown}</p>}
+        </div>
+      </header>
+
+      <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-4 py-4">
+        {isLoading ? (
+          <Loader label="Loading messages…" />
+        ) : messages.length === 0 ? (
+          <EmptyState title="No messages yet" description={`Say hello to ${peerName}.`} />
+        ) : (
+          messages.map((message) => {
+            const isOwn = message.senderId === currentUserId
+            return (
+              <div key={message.id} className={cn('flex items-end gap-2', isOwn ? 'justify-end' : 'justify-start')}>
+                {!isOwn && <Avatar name={peerName} src={peer?.profile.avatarUrl} size="sm" />}
+                <div
+                  className={cn(
+                    'max-w-[75%] rounded-2xl px-3.5 py-2 text-sm shadow-sm',
+                    isOwn
+                      ? 'bg-brand-600 text-white'
+                      : 'border border-slate-200 bg-white text-slate-800',
+                  )}
+                >
+                  <p className="whitespace-pre-line break-words">{message.content}</p>
+                  <p className={cn('mt-1 text-right text-[10px]', isOwn ? 'text-brand-100' : 'text-slate-400')}>
+                    {formatClockTime(message.createdAt)}
+                  </p>
+                </div>
+              </div>
+            )
+          })
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      <div className="border-t border-slate-100 p-3">
+        <div className="flex items-end gap-2">
+          <Textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            placeholder="Write a message… (Enter to send, Shift+Enter for a new line)"
+            className="flex-1"
+          />
+          <Button onClick={() => void handleSend()} isLoading={isSending} disabled={!draft.trim()}>
+            Send
+          </Button>
         </div>
       </div>
-
-      {/* Message stream */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
-        {messages.map((msg) => {
-          const isMe = msg.senderId === currentUserId;
-          return (
-            <div
-              key={msg.id}
-              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
-            >
-              <div
-                className={`max-w-sm rounded-2xl px-4 py-2 text-xs leading-relaxed ${
-                  isMe
-                    ? 'bg-indigo-600 text-white rounded-br-xs shadow-xs'
-                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-xs shadow-xs'
-                }`}
-              >
-                {msg.content}
-              </div>
-              <span className="text-[10px] text-gray-400 mt-1 px-1">
-                {new Date(msg.timestamp || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Input bar */}
-      <form onSubmit={handleSend} className="p-3 bg-white border-t border-gray-200 flex items-center space-x-2">
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder={`Message ${p?.fullName}...`}
-          className="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
-        />
-        <Button
-          type="submit"
-          size="sm"
-          disabled={!inputText.trim()}
-          className="bg-indigo-600 hover:bg-indigo-700 py-2 px-3"
-        >
-          <Send className="w-4 h-4" />
-        </Button>
-      </form>
     </div>
-  );
-};
+  )
+}

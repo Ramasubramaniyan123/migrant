@@ -1,48 +1,42 @@
 export interface Coordinates {
-  latitude: number;
-  longitude: number;
+  latitude: number
+  longitude: number
 }
 
-export const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371;
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
+const EARTH_RADIUS_KM = 6371
+
+function toRadians(degrees: number): number {
+  return (degrees * Math.PI) / 180
+}
+
+/** Great-circle distance between two coordinates, in kilometres. */
+export function calculateDistanceKm(from: Coordinates, to: Coordinates): number {
+  const dLat = toRadians(to.latitude - from.latitude)
+  const dLng = toRadians(to.longitude - from.longitude)
+  const lat1 = toRadians(from.latitude)
+  const lat2 = toRadians(to.latitude)
+
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
-const toRadians = (degrees: number): number => {
-  return degrees * (Math.PI / 180);
-};
+  return EARTH_RADIUS_KM * c
+}
 
-export const formatDistance = (distanceKm: number): string => {
-  if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)}m`;
+/**
+ * Rounds a coordinate so the exact position is never exposed.
+ * Roughly ~1 km of deliberate fuzziness.
+ */
+export function fuzzCoordinates(coords: Coordinates): Coordinates {
+  return {
+    latitude: Number(coords.latitude.toFixed(2)),
+    longitude: Number(coords.longitude.toFixed(2)),
   }
-  if (distanceKm < 10) {
-    return `${distanceKm.toFixed(1)}km`;
-  }
-  return `${Math.round(distanceKm)}km`;
-};
+}
 
-export const isWithinRadius = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-  radiusKm: number
-): boolean => {
-  const distance = calculateDistance(lat1, lon1, lat2, lon2);
-  return distance <= radiusKm;
-};
+/** Maps a 0-100 match score to a Tailwind-friendly bucket. */
+export function matchScoreBucket(score: number): 'high' | 'medium' | 'low' {
+  if (score >= 75) return 'high'
+  if (score >= 45) return 'medium'
+  return 'low'
+}

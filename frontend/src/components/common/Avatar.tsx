@@ -1,71 +1,74 @@
-import React from 'react';
-import { User } from 'lucide-react';
-import { clsx } from '@/utils/helpers';
+import { useEffect, useState } from 'react'
+import { cn } from '@/utils/helpers'
+import { getInitials } from '@/utils/formatters'
+
+type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 interface AvatarProps {
-  src?: string;
-  alt?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  name?: string;
-  className?: string;
+  name: string
+  src?: string
+  size?: AvatarSize
+  className?: string
 }
 
-export const Avatar: React.FC<AvatarProps> = ({
-  src,
-  alt,
-  size = 'md',
-  name,
-  className,
-}) => {
-  const sizes = {
-    sm: 'w-8 h-8 text-sm',
-    md: 'w-10 h-10 text-base',
-    lg: 'w-12 h-12 text-lg',
-    xl: 'w-16 h-16 text-xl',
-  };
+const SIZE_CLASSES: Record<AvatarSize, string> = {
+  xs: 'h-6 w-6 text-[10px]',
+  sm: 'h-8 w-8 text-xs',
+  md: 'h-10 w-10 text-sm',
+  lg: 'h-14 w-14 text-base',
+  xl: 'h-20 w-20 text-xl',
+}
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+const PALETTE = [
+  'bg-brand-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-violet-500',
+  'bg-cyan-500',
+  'bg-indigo-500',
+]
 
-  if (src) {
+/** Stable palette index so the same name always gets the same fallback colour. */
+function colorFor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0
+  }
+  return PALETTE[Math.abs(hash) % PALETTE.length]
+}
+
+/** User avatar that falls back to deterministic initials when no image is available. */
+export default function Avatar({ name, src, size = 'md', className }: AvatarProps) {
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    setHasError(false)
+  }, [src])
+
+  if (src && !hasError) {
     return (
       <img
         src={src}
-        alt={alt || 'Avatar'}
-        className={clsx('rounded-full object-cover', sizes[size], className)}
+        alt={name}
+        onError={() => setHasError(true)}
+        className={cn('rounded-full object-cover', SIZE_CLASSES[size], className)}
       />
-    );
-  }
-
-  if (name) {
-    return (
-      <div
-        className={clsx(
-          'rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold',
-          sizes[size],
-          className
-        )}
-      >
-        {getInitials(name)}
-      </div>
-    );
+    )
   }
 
   return (
-    <div
-      className={clsx(
-        'rounded-full bg-gray-200 text-gray-500 flex items-center justify-center',
-        sizes[size],
-        className
+    <span
+      role="img"
+      aria-label={name}
+      className={cn(
+        'inline-flex items-center justify-center rounded-full font-semibold text-white',
+        colorFor(name),
+        SIZE_CLASSES[size],
+        className,
       )}
     >
-      <User className="w-1/2 h-1/2" />
-    </div>
-  );
-};
+      {getInitials(name)}
+    </span>
+  )
+}

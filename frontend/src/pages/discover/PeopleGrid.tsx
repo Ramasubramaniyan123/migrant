@@ -1,44 +1,56 @@
-import React from 'react';
-import { UserCard } from '@/components/shared/UserCard';
-import { EmptyState } from '@/components/common/EmptyState';
-import { Users } from 'lucide-react';
-import type { User } from '@/types';
+import type { DiscoveredUser } from '@/types/connection.types'
+import { useConnections } from '@/hooks/useConnections'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
+import UserCard from '@/components/shared/UserCard'
 
 interface PeopleGridProps {
-  users: User[];
-  onConnect?: (userId: string) => void;
-  onAccept?: (userId: string) => void;
-  onReject?: (userId: string) => void;
+  users: DiscoveredUser[]
+  isLoading: boolean
+  busyId?: number | null
+  onConnect: (user: DiscoveredUser) => void
+  onMessage: (user: DiscoveredUser) => void
+  onViewProfile: (user: DiscoveredUser) => void
 }
 
-export const PeopleGrid: React.FC<PeopleGridProps> = ({
+/** Responsive grid of matched people with connect / message actions. */
+export default function PeopleGrid({
   users,
+  isLoading,
+  busyId,
   onConnect,
-  onAccept,
-  onReject,
-}) => {
+  onMessage,
+  onViewProfile,
+}: PeopleGridProps) {
+  const { getStatus } = useConnections()
+
+  if (isLoading) {
+    return <Loader label="Finding people…" />
+  }
+
   if (users.length === 0) {
     return (
       <EmptyState
-        icon={<Users className="w-12 h-12 text-gray-400" />}
-        title="No Migrant Members Found"
-        description="Try adjusting your mother tongue, hometown, or distance filters to expand the search radius."
-        className="bg-white rounded-2xl border border-gray-200 p-12"
+        title="No matches found"
+        description="Try widening your filters or removing a few interests."
       />
-    );
+    )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {users.map((user) => (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {users.map((person) => (
         <UserCard
-          key={user.id}
-          user={user}
-          onConnect={onConnect}
-          onAccept={onAccept}
-          onReject={onReject}
+          key={person.id}
+          user={person}
+          matchReason={person.matchReason}
+          connectionStatus={getStatus(person.id)}
+          onSendRequest={() => onConnect(person)}
+          onMessage={() => onMessage(person)}
+          onViewProfile={() => onViewProfile(person)}
+          isBusy={busyId === person.id}
         />
       ))}
     </div>
-  );
-};
+  )
+}

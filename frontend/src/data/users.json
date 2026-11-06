@@ -1,323 +1,454 @@
 [
   {
-    "id": "user-demo",
-    "email": "demo@connect.in",
-    "firstName": "Arun",
-    "lastName": "Selvam",
-    "fullName": "Arun Selvam",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Arun",
-    "bio": "Software engineer from Tenkasi, Tamil Nadu. New to Gurugram and looking for Tamil conversations, weekend cricket, and filter coffee friends.",
-    "profession": "Software Engineer",
-    "role": "user",
-    "currentLocation": {
-      "city": "Gurugram",
-      "state": "Haryana",
-      "locality": "Cyber City",
-      "latitude": 28.4950,
-      "longitude": 77.0826
-    },
-    "hometown": {
-      "city": "Tenkasi",
-      "state": "Tamil Nadu",
-      "district": "Tenkasi",
-      "latitude": 8.9594,
-      "longitude": 77.3146
-    },
-    "motherTongue": "Tamil",
-    "additionalLanguages": [
-      { "name": "Tamil", "code": "ta", "nativeName": "தமிழ்", "proficiency": "native" },
-      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" },
-      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "intermediate" }
-    ],
-    "languages": ["Tamil", "English", "Hindi"],
-    "interests": ["Cricket", "Technology", "Food", "Movies"],
-    "livingSituation": "Rented Apartment",
-    "privacySettings": {
-      "profileVisibility": "everyone",
-      "showDateOfBirth": true,
-      "showHometown": true,
-      "showExactLocality": true,
-      "showProfession": true,
-      "appearInDiscovery": true,
-      "appearInHometownSearch": true,
-      "showDistance": true,
-      "locationAccuracy": "exact"
-    },
-    "connectionCount": 12,
-    "postCount": 4,
-    "isOnline": true,
-    "onboardingComplete": true,
-    "joinedDate": "2024-01-01",
-    "createdAt": "2024-01-01T00:00:00Z",
-    "updatedAt": "2026-11-04T12:00:00Z"
+    "id": 1,
+    "email": "aarav.sharma@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-01-14T09:12:00Z",
+    "profile": {
+      "firstName": "Aarav",
+      "lastName": "Sharma",
+      "dateOfBirth": "1993-04-18",
+      "gender": "MALE",
+      "bio": "Mechanical engineer in Dubai for 3 years. Love cricket, biryani and helping newcomers settle in.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=12",
+      "hometownCountry": "India",
+      "hometownCity": "Jaipur",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "locationAccuracyKm": 2,
+      "interests": ["Cooking", "Cricket", "Language exchange", "Travel"],
+      "languages": [
+        { "languageId": 1, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 6, "proficiency": "INTERMEDIATE", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
   },
   {
-    "id": "user-admin",
-    "email": "admin@connect.in",
-    "firstName": "Maya",
-    "lastName": "Kapoor",
-    "fullName": "Maya Kapoor",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Maya",
-    "bio": "Community operations lead at MigrantConnect. Helping people feel at home in Millennium City.",
-    "profession": "Community Lead & Admin",
-    "role": "admin",
-    "currentLocation": {
-      "city": "Gurugram",
-      "state": "Haryana",
-      "locality": "Sector 29",
-      "latitude": 28.4682,
-      "longitude": 77.0634
-    },
-    "hometown": {
-      "city": "Delhi",
-      "state": "Delhi",
-      "district": "New Delhi",
-      "latitude": 28.6139,
-      "longitude": 77.2090
-    },
-    "motherTongue": "Hindi",
-    "additionalLanguages": [
-      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "native" },
-      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" },
-      { "name": "Punjabi", "code": "pa", "nativeName": "ਪੰਜਾਬੀ", "proficiency": "intermediate" }
-    ],
-    "languages": ["Hindi", "English", "Punjabi"],
-    "interests": ["Reading", "Food", "Travelling"],
-    "livingSituation": "Own House",
-    "privacySettings": {
-      "profileVisibility": "everyone",
-      "showDateOfBirth": false,
-      "showHometown": true,
-      "showExactLocality": true,
-      "showProfession": true,
-      "appearInDiscovery": true,
-      "appearInHometownSearch": true,
-      "showDistance": true,
-      "locationAccuracy": "general"
-    },
-    "connectionCount": 45,
-    "postCount": 18,
-    "isOnline": true,
-    "onboardingComplete": true,
-    "joinedDate": "2023-11-10",
-    "createdAt": "2023-11-10T00:00:00Z",
-    "updatedAt": "2026-11-04T12:00:00Z"
+    "id": 2,
+    "email": "priya.nair@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-02-02T11:40:00Z",
+    "profile": {
+      "firstName": "Priya",
+      "lastName": "Nair",
+      "dateOfBirth": "1995-09-02",
+      "gender": "FEMALE",
+      "bio": "Nurse at a private clinic. Weekend cook, always hunting for the best sadya in town.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=45",
+      "hometownCountry": "India",
+      "hometownCity": "Kochi",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.2285,
+      "longitude": 55.3273,
+      "locationAccuracyKm": 3,
+      "interests": ["Cooking", "Movies", "Music", "Photography"],
+      "languages": [
+        { "languageId": 8, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 3, "proficiency": "INTERMEDIATE", "isPrimary": false },
+        { "languageId": 1, "proficiency": "INTERMEDIATE", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": false
+      },
+      "onboardingCompleted": true
+    }
   },
   {
-    "id": "u-priya",
-    "email": "priya.karthik@example.com",
-    "firstName": "Priya",
-    "lastName": "Karthik",
-    "fullName": "Priya Karthik",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
-    "bio": "Product designer from Madurai missing home-style jigarthanda and Sunday temple visits. Always up for badminton and design chats.",
-    "profession": "Senior Product Designer",
-    "role": "user",
-    "currentLocation": {
-      "city": "Gurugram",
-      "state": "Haryana",
-      "locality": "DLF Phase 2",
-      "latitude": 28.4890,
-      "longitude": 77.0890
-    },
-    "hometown": {
-      "city": "Madurai",
-      "state": "Tamil Nadu",
-      "district": "Madurai",
-      "latitude": 9.9252,
-      "longitude": 78.1198
-    },
-    "motherTongue": "Tamil",
-    "additionalLanguages": [
-      { "name": "Tamil", "code": "ta", "nativeName": "தமிழ்", "proficiency": "native" },
-      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
-    ],
-    "languages": ["Tamil", "English"],
-    "interests": ["Photography", "Movies", "Food", "Design"],
-    "livingSituation": "PG",
-    "privacySettings": {
-      "profileVisibility": "everyone",
-      "showDateOfBirth": false,
-      "showHometown": true,
-      "showExactLocality": true,
-      "showProfession": true,
-      "appearInDiscovery": true,
-      "appearInHometownSearch": true,
-      "showDistance": true,
-      "locationAccuracy": "exact"
-    },
-    "approximateDistance": "0.8 km away",
-    "distanceFromCurrentUser": 0.8,
-    "connectionCount": 20,
-    "postCount": 6,
-    "isOnline": true,
-    "connectionStatus": "pending-received",
-    "onboardingComplete": true,
-    "joinedDate": "2024-02-14",
-    "createdAt": "2024-02-14T00:00:00Z",
-    "updatedAt": "2026-11-04T10:00:00Z"
+    "id": 3,
+    "email": "rahul.verma@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-02-09T08:05:00Z",
+    "profile": {
+      "firstName": "Rahul",
+      "lastName": "Verma",
+      "dateOfBirth": "1990-01-25",
+      "gender": "MALE",
+      "bio": "Small business owner in Deira. Football on Fridays, chai every evening.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=33",
+      "hometownCountry": "India",
+      "hometownCity": "Ludhiana",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.2769,
+      "longitude": 55.2963,
+      "locationAccuracyKm": 4,
+      "interests": ["Football", "Job hunting", "Fitness"],
+      "languages": [
+        { "languageId": 2, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "ADVANCED", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
   },
   {
-    "id": "u-suresh",
-    "email": "suresh.varma@example.com",
-    "firstName": "Suresh",
-    "lastName": "Varma",
-    "fullName": "Suresh Varma",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh",
-    "bio": "DevOps Engineer from Visakhapatnam. Huge cricket fanatic and weekend cyclist around Aravali Biodiversity Park.",
-    "profession": "DevOps Engineer",
-    "role": "user",
-    "currentLocation": {
-      "city": "Gurugram",
-      "state": "Haryana",
-      "locality": "Sector 29",
-      "latitude": 28.4682,
-      "longitude": 77.0634
-    },
-    "hometown": {
-      "city": "Visakhapatnam",
-      "state": "Andhra Pradesh",
-      "district": "Visakhapatnam",
-      "latitude": 17.6868,
-      "longitude": 83.2185
-    },
-    "motherTongue": "Telugu",
-    "additionalLanguages": [
-      { "name": "Telugu", "code": "te", "nativeName": "తెలుగు", "proficiency": "native" },
-      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "advanced" },
-      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
-    ],
-    "languages": ["Telugu", "Hindi", "English"],
-    "interests": ["Cricket", "Cycling", "Gaming", "Technology"],
-    "livingSituation": "Rented Apartment",
-    "privacySettings": {
-      "profileVisibility": "everyone",
-      "showDateOfBirth": true,
-      "showHometown": true,
-      "showExactLocality": true,
-      "showProfession": true,
-      "appearInDiscovery": true,
-      "appearInHometownSearch": true,
-      "showDistance": true,
-      "locationAccuracy": "exact"
-    },
-    "approximateDistance": "2.1 km away",
-    "distanceFromCurrentUser": 2.1,
-    "connectionCount": 18,
-    "postCount": 9,
-    "isOnline": false,
-    "connectionStatus": "connected",
-    "onboardingComplete": true,
-    "joinedDate": "2024-01-20",
-    "createdAt": "2024-01-20T00:00:00Z",
-    "updatedAt": "2026-11-04T08:00:00Z"
+    "id": 4,
+    "email": "fatima.khan@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-02-21T18:22:00Z",
+    "profile": {
+      "firstName": "Fatima",
+      "lastName": "Khan",
+      "dateOfBirth": "1997-06-11",
+      "gender": "FEMALE",
+      "bio": "Graphic designer in Sharjah. Poetry, coffee and long walks by the corniche.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=27",
+      "hometownCountry": "Pakistan",
+      "hometownCity": "Karachi",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Sharjah",
+      "latitude": 25.3463,
+      "longitude": 55.4209,
+      "locationAccuracyKm": 5,
+      "interests": ["Reading", "Photography", "Movies"],
+      "languages": [
+        { "languageId": 6, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "ADVANCED", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
   },
   {
-    "id": "u-karthik",
-    "email": "karthik.raman@example.com",
-    "firstName": "Karthik",
-    "lastName": "Raman",
-    "fullName": "Karthik Raman",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Karthik",
-    "bio": "Financial Analyst from Tenkasi, Tamil Nadu. Looking for hometown buddies in Gurugram!",
-    "profession": "Financial Analyst",
-    "role": "user",
-    "currentLocation": {
-      "city": "Gurugram",
-      "state": "Haryana",
-      "locality": "DLF Phase 1",
-      "latitude": 28.4790,
-      "longitude": 77.0940
-    },
-    "hometown": {
-      "city": "Tenkasi",
-      "state": "Tamil Nadu",
-      "district": "Tenkasi",
-      "latitude": 8.9594,
-      "longitude": 77.3146
-    },
-    "motherTongue": "Tamil",
-    "additionalLanguages": [
-      { "name": "Tamil", "code": "ta", "nativeName": "தமிழ்", "proficiency": "native" },
-      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
-    ],
-    "languages": ["Tamil", "English"],
-    "interests": ["Cricket", "Stocks", "Food", "Travelling"],
-    "livingSituation": "Rented Apartment",
-    "privacySettings": {
-      "profileVisibility": "everyone",
-      "showDateOfBirth": true,
-      "showHometown": true,
-      "showExactLocality": true,
-      "showProfession": true,
-      "appearInDiscovery": true,
-      "appearInHometownSearch": true,
-      "showDistance": true,
-      "locationAccuracy": "exact"
-    },
-    "approximateDistance": "1.4 km away",
-    "distanceFromCurrentUser": 1.4,
-    "connectionCount": 15,
-    "postCount": 3,
-    "isOnline": true,
-    "connectionStatus": "not-connected",
-    "onboardingComplete": true,
-    "joinedDate": "2024-03-01",
-    "createdAt": "2024-03-01T00:00:00Z",
-    "updatedAt": "2026-11-04T09:30:00Z"
+    "id": 5,
+    "email": "deepak.kumar@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-03-01T07:15:00Z",
+    "profile": {
+      "firstName": "Deepak",
+      "lastName": "Kumar",
+      "dateOfBirth": "1991-11-30",
+      "gender": "MALE",
+      "bio": "Software tester. Badminton after work, weekend trips to Hatta.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=54",
+      "hometownCountry": "India",
+      "hometownCity": "Hyderabad",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.1972,
+      "longitude": 55.2744,
+      "locationAccuracyKm": 2,
+      "interests": ["Tech", "Fitness", "Travel", "Cricket"],
+      "languages": [
+        { "languageId": 4, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "ADVANCED", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
   },
   {
-    "id": "u-ananya",
-    "email": "ananya.sharma@example.com",
-    "firstName": "Ananya",
-    "lastName": "Sharma",
-    "fullName": "Ananya Sharma",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya",
-    "bio": "Marketing Strategist from Lucknow. Fond of Awadhi cuisine, book clubs, and cultural arts.",
-    "profession": "Marketing Strategist",
-    "role": "user",
-    "currentLocation": {
-      "city": "Gurugram",
-      "state": "Haryana",
-      "locality": "Sector 56",
-      "latitude": 28.4280,
-      "longitude": 77.1050
-    },
-    "hometown": {
-      "city": "Lucknow",
-      "state": "Uttar Pradesh",
-      "district": "Lucknow",
-      "latitude": 26.8467,
-      "longitude": 80.9462
-    },
-    "motherTongue": "Hindi",
-    "additionalLanguages": [
-      { "name": "Hindi", "code": "hi", "nativeName": "हिन्दी", "proficiency": "native" },
-      { "name": "English", "code": "en", "nativeName": "English", "proficiency": "advanced" }
-    ],
-    "languages": ["Hindi", "English"],
-    "interests": ["Reading", "Food", "Art", "Writing"],
-    "livingSituation": "Rented Apartment",
-    "privacySettings": {
-      "profileVisibility": "everyone",
-      "showDateOfBirth": false,
-      "showHometown": true,
-      "showExactLocality": true,
-      "showProfession": true,
-      "appearInDiscovery": true,
-      "appearInHometownSearch": true,
-      "showDistance": true,
-      "locationAccuracy": "exact"
-    },
-    "approximateDistance": "4.2 km away",
-    "distanceFromCurrentUser": 4.2,
-    "connectionCount": 31,
-    "postCount": 14,
-    "isOnline": false,
-    "connectionStatus": "not-connected",
-    "onboardingComplete": true,
-    "joinedDate": "2024-01-05",
-    "createdAt": "2024-01-05T00:00:00Z",
-    "updatedAt": "2026-11-04T11:00:00Z"
+    "id": 6,
+    "email": "ananya.das@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-03-05T13:45:00Z",
+    "profile": {
+      "firstName": "Ananya",
+      "lastName": "Das",
+      "dateOfBirth": "1994-03-17",
+      "gender": "FEMALE",
+      "bio": "Teacher in Abu Dhabi. Runs a small Bengali reading circle on Sundays.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=31",
+      "hometownCountry": "India",
+      "hometownCity": "Kolkata",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Abu Dhabi",
+      "latitude": 24.4539,
+      "longitude": 54.3773,
+      "locationAccuracyKm": 6,
+      "interests": ["Reading", "Volunteering", "Music", "Study groups"],
+      "languages": [
+        { "languageId": 5, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "ADVANCED", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": false
+      },
+      "onboardingCompleted": true
+    }
+  },
+  {
+    "id": 7,
+    "email": "mohammed.ali@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-03-12T10:10:00Z",
+    "profile": {
+      "firstName": "Mohammed",
+      "lastName": "Ali",
+      "dateOfBirth": "1988-08-08",
+      "gender": "MALE",
+      "bio": "Civil engineer, football league organiser. Always looking for a goalkeeper.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=60",
+      "hometownCountry": "Egypt",
+      "hometownCity": "Cairo",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.1928,
+      "longitude": 55.2677,
+      "locationAccuracyKm": 3,
+      "interests": ["Football", "Fitness", "Travel"],
+      "languages": [
+        { "languageId": 12, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 6, "proficiency": "INTERMEDIATE", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
+  },
+  {
+    "id": 8,
+    "email": "simran.kaur@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-03-19T16:30:00Z",
+    "profile": {
+      "firstName": "Simran",
+      "lastName": "Kaur",
+      "dateOfBirth": "1996-12-05",
+      "gender": "FEMALE",
+      "bio": "Salon owner in Ajman. Bhangra music on repeat, cooking for everyone.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=48",
+      "hometownCountry": "India",
+      "hometownCity": "Amritsar",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Ajman",
+      "latitude": 25.4052,
+      "longitude": 55.5136,
+      "locationAccuracyKm": 5,
+      "interests": ["Music", "Cooking", "Movies"],
+      "languages": [
+        { "languageId": 2, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "ADVANCED", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
+  },
+  {
+    "id": 9,
+    "email": "ravi.iyer@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": false,
+    "createdAt": "2025-04-02T09:00:00Z",
+    "profile": {
+      "firstName": "Ravi",
+      "lastName": "Iyer",
+      "dateOfBirth": "1992-02-14",
+      "gender": "MALE",
+      "bio": "Accountant. Carnatic music, filter coffee and a very loud chess obsession.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=15",
+      "hometownCountry": "India",
+      "hometownCity": "Chennai",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.2637,
+      "longitude": 55.2972,
+      "locationAccuracyKm": 4,
+      "interests": ["Music", "Reading", "Tech"],
+      "languages": [
+        { "languageId": 3, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "INTERMEDIATE", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": false
+      },
+      "onboardingCompleted": true
+    }
+  },
+  {
+    "id": 10,
+    "email": "neha.patel@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-04-11T12:00:00Z",
+    "profile": {
+      "firstName": "Neha",
+      "lastName": "Patel",
+      "dateOfBirth": "1998-07-21",
+      "gender": "FEMALE",
+      "bio": "Pharmacist. New in Dubai and looking for a gym buddy and a good thali.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=20",
+      "hometownCountry": "India",
+      "hometownCity": "Ahmedabad",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.2138,
+      "longitude": 55.2905,
+      "locationAccuracyKm": 2,
+      "interests": ["Fitness", "Cooking", "Travel", "Language exchange"],
+      "languages": [
+        { "languageId": 7, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "NATIVE", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
+  },
+  {
+    "id": 11,
+    "email": "bikash.thapa@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-04-25T14:20:00Z",
+    "profile": {
+      "firstName": "Bikash",
+      "lastName": "Thapa",
+      "dateOfBirth": "1994-10-09",
+      "gender": "MALE",
+      "bio": "Security supervisor. Trekking on weekends, learning Arabic slowly.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=68",
+      "hometownCountry": "Nepal",
+      "hometownCity": "Kathmandu",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.2415,
+      "longitude": 55.2765,
+      "locationAccuracyKm": 3,
+      "interests": ["Travel", "Fitness", "Study groups"],
+      "languages": [
+        { "languageId": 11, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "ADVANCED", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": true
+      },
+      "onboardingCompleted": true
+    }
+  },
+  {
+    "id": 12,
+    "email": "sana.iqbal@example.com",
+    "role": "USER",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2025-05-06T10:35:00Z",
+    "profile": {
+      "firstName": "Sana",
+      "lastName": "Iqbal",
+      "dateOfBirth": "1999-01-03",
+      "gender": "FEMALE",
+      "bio": "Junior architect. Sketching buildings and finding quiet cafes in Sharjah.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=25",
+      "hometownCountry": "Pakistan",
+      "hometownCity": "Lahore",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Sharjah",
+      "latitude": 25.3579,
+      "longitude": 55.3909,
+      "locationAccuracyKm": 4,
+      "interests": ["Photography", "Reading", "Travel"],
+      "languages": [
+        { "languageId": 6, "proficiency": "NATIVE", "isPrimary": true },
+        { "languageId": 1, "proficiency": "INTERMEDIATE", "isPrimary": false }
+      ],
+      "privacy": {
+        "showHometown": true,
+        "showExactLocation": false,
+        "allowConnectionRequests": true,
+        "showOnlineStatus": false
+      },
+      "onboardingCompleted": true
+    }
+  },
+  {
+    "id": 13,
+    "email": "admin@migrant.app",
+    "role": "ADMIN",
+    "isActive": true,
+    "isVerified": true,
+    "createdAt": "2024-12-01T00:00:00Z",
+    "profile": {
+      "firstName": "Platform",
+      "lastName": "Admin",
+      "gender": "PREFER_NOT_TO_SAY",
+      "bio": "Platform moderation account.",
+      "avatarUrl": "https://i.pravatar.cc/160?img=5",
+      "hometownCountry": "United Arab Emirates",
+      "hometownCity": "Dubai",
+      "currentCountry": "United Arab Emirates",
+      "currentCity": "Dubai",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "locationAccuracyKm": 1,
+      "interests": ["Volunteering"],
+      "languages": [{ "languageId": 12, "proficiency": "NATIVE", "isPrimary": true }],
+      "privacy": {
+        "showHometown": false,
+        "showExactLocation": false,
+        "allowConnectionRequests": false,
+        "showOnlineStatus": false
+      },
+      "onboardingCompleted": true
+    }
   }
 ]

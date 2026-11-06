@@ -1,115 +1,131 @@
-import React from 'react';
-import { Search, RotateCcw } from 'lucide-react';
-import { LANGUAGES, LOCALITIES } from '@/data/constants';
-import type { DiscoveryFiltersState } from '@/hooks/useDiscovery';
+import type { DiscoveryFilters as Filters } from '@/types/connection.types'
+import { languages } from '@/services/userService'
+import { INTEREST_OPTIONS } from '@/utils/constants'
+import { cn } from '@/utils/helpers'
+import Button from '@/components/common/Button'
+import SearchBar from '@/components/shared/SearchBar'
 
 interface DiscoveryFiltersProps {
-  filters: DiscoveryFiltersState;
-  onFilterChange: (filters: Partial<DiscoveryFiltersState>) => void;
-  onReset: () => void;
-  resultCount: number;
+  filters: Filters
+  onChange: (patch: Partial<Filters>) => void
+  onReset: () => void
 }
 
-export const DiscoveryFilters: React.FC<DiscoveryFiltersProps> = ({
-  filters,
-  onFilterChange,
-  onReset,
-  resultCount,
-}) => {
+const selectClass =
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200'
+
+const DISTANCE_OPTIONS = [5, 10, 25, 50, 100, 250]
+
+/** Filter sidebar shared by the Discover screen. */
+export default function DiscoveryFilters({ filters, onChange, onReset }: DiscoveryFiltersProps) {
+  const selectedInterests = filters.interests ?? []
+
+  const toggleInterest = (interest: string) => {
+    const next = selectedInterests.includes(interest)
+      ? selectedInterests.filter((value) => value !== interest)
+      : [...selectedInterests, interest]
+    onChange({ interests: next.length > 0 ? next : undefined })
+  }
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <input
-          type="text"
-          value={filters.searchQuery}
-          onChange={(e) => onFilterChange({ searchQuery: e.target.value })}
-          placeholder="Search by name, profession, or keywords (e.g. Tenkasi, React, Doctor)..."
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
-        />
+    <div className="card space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-slate-900">Filters</h2>
+        <Button variant="ghost" size="sm" onClick={onReset}>
+          Reset
+        </Button>
       </div>
 
-      {/* Filter Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Language */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Mother Tongue</label>
-          <select
-            value={filters.language}
-            onChange={(e) => onFilterChange({ language: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="All">All Languages</option>
-            {LANGUAGES.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
-        </div>
+      <SearchBar
+        value={filters.query ?? ''}
+        onChange={(value) => onChange({ query: value || undefined })}
+        placeholder="Name, city or interest"
+      />
 
-        {/* Hometown query */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Hometown / State</label>
-          <input
-            type="text"
-            value={filters.hometown}
-            onChange={(e) => onFilterChange({ hometown: e.target.value })}
-            placeholder="e.g. Madurai, Kerala"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-          </input>
-        </div>
-
-        {/* Locality */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Locality in Gurugram</label>
-          <select
-            value={filters.locality}
-            onChange={(e) => onFilterChange({ locality: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="All">All Gurugram Localities</option>
-            {LOCALITIES.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Distance Range */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-semibold text-gray-700">Radius</label>
-            <span className="text-xs font-bold text-indigo-600">Within {filters.maxDistance} km</span>
-          </div>
-          <input
-            type="range"
-            min={1}
-            max={25}
-            value={filters.maxDistance}
-            onChange={(e) => onFilterChange({ maxDistance: Number(e.target.value) })}
-            className="w-full accent-indigo-600 cursor-pointer h-2 bg-gray-200 rounded-lg"
-          />
-        </div>
-      </div>
-
-      {/* Footer info & reset */}
-      <div className="pt-2 flex items-center justify-between border-t border-gray-100 text-xs">
-        <span className="text-gray-500 font-medium">
-          Showing <strong className="text-gray-900">{resultCount}</strong> members nearby
-        </span>
-        <button
-          type="button"
-          onClick={onReset}
-          className="flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
+      <div className="space-y-1.5">
+        <label htmlFor="discover-sort" className="text-sm font-medium text-slate-700">
+          Sort by
+        </label>
+        <select
+          id="discover-sort"
+          className={selectClass}
+          value={filters.sortBy ?? 'match'}
+          onChange={(event) => onChange({ sortBy: event.target.value as Filters['sortBy'] })}
         >
-          <RotateCcw className="w-3.5 h-3.5 mr-1" />
-          Reset filters
-        </button>
+          <option value="match">Best match</option>
+          <option value="distance">Closest first</option>
+          <option value="recent">Newest members</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label htmlFor="discover-language" className="text-sm font-medium text-slate-700">
+          Language
+        </label>
+        <select
+          id="discover-language"
+          className={selectClass}
+          value={filters.languageId ?? ''}
+          onChange={(event) =>
+            onChange({ languageId: event.target.value ? Number(event.target.value) : undefined })
+          }
+        >
+          <option value="">Any language</option>
+          {languages.map((language) => (
+            <option key={language.id} value={language.id}>
+              {language.name} · {language.nativeName}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label htmlFor="discover-distance" className="text-sm font-medium text-slate-700">
+          Maximum distance
+        </label>
+        <select
+          id="discover-distance"
+          className={selectClass}
+          value={filters.maxDistanceKm ?? ''}
+          onChange={(event) =>
+            onChange({
+              maxDistanceKm: event.target.value ? Number(event.target.value) : undefined,
+            })
+          }
+        >
+          <option value="">Any distance</option>
+          {DISTANCE_OPTIONS.map((distance) => (
+            <option key={distance} value={distance}>
+              Within {distance} km
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-slate-700">Interests</p>
+        <div className="flex flex-wrap gap-2">
+          {INTEREST_OPTIONS.map((interest) => {
+            const isSelected = selectedInterests.includes(interest)
+            return (
+              <button
+                key={interest}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => toggleInterest(interest)}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  isSelected
+                    ? 'border-brand-500 bg-brand-50 text-brand-700'
+                    : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50',
+                )}
+              >
+                {interest}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}

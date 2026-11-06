@@ -1,18 +1,18 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { ROUTES } from '@/utils/constants';
+import { Navigate, Outlet } from 'react-router-dom'
+import Loader from '@/components/common/Loader'
+import { useAuth } from '@/hooks/useAuth'
 
-export const AdminRoute: React.FC = () => {
-  const { user } = useAuth();
+/** Restricts the admin area to users with the ADMIN role. */
+export default function AdminRoute() {
+  const { isAdmin, isLoading } = useAuth()
 
-  if (!user) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+  if (isLoading) {
+    return <Loader fullScreen label="Verifying permissions…" />
   }
 
-  if (user.role !== 'admin' && !user.email.includes('admin')) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />
   }
 
-  return <Outlet />;
-};
+  return <Outlet />
+}

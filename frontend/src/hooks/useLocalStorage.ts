@@ -1,25 +1,28 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react'
 
-export const useLocalStorage = <T>(key: string, initialValue: T) => {
-  const [storedValue, setStoredValue] = useState<T>(() => {
+/** Persists a piece of state in `localStorage`, falling back to the initial value. */
+export function useLocalStorage<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState<T>(() => {
     try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.error(error);
-      return initialValue;
+      const raw = window.localStorage.getItem(key)
+      return raw ? (JSON.parse(raw) as T) : initialValue
+    } catch {
+      return initialValue
     }
-  });
+  })
 
-  const setValue = (value: T | ((val: T) => T)) => {
+  useEffect(() => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
-    } catch (error) {
-      console.error(error);
+      window.localStorage.setItem(key, JSON.stringify(value))
+    } catch {
+      // Storage can be unavailable (private mode) — state still works in memory.
     }
-  };
+  }, [key, value])
 
-  return [storedValue, setValue] as const;
-};
+  const remove = useCallback(() => {
+    window.localStorage.removeItem(key)
+    setValue(initialValue)
+  }, [initialValue, key])
+
+  return [value, setValue, remove] as const
+}

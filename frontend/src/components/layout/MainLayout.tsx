@@ -1,68 +1,102 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Navbar } from './Navbar';
-import { Sidebar } from './Sidebar';
-import { Footer } from './Footer';
-import { Menu, Compass, Users, MessageSquare, Bell } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ROUTES } from '@/utils/constants';
+import { useEffect, useState } from 'react'
+import { Outlet } from 'react-router-dom'
+import Navbar from '@/components/layout/Navbar'
+import Sidebar from '@/components/layout/Sidebar'
 
-export const MainLayout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+/** Authenticated shell: top bar, responsive sidebar (desktop rail / mobile drawer) and content. */
+export default function MainLayout() {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
-  const bottomItems = [
-    { path: ROUTES.DASHBOARD, icon: Compass, label: 'Feed' },
-    { path: ROUTES.DISCOVER, icon: Users, label: 'Discover' },
-    { path: ROUTES.MESSAGES, icon: MessageSquare, label: 'Messages' },
-    { path: ROUTES.NOTIFICATIONS, icon: Bell, label: 'Alerts' },
-  ];
+  useEffect(() => {
+    if (!isDrawerOpen) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsDrawerOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isDrawerOpen])
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="flex min-h-full flex-col bg-slate-50">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="min-w-0 flex-1 overflow-y-auto pb-20 md:pb-0">
-          <div className="md:hidden px-4 pt-3">
-            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="gap-2">
-              <Menu className="w-5 h-5" />
-              <span className="text-sm">Menu</span>
-            </Button>
+
+      <div className="mx-auto flex w-full max-w-7xl flex-1">
+        <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:block">
+          <div className="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <Sidebar />
           </div>
-          <div className="p-4 md:p-6 lg:p-8">
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="sticky top-16 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(true)}
+              aria-label="Open navigation"
+              aria-expanded={isDrawerOpen}
+              className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <span className="text-sm font-medium text-slate-600">Menu</span>
+          </div>
+
+          <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
             <Outlet />
-          </div>
-          <Footer />
-        </main>
+          </main>
+        </div>
       </div>
 
-      {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 safe-pb">
-        <div className="flex items-center justify-around h-16">
-          {bottomItems.map((item) => {
-            const Icon = item.icon;
-            const active = location.pathname === item.path || (item.path !== ROUTES.DASHBOARD && location.pathname.startsWith(item.path));
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex flex-col items-center justify-center flex-1 h-full text-[11px] font-medium transition-colors ${active ? 'text-indigo-600' : 'text-gray-500'}`}
-              >
-                <Icon className={`w-5 h-5 mb-0.5 ${active ? 'text-indigo-600' : 'text-gray-400'}`} />
-                {item.label}
-              </Link>
-            );
-          })}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="flex flex-col items-center justify-center flex-1 h-full text-[11px] font-medium text-gray-500"
+      {isDrawerOpen ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div
+            className="absolute inset-0 bg-slate-900/40"
+            onClick={() => setIsDrawerOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation"
+            className="absolute inset-y-0 left-0 flex w-72 max-w-[80%] flex-col bg-white shadow-xl animate-slide-up"
           >
-            <Menu className="w-5 h-5 mb-0.5 text-gray-400" />
-            More
-          </button>
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <span className="text-sm font-semibold text-slate-900">Menu</span>
+              <button
+                type="button"
+                onClick={() => setIsDrawerOpen(false)}
+                aria-label="Close navigation"
+                className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  className="h-5 w-5"
+                  aria-hidden="true"
+                >
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <Sidebar onNavigate={() => setIsDrawerOpen(false)} />
+            </div>
+          </div>
         </div>
-      </nav>
+      ) : null}
     </div>
-  );
-};
+  )
+}

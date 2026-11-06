@@ -1,22 +1,19 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { Loader } from '@/components/common/Loader';
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import Loader from '@/components/common/Loader'
+import { useAuth } from '@/hooks/useAuth'
 
-export const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+/** Blocks unauthenticated visitors and remembers where they were heading. */
+export default function ProtectedRoute() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader size="lg" />
-      </div>
-    );
+    return <Loader fullScreen label="Checking your session…" />
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
-  return <Outlet />;
-};
+  return <Outlet />
+}

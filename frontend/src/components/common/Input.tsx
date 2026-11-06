@@ -1,40 +1,106 @@
-import React from 'react';
-import { clsx } from '@/utils/helpers';
+import { useId } from 'react'
+import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import { cn } from '@/utils/helpers'
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  helperText?: string;
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string
+  error?: string
+  hint?: string
 }
 
-export const Input: React.FC<InputProps> = ({
-  label,
-  error,
-  helperText,
-  className,
-  id,
-  ...props
-}) => {
-  const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`;
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string
+  error?: string
+  hint?: string
+}
+
+const FIELD_BASE =
+  'w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus-visible:outline-none'
+
+/** Single-line text field with label, hint and inline validation message. */
+export default function Input({ label, error, hint, id, className, ...rest }: InputProps) {
+  const generatedId = useId()
+  const inputId = id ?? generatedId
+  const describedById = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
 
   return (
-    <div className="w-full">
-      {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1.5">
+    <div className="flex flex-col gap-1.5">
+      {label ? (
+        <label htmlFor={inputId} className="text-sm font-medium text-slate-700">
           {label}
         </label>
-      )}
+      ) : null}
       <input
+        {...rest}
         id={inputId}
-        className={clsx(
-          'w-full px-3.5 py-2.5 text-base border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors min-h-[44px]',
-          error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 hover:border-gray-400',
-          className
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedById}
+        className={cn(
+          FIELD_BASE,
+          error
+            ? 'border-red-400 focus:border-red-500 focus-visible:ring-red-500'
+            : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500',
+          className,
         )}
-        {...props}
       />
-      {error && <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">{error}</p>}
-      {helperText && !error && <p className="mt-1.5 text-sm text-gray-500">{helperText}</p>}
+      {error ? (
+        <p id={`${inputId}-error`} className="text-xs text-red-600">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${inputId}-hint`} className="text-xs text-slate-500">
+          {hint}
+        </p>
+      ) : null}
     </div>
-  );
-};
+  )
+}
+
+/** Multi-line text field matching the `Input` styling. */
+export function Textarea({
+  label,
+  error,
+  hint,
+  id,
+  className,
+  rows = 4,
+  ...rest
+}: TextareaProps) {
+  const generatedId = useId()
+  const textareaId = id ?? generatedId
+  const describedById = error ? `${textareaId}-error` : hint ? `${textareaId}-hint` : undefined
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {label ? (
+        <label htmlFor={textareaId} className="text-sm font-medium text-slate-700">
+          {label}
+        </label>
+      ) : null}
+      <textarea
+        {...rest}
+        id={textareaId}
+        rows={rows}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedById}
+        className={cn(
+          FIELD_BASE,
+          'resize-y',
+          error
+            ? 'border-red-400 focus:border-red-500 focus-visible:ring-red-500'
+            : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500',
+          className,
+        )}
+      />
+      {error ? (
+        <p id={`${textareaId}-error`} className="text-xs text-red-600">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${textareaId}-hint`} className="text-xs text-slate-500">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  )
+}

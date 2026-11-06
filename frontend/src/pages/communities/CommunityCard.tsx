@@ -1,89 +1,75 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Users, MessageSquare, ArrowRight } from 'lucide-react';
-import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
-import type { Community } from '@/types';
+import type { KeyboardEvent } from 'react'
+import type { Community } from '@/types/community.types'
+import { languageById } from '@/services/userService'
+import { formatCount, truncate } from '@/utils/formatters'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import LocationBadge from '@/components/shared/LocationBadge'
 
 interface CommunityCardProps {
-  community: Community;
-  onJoinToggle?: (communityId: string) => void;
+  community: Community
+  isMember?: boolean
+  onOpen: () => void
+  onToggleMembership?: () => void
 }
 
-export const CommunityCard: React.FC<CommunityCardProps> = ({
+/** Summary card for a single community with quick join/leave control. */
+export default function CommunityCard({
   community,
-  onJoinToggle,
-}) => {
-  const language = typeof community.language === 'string' ? community.language : (community.language as any)?.name;
+  isMember = false,
+  onOpen,
+  onToggleMembership,
+}: CommunityCardProps) {
+  const language = languageById(community.languageId)
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onOpen()
+    }
+  }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md hover:border-indigo-200 transition-all flex flex-col justify-between">
-      <div>
-        {/* Banner */}
-        <div className="h-32 w-full bg-indigo-900 relative overflow-hidden">
-          {community.bannerImage || community.imageUrl ? (
-            <img
-              src={community.bannerImage || community.imageUrl}
-              alt={community.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-tr from-indigo-700 to-blue-600" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white">
-            <Badge variant="primary" size="sm" className="bg-white/20 backdrop-blur-xs text-white border-0 text-[11px]">
-              {language} {community.languageNative ? `• ${community.languageNative}` : ''}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-5">
-          <Link to={`/communities/${community.id}`} className="group block">
-            <h3 className="font-bold text-gray-900 text-base group-hover:text-indigo-600 transition-colors leading-snug">
-              {community.name}
-            </h3>
-          </Link>
-          <p className="mt-2 text-xs text-gray-600 line-clamp-2 leading-relaxed">
-            {community.description}
-          </p>
-
-          <div className="mt-4 flex items-center space-x-4 text-xs text-gray-500 font-medium">
-            <span className="flex items-center">
-              <Users className="w-3.5 h-3.5 mr-1 text-indigo-500" />
-              {community.memberCount} members
-            </span>
-            <span className="flex items-center">
-              <MessageSquare className="w-3.5 h-3.5 mr-1 text-blue-500" />
-              {community.postCount || 0} posts
-            </span>
-          </div>
-        </div>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={handleKeyDown}
+      className="card flex h-full cursor-pointer flex-col gap-3 transition hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-base font-semibold text-slate-900">{community.name}</h2>
+        {isMember && <Badge variant="brand" size="sm">Member</Badge>}
       </div>
 
-      {/* Footer CTA */}
-      <div className="p-4 pt-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-        <Link
-          to={`/communities/${community.id}`}
-          className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center"
-        >
-          View Circle
-          <ArrowRight className="w-3.5 h-3.5 ml-1" />
-        </Link>
-        {onJoinToggle && (
+      <p className="text-sm text-slate-600">{truncate(community.description, 130)}</p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {language && (
+          <Badge variant="neutral" size="sm">
+            {language.name}
+          </Badge>
+        )}
+        <LocationBadge city={community.locationCity} country={community.locationCountry} />
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+        <span className="text-sm font-medium text-slate-500">
+          {formatCount(community.memberCount)} members
+        </span>
+        {onToggleMembership && (
           <Button
             size="sm"
-            variant={community.isMember ? 'outline' : 'primary'}
-            onClick={() => onJoinToggle(community.id)}
-            className={`text-xs py-1 px-3 ${
-              community.isMember ? 'text-gray-600 border-gray-300' : 'bg-indigo-600 hover:bg-indigo-700'
-            }`}
+            variant={isMember ? 'secondary' : 'primary'}
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleMembership()
+            }}
           >
-            {community.isMember ? 'Joined ✓' : 'Join'}
+            {isMember ? 'Leave' : 'Join'}
           </Button>
         )}
       </div>
     </div>
-  );
-};
+  )
+}

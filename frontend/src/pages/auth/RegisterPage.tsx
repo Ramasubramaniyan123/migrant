@@ -1,147 +1,124 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
-import { useAuth } from '@/hooks/useAuth';
-import { validateEmail, validatePassword, validateName } from '@/utils/validators';
-import { ROUTES } from '@/utils/constants';
+import { useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import Button from '@/components/common/Button'
+import Input from '@/components/common/Input'
+import { useAuth } from '@/hooks/useAuth'
+import { ROUTES } from '@/utils/constants'
+import { hasErrors, validateRegister, type FieldErrors } from '@/utils/validators'
 
-export const RegisterPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { register } = useAuth();
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+/** Account creation screen; new members continue into onboarding. */
+export default function RegisterPage() {
+  const navigate = useNavigate()
+  const { register, error, clearError, isLoading } = useAuth()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [errors, setErrors] = useState<FieldErrors>({})
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  function clearFieldError(field: string) {
+    setErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
 
-    if (!validateName(formData.firstName)) {
-      setError('First name must be at least 2 characters');
-      return;
-    }
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    clearError()
 
-    if (!validateName(formData.lastName)) {
-      setError('Last name must be at least 2 characters');
-      return;
-    }
+    const nextErrors = validateRegister(fullName, email, password, confirmPassword)
+    setErrors(nextErrors)
+    if (hasErrors(nextErrors)) return
 
-    if (!validateEmail(formData.email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    const passwordValidation = validatePassword(formData.password);
-    if (!passwordValidation.valid) {
-      setError(passwordValidation.message || 'Invalid password');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      await register({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-      });
-      navigate(ROUTES.ONBOARDING);
+      await register({ fullName: fullName.trim(), email: email.trim(), password })
+      navigate(ROUTES.onboarding, { replace: true })
     } catch {
-      setError('Registration failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+      // The failure message is surfaced through the auth context `error`.
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50/70 to-blue-100 flex items-center justify-center p-4">
-      <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl p-8 border border-gray-100">
-        <div className="text-center mb-6">
-          <Link to="/" className="inline-block font-extrabold text-2xl bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
-            MigrantConnect
-          </Link>
-          <h2 className="text-xl font-bold text-gray-900 mt-2">Create Your Account</h2>
-          <p className="text-xs text-gray-500 mt-1">Join fellow migrants in your city</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="text"
-              label="First Name"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              placeholder="Arun"
-              required
-            />
-            <Input
-              type="text"
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              placeholder="Selvam"
-              required
-            />
-          </div>
-          <Input
-            type="email"
-            label="Email Address"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="you@domain.com"
-            required
-          />
-          <Input
-            type="password"
-            label="Password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••"
-            helperText="At least 8 chars with uppercase, lowercase, and number"
-            required
-          />
-          <Input
-            type="password"
-            label="Confirm Password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="••••••••"
-            required
-          />
-          {error && <p className="text-red-600 text-xs bg-red-50 p-2 rounded-lg">{error}</p>}
-          <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 py-2.5 font-semibold" isLoading={isLoading}>
-            Create Account & Continue
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-xs text-gray-600">
-          Already have an account?{' '}
-          <Link to={ROUTES.LOGIN} className="text-indigo-600 font-semibold hover:underline">
-            Sign in
-          </Link>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="page-title">Create your account</h1>
+        <p className="muted mt-1">A few details and you are on your way to finding your people.</p>
       </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+        >
+          {error}
+        </div>
+      )}
+
+      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <Input
+          label="Full name"
+          autoComplete="name"
+          placeholder="Aarav Sharma"
+          value={fullName}
+          error={errors.fullName}
+          onChange={(event) => {
+            setFullName(event.target.value)
+            clearFieldError('fullName')
+          }}
+        />
+        <Input
+          label="Email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={email}
+          error={errors.email}
+          onChange={(event) => {
+            setEmail(event.target.value)
+            clearFieldError('email')
+          }}
+        />
+        <Input
+          label="Password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          hint="At least 8 characters, including letters and numbers."
+          value={password}
+          error={errors.password}
+          onChange={(event) => {
+            setPassword(event.target.value)
+            clearFieldError('password')
+          }}
+        />
+        <Input
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          value={confirmPassword}
+          error={errors.confirmPassword}
+          onChange={(event) => {
+            setConfirmPassword(event.target.value)
+            clearFieldError('confirmPassword')
+          }}
+        />
+
+        <Button type="submit" fullWidth isLoading={isLoading}>
+          Create account
+        </Button>
+      </form>
+
+      <p className="text-center text-sm text-slate-600">
+        Already have an account?{' '}
+        <Link to={ROUTES.login} className="font-medium text-brand-700 hover:underline">
+          Sign in
+        </Link>
+      </p>
     </div>
-  );
-};
+  )
+}

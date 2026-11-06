@@ -1,106 +1,89 @@
-import React from 'react';
-import { Check, X, Compass, MapPin } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Avatar } from '@/components/common/Avatar';
-import { Badge } from '@/components/common/Badge';
-import { EmptyState } from '@/components/common/EmptyState';
-import type { Connection } from '@/types';
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useConnections } from '@/hooks/useConnections'
+import { useUsers } from '@/hooks/useUsers'
+import { fullName } from '@/services/userService'
+import { MATCH_REASON_LABELS, ROUTES } from '@/utils/constants'
+import Avatar from '@/components/common/Avatar'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
 
-interface ReceivedRequestsProps {
-  requests: Connection[];
-  onAccept: (id: string) => void;
-  onReject: (id: string) => void;
-}
+/** Incoming pending connection requests with accept / decline actions. */
+export default function ReceivedRequests() {
+  const { receivedRequests, isLoading, accept, reject } = useConnections()
+  const { getUserById } = useUsers()
+  const [busyId, setBusyId] = useState<number | null>(null)
 
-export const ReceivedRequests: React.FC<ReceivedRequestsProps> = ({
-  requests,
-  onAccept,
-  onReject,
-}) => {
-  if (requests.length === 0) {
+  const handleAction = async (connectionId: number, action: (id: number) => Promise<void>) => {
+    setBusyId(connectionId)
+    try {
+      await action(connectionId)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  if (isLoading) {
+    return <Loader label="Loading requests…" />
+  }
+
+  if (receivedRequests.length === 0) {
     return (
       <EmptyState
-        title="No Pending Received Requests"
-        description="When other migrants in Gurugram send you connection requests, they will appear here."
-        className="bg-white rounded-2xl border border-gray-200 p-12"
+        title="No pending requests"
+        description="When someone asks to connect, their request will appear here."
       />
-    );
+    )
   }
 
   return (
-    <div className="space-y-4">
-      {requests.map((req) => {
-        const u = req.user;
+    <div className="space-y-3">
+      {receivedRequests.map((connection) => {
+        const requester = getUserById(connection.requesterId)
+        const name = requester ? fullName(requester) : 'Unknown member'
         return (
-          <div
-            key={req.id}
-            className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs hover:border-gray-300 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-          >
-            <div className="flex items-start space-x-4 min-w-0">
-              <Avatar
-                src={u?.avatar}
-                name={u?.fullName || 'User'}
-                size="lg"
-                className="shrink-0"
-              />
+          <div key={connection.id} className="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar name={name} src={requester?.profile.avatarUrl} size="lg" />
               <div className="min-w-0">
-                <div className="flex items-center space-x-2">
-                  <h4 className="font-bold text-gray-900 text-sm truncate">{u?.fullName}</h4>
-                  {u?.motherTongue && (
-                    <Badge variant="primary" size="sm" className="text-[10px]">
-                      {u.motherTongue}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">{u?.profession}</p>
-
-                <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-500">
-                  {u?.hometown && (
-                    <span className="flex items-center">
-                      <Compass className="w-3 h-3 mr-1 text-indigo-500" />
-                      From {u.hometown}
-                    </span>
-                  )}
-                  {u?.approximateDistance && (
-                    <span className="flex items-center">
-                      <MapPin className="w-3 h-3 mr-1 text-emerald-500" />
-                      {u.approximateDistance}
-                    </span>
-                  )}
-                </div>
-
-                {req.message && (
-                  <p className="mt-2 text-xs text-gray-700 bg-gray-50 p-2.5 rounded-lg border border-gray-100 italic">
-                    "{req.message}"
+                <Link to={ROUTES.userProfile(connection.requesterId)} className="text-sm font-semibold text-slate-900 hover:underline">
+                  {name}
+                </Link>
+                {(requester?.profile.hometownCity || requester?.profile.hometownCountry) && (
+                  <p className="text-xs text-slate-500">
+                    From {[requester?.profile.hometownCity, requester?.profile.hometownCountry].filter(Boolean).join(', ')}
                   </p>
                 )}
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <Badge variant="brand" size="sm">
+                    {MATCH_REASON_LABELS[connection.matchedBy]}
+                  </Badge>
+                  <span className="text-xs font-medium text-slate-500">{connection.matchScore}% match</span>
+                </div>
               </div>
             </div>
-
-            {/* Actions */}
-            <div className="flex items-center space-x-2 self-end sm:self-center shrink-0">
+            <div className="flex shrink-0 gap-2">
               <Button
                 size="sm"
-                onClick={() => onAccept(req.id)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-xs px-3.5"
+                onClick={() => void handleAction(connection.id, accept)}
+                isLoading={busyId === connection.id}
               >
-                <Check className="w-3.5 h-3.5 mr-1" />
                 Accept
               </Button>
               <Button
-                variant="outline"
                 size="sm"
-                onClick={() => onReject(req.id)}
-                className="text-xs text-gray-600 hover:text-red-600 px-3"
+                variant="ghost"
+                onClick={() => void handleAction(connection.id, reject)}
+                disabled={busyId === connection.id}
               >
-                <X className="w-3.5 h-3.5 mr-1" />
                 Decline
               </Button>
             </div>
           </div>
-        );
+        )
       })}
     </div>
-  );
-};
-
+  )
+}

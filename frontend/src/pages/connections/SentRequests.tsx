@@ -1,71 +1,76 @@
-import React from 'react';
-import { Button } from '@/components/common/Button';
-import { Avatar } from '@/components/common/Avatar';
-import { Badge } from '@/components/common/Badge';
-import { EmptyState } from '@/components/common/EmptyState';
-import type { Connection } from '@/types';
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useConnections } from '@/hooks/useConnections'
+import { useUsers } from '@/hooks/useUsers'
+import { fullName } from '@/services/userService'
+import { MATCH_REASON_LABELS, ROUTES } from '@/utils/constants'
+import Avatar from '@/components/common/Avatar'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
 
-interface SentRequestsProps {
-  requests: Connection[];
-  onCancel: (id: string) => void;
-}
+/** Outgoing pending connection requests with a cancel action. */
+export default function SentRequests() {
+  const { sentRequests, isLoading, cancel } = useConnections()
+  const { getUserById } = useUsers()
+  const [busyId, setBusyId] = useState<number | null>(null)
 
-export const SentRequests: React.FC<SentRequestsProps> = ({
-  requests,
-  onCancel,
-}) => {
-  if (requests.length === 0) {
+  const handleCancel = async (connectionId: number) => {
+    setBusyId(connectionId)
+    try {
+      await cancel(connectionId)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  if (isLoading) {
+    return <Loader label="Loading requests…" />
+  }
+
+  if (sentRequests.length === 0) {
     return (
       <EmptyState
-        title="No Sent Requests"
-        description="Browse the Discover or Hometown Match sections to find and connect with fellow migrants."
-        className="bg-white rounded-2xl border border-gray-200 p-12"
+        title="No sent requests"
+        description="You haven't sent any connection requests yet."
       />
-    );
+    )
   }
 
   return (
-    <div className="space-y-4">
-      {requests.map((req) => {
-        const u = req.user;
+    <div className="space-y-3">
+      {sentRequests.map((connection) => {
+        const receiver = getUserById(connection.receiverId)
+        const name = receiver ? fullName(receiver) : 'Unknown member'
         return (
-          <div
-            key={req.id}
-            className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-          >
-            <div className="flex items-center space-x-4 min-w-0">
-              <Avatar
-                src={u?.avatar}
-                name={u?.fullName || 'User'}
-                size="lg"
-                className="shrink-0"
-              />
+          <div key={connection.id} className="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar name={name} src={receiver?.profile.avatarUrl} size="lg" />
               <div className="min-w-0">
-                <div className="flex items-center space-x-2">
-                  <h4 className="font-bold text-gray-900 text-sm truncate">{u?.fullName}</h4>
-                  <Badge variant="warning" size="sm" className="text-[10px]">
-                    Pending Response
+                <Link to={ROUTES.userProfile(connection.receiverId)} className="text-sm font-semibold text-slate-900 hover:underline">
+                  {name}
+                </Link>
+                <p className="text-xs text-slate-500">Request pending</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <Badge variant="neutral" size="sm">
+                    {MATCH_REASON_LABELS[connection.matchedBy]}
                   </Badge>
+                  <span className="text-xs font-medium text-slate-500">{connection.matchScore}% match</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">{u?.profession}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Sent on {new Date(req.createdAt).toLocaleDateString()}
-                </p>
               </div>
             </div>
-
             <Button
-              variant="outline"
               size="sm"
-              onClick={() => onCancel(req.id)}
-              className="text-xs text-gray-500 hover:text-red-600 self-end sm:self-center"
+              variant="ghost"
+              onClick={() => void handleCancel(connection.id)}
+              isLoading={busyId === connection.id}
             >
-              Cancel Request
+              Cancel request
             </Button>
           </div>
-        );
+        )
       })}
     </div>
-  );
-};
-
+  )
+}

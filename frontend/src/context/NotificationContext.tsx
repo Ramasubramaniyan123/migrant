@@ -1,76 +1,96 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import type { Notification } from '@/types';
-import initialNotifications from '@/data/notifications.json';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import type { AppNotification } from '@/types/notification.types'
+import { notificationService } from '@/services/notificationService'
+import { useAuthContext } from './AuthContext'
 
-interface NotificationContextType {
-  notifications: Notification[];
-  unreadCount: number;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  deleteNotification: (id: string) => void;
-  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void;
+interface NotificationContextValue {
+  notifications: AppNotification[]
+  unreadCount: number
+  isLoading: boolean
+  refresh: () => Promise<void>
+  markRead: (id: number) => Promise<void>
+  markAllRead: () => Promise<void>
+  clearAll: () => Promise<void>
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextValue | undefined>(undefined)
 
-export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>(() => {
-    const saved = localStorage.getItem('migrant_notifications');
-    return saved ? JSON.parse(saved) : (initialNotifications as unknown as Notification[]);
-  });
+export function NotificationProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuthContext()
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const userId = user?.id
+
+  const refresh = useCallback(async () => {
+    if (!userId) {
+      setNotifications([])
+      setIsLoading(false)
+      return
+    }
+    setIsLoading(true)
+    try {
+      setNotifications(await notificationService.getForUser(userId))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [userId])
 
   useEffect(() => {
-    localStorage.setItem('migrant_notifications', JSON.stringify(notifications));
-  }, [notifications]);
+    void refresh()
+  }, [refresh])
 
-  const unreadCount = notifications.filter((n) => !n.read && !n.isRead).length;
+  const markRead = useCallback(
+    async (id: number) => {
+      await notificationService.markRead(id)
+      setNotifications((rows) =>
+        rows.map((row) => (row.id === id ? { ...row, isRead: true } : row)),
+      )
+    },
+    [],
+  )
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true, isRead: true } : n))
-    );
-  };
+  const markAllRead = useCallback(async () => {
+    if (!userId) return
+    setNotifications(await notificationService.markAllRead(userId))
+  }, [userId])
 
-  const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, read: true, isRead: true }))
-    );
-  };
+  const clearAll = useCallback(async () => {
+    if (!userId) return
+    await notificationService.clear(userId)
+    setNotifications([])
+  }, [userId])
 
-  const deleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
-  const addNotification = (notif: Omit<Notification, 'id' | 'createdAt'>) => {
-    const newNotif: Notification = {
-      ...notif,
-      id: `notif-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    setNotifications((prev) => [newNotif, ...prev]);
-  };
+  const value = useMemo<NotificationContextValue>(
+    () => ({
+      notifications,
+      unreadCount: notifications.filter((row) => !row.isRead).length,
+      isLoading,
+      refresh,
+      markRead,
+      markAllRead,
+      clearAll,
+    }),
+    [clearAll, isLoading, markAllRead, markRead, notifications, refresh],
+  )
 
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        addNotification,
-      }}
-    >
-      {children}
-    </NotificationContext.Provider>
-  );
-};
+    <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>
+  )
+}
 
-export const useNotificationContext = () => {
-  const context = useContext(NotificationContext);
+export function useNotificationContext(): NotificationContextValue {
+  const context = useContext(NotificationContext)
   if (!context) {
-    throw new Error('useNotificationContext must be used within a NotificationProvider');
+    throw new Error('useNotificationContext must be used inside a NotificationProvider')
   }
-  return context;
-};
+  return context
+}

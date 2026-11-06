@@ -1,183 +1,316 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
-import { Avatar } from '@/components/common/Avatar';
-import { useAuth } from '@/hooks/useAuth';
-import { useUserContext } from '@/context/UserContext';
-import { LANGUAGES, LOCALITIES } from '@/data/constants';
-import { ROUTES } from '@/utils/constants';
-import type { MotherTongue, LivingSituation } from '@/types';
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import type { Gender, ProficiencyLevel, UserLanguage } from '@/types/user.types'
+import { useAuth } from '@/hooks/useAuth'
+import { INTEREST_OPTIONS, ROUTES } from '@/utils/constants'
+import { cn } from '@/utils/helpers'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Input, { Textarea } from '@/components/common/Input'
+import Loader from '@/components/common/Loader'
+import LanguageSelector from '@/components/shared/LanguageSelector'
 
-export const EditProfilePage: React.FC = () => {
-  const { user, updateUser } = useAuth();
-  const { updateCurrentUserProfile } = useUserContext();
-  const navigate = useNavigate();
+const GENDER_OPTIONS: Array<{ value: Gender; label: string }> = [
+  { value: 'MALE', label: 'Male' },
+  { value: 'FEMALE', label: 'Female' },
+  { value: 'OTHER', label: 'Other' },
+  { value: 'PREFER_NOT_TO_SAY', label: 'Prefer not to say' },
+]
 
-  const [firstName, setFirstName] = useState(user?.firstName || 'Arun');
-  const [lastName, setLastName] = useState(user?.lastName || 'Selvam');
-  const [profession, setProfession] = useState(user?.profession || 'Software Engineer');
-  const [bio, setBio] = useState(user?.bio || '');
-  const [avatar, setAvatar] = useState(
-    user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Arun'
-  );
-  const [motherTongue, setMotherTongue] = useState<MotherTongue>(
-    (user?.motherTongue as MotherTongue) || 'Tamil'
-  );
-  const [locality, setLocality] = useState(user?.currentLocation?.locality || 'Cyber City');
-  const [livingSituation, setLivingSituation] = useState<LivingSituation>(
-    user?.livingSituation || 'Rented Apartment'
-  );
+const selectClass =
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200'
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updatedData = {
-      firstName,
-      lastName,
-      profession,
-      bio,
-      avatar,
-      motherTongue,
-      currentLocation: {
-        ...(user?.currentLocation || { city: 'Gurugram', state: 'Haryana' }),
-        locality,
-      },
-      livingSituation,
-    };
+interface FormState {
+  firstName: string
+  lastName: string
+  dateOfBirth: string
+  gender: Gender | ''
+  bio: string
+  hometownCity: string
+  hometownCountry: string
+  currentCity: string
+  currentCountry: string
+  latitude: string
+  longitude: string
+  shareExactLocation: boolean
+  languageIds: number[]
+  interests: string[]
+}
 
-    updateUser(updatedData as any);
-    updateCurrentUserProfile(updatedData as any);
-    navigate(ROUTES.PROFILE);
-  };
+const emptyForm: FormState = {
+  firstName: '',
+  lastName: '',
+  dateOfBirth: '',
+  gender: '',
+  bio: '',
+  hometownCity: '',
+  hometownCountry: '',
+  currentCity: '',
+  currentCountry: '',
+  latitude: '',
+  longitude: '',
+  shareExactLocation: false,
+  languageIds: [],
+  interests: [],
+}
+
+/** Editable form for the signed-in user's own profile. */
+export default function EditProfilePage() {
+  const { user, isLoading, updateProfile } = useAuth()
+  const navigate = useNavigate()
+
+  const [form, setForm] = useState<FormState>(emptyForm)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    const { profile } = user
+    setForm({
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      dateOfBirth: profile.dateOfBirth ?? '',
+      gender: profile.gender ?? '',
+      bio: profile.bio ?? '',
+      hometownCity: profile.hometownCity ?? '',
+      hometownCountry: profile.hometownCountry ?? '',
+      currentCity: profile.currentCity ?? '',
+      currentCountry: profile.currentCountry ?? '',
+      latitude: profile.latitude !== undefined ? String(profile.latitude) : '',
+      longitude: profile.longitude !== undefined ? String(profile.longitude) : '',
+      shareExactLocation: profile.privacy.showExactLocation,
+      languageIds: profile.languages.map((entry) => entry.languageId),
+      interests: profile.interests,
+    })
+  }, [user])
+
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setIsSaved(false)
+  }
+
+  const toggleInterest = (interest: string) => {
+    setForm((prev) => ({
+      ...prev,
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter((item) => item !== interest)
+        : [...prev.interests, interest],
+    }))
+    setIsSaved(false)
+  }
+
+  const buildLanguages = (): UserLanguage[] => {
+    const existing = user?.profile.languages ?? []
+    const next: UserLanguage[] = form.languageIds.map((languageId) => {
+      const match = existing.find((entry) => entry.languageId === languageId)
+      return match
+        ? { ...match }
+        : { languageId, proficiency: 'INTERMEDIATE' as ProficiencyLevel, isPrimary: false }
+    })
+    if (next.length > 0 && !next.some((entry) => entry.isPrimary)) {
+      next[0] = { ...next[0], isPrimary: true }
+    }
+    return next
+  }
+
+  const handleSave = async () => {
+    if (!user) return
+    setIsSaving(true)
+    try {
+      await updateProfile({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender || undefined,
+        bio: form.bio.trim() || undefined,
+        hometownCity: form.hometownCity.trim() || undefined,
+        hometownCountry: form.hometownCountry.trim() || undefined,
+        currentCity: form.currentCity.trim() || undefined,
+        currentCountry: form.currentCountry.trim() || undefined,
+        latitude: form.latitude ? Number(form.latitude) : undefined,
+        longitude: form.longitude ? Number(form.longitude) : undefined,
+        interests: form.interests,
+        languages: buildLanguages(),
+        privacy: { ...user.profile.privacy, showExactLocation: form.shareExactLocation },
+      })
+      setIsSaved(true)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (isLoading) {
+    return <Loader fullScreen label="Loading your profile…" />
+  }
+
+  if (!user) {
+    return (
+      <EmptyState
+        title="Sign in required"
+        description="Please sign in to edit your profile."
+        action={
+          <Link to={ROUTES.login}>
+            <Button>Go to sign in</Button>
+          </Link>
+        }
+      />
+    )
+  }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <Link
-        to={ROUTES.PROFILE}
-        className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-indigo-600 transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-        Back to Profile
-      </Link>
+    <div className="mx-auto w-full max-w-3xl space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="page-title">Edit profile</h1>
+        <Link to={ROUTES.profile} className="text-sm font-medium text-brand-700 hover:underline">
+          Back to profile
+        </Link>
+      </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs">
-        <h1 className="text-xl font-extrabold text-gray-900 mb-6">Edit Migrant Profile</h1>
+      {isSaved && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Profile saved successfully.
+        </div>
+      )}
 
-        <form onSubmit={handleSave} className="space-y-5">
-          {/* Avatar edit */}
-          <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <Avatar src={avatar} name={`${firstName} ${lastName}`} size="xl" />
-            <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1">Profile Photo</label>
-              <button
-                type="button"
-                onClick={() => {
-                  const seed = Math.random().toString(36).substring(7);
-                  setAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`);
-                }}
-                className="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
-              >
-                <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                Randomize DiceBear Avatar
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="First Name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
-            <Input
-              label="Last Name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-          </div>
-
+      <section className="card space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Basics</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="Profession / Job Title"
-            value={profession}
-            onChange={(e) => setProfession(e.target.value)}
-            placeholder="e.g. Senior Software Engineer"
-            required
+            label="First name"
+            value={form.firstName}
+            onChange={(event) => update('firstName', event.target.value)}
           />
-
+          <Input
+            label="Last name"
+            value={form.lastName}
+            onChange={(event) => update('lastName', event.target.value)}
+          />
+          <Input
+            label="Date of birth"
+            type="date"
+            value={form.dateOfBirth}
+            onChange={(event) => update('dateOfBirth', event.target.value)}
+          />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">About You (Bio)</label>
-            <textarea
-              rows={3}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell other migrants about your journey, interests, or background..."
-              className="w-full text-sm border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mother Tongue</label>
-              <select
-                value={motherTongue}
-                onChange={(e) => setMotherTongue(e.target.value as MotherTongue)}
-                className="w-full text-sm border border-gray-300 rounded-lg p-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {LANGUAGES.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gurugram Locality</label>
-              <select
-                value={locality}
-                onChange={(e) => setLocality(e.target.value)}
-                className="w-full text-sm border border-gray-300 rounded-lg p-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {LOCALITIES.map((loc) => (
-                  <option key={loc} value={loc}>
-                    {loc}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Living Situation</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Gender</label>
             <select
-              value={livingSituation}
-              onChange={(e) => setLivingSituation(e.target.value as LivingSituation)}
-              className="w-full text-sm border border-gray-300 rounded-lg p-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={selectClass}
+              value={form.gender}
+              onChange={(event) => update('gender', event.target.value as Gender | '')}
             >
-              <option value="PG">PG</option>
-              <option value="Hostel">Hostel</option>
-              <option value="Rented Apartment">Rented Apartment</option>
-              <option value="Own House">Own House</option>
+              <option value="">Not specified</option>
+              {GENDER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
+        </div>
+        <Textarea
+          label="Bio"
+          value={form.bio}
+          onChange={(event) => update('bio', event.target.value)}
+          rows={3}
+          placeholder="Tell people a little about yourself"
+        />
+      </section>
 
-          <div className="pt-4 border-t border-gray-100 flex items-center justify-end space-x-3">
-            <Link to={ROUTES.PROFILE}>
-              <Button type="button" variant="outline" size="sm">
-                Cancel
-              </Button>
-            </Link>
-            <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-              <Save className="w-4 h-4 mr-1.5" />
-              Save Changes
-            </Button>
-          </div>
-        </form>
+      <section className="card space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Location</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Hometown city"
+            value={form.hometownCity}
+            onChange={(event) => update('hometownCity', event.target.value)}
+          />
+          <Input
+            label="Hometown country"
+            value={form.hometownCountry}
+            onChange={(event) => update('hometownCountry', event.target.value)}
+          />
+          <Input
+            label="Current city"
+            value={form.currentCity}
+            onChange={(event) => update('currentCity', event.target.value)}
+          />
+          <Input
+            label="Current country"
+            value={form.currentCountry}
+            onChange={(event) => update('currentCountry', event.target.value)}
+          />
+          <Input
+            label="Latitude"
+            type="number"
+            step="any"
+            value={form.latitude}
+            onChange={(event) => update('latitude', event.target.value)}
+          />
+          <Input
+            label="Longitude"
+            type="number"
+            step="any"
+            value={form.longitude}
+            onChange={(event) => update('longitude', event.target.value)}
+          />
+        </div>
+        <label className="flex items-start gap-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={form.shareExactLocation}
+            onChange={(event) => update('shareExactLocation', event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          <span>
+            Share my exact location with connections
+            <span className="block text-xs text-slate-500">
+              When off, your location is only ever shown approximately.
+            </span>
+          </span>
+        </label>
+      </section>
+
+      <section className="card space-y-4">
+        <LanguageSelector
+          selectedIds={form.languageIds}
+          onChange={(ids) => update('languageIds', ids)}
+          label="Languages you speak"
+          hint="Select every language you are comfortable using."
+        />
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Interests</h2>
+        <div className="flex flex-wrap gap-2">
+          {INTEREST_OPTIONS.map((interest) => {
+            const active = form.interests.includes(interest)
+            return (
+              <button
+                key={interest}
+                type="button"
+                onClick={() => toggleInterest(interest)}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-sm transition',
+                  active
+                    ? 'border-brand-600 bg-brand-600 text-white'
+                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+                )}
+              >
+                {interest}
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      <div className="flex justify-end gap-3">
+        <Button variant="ghost" onClick={() => navigate(ROUTES.profile)} disabled={isSaving}>
+          Cancel
+        </Button>
+        <Button onClick={() => void handleSave()} isLoading={isSaving}>
+          Save changes
+        </Button>
       </div>
     </div>
-  );
-};
-
+  )
+}

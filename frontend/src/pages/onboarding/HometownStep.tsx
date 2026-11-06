@@ -1,86 +1,34 @@
-import React from 'react';
-import { STATES, HOMETOWNS, DISTRICTS } from '@/data/constants';
-import { Input } from '@/components/common/Input';
+import Input from '@/components/common/Input'
+import type { OnboardingFormData } from '@/types/user.types'
 
-interface HometownStepProps {
-  homeState: string;
-  hometown: string;
-  district: string;
-  onChange: (fields: { homeState?: string; hometown?: string; district?: string }) => void;
+interface StepProps {
+  data: OnboardingFormData
+  onChange: (patch: Partial<OnboardingFormData>) => void
 }
 
-export const HometownStep: React.FC<HometownStepProps> = ({
-  homeState,
-  hometown,
-  district,
-  onChange,
-}) => {
-  const availableCities = HOMETOWNS[homeState] || [];
-
-  const handleStateChange = (newState: string) => {
-    const firstCity = HOMETOWNS[newState]?.[0] || '';
-    const newDistrict = DISTRICTS[firstCity] || firstCity;
-    onChange({ homeState: newState, hometown: firstCity, district: newDistrict });
-  };
-
-  const handleCityChange = (newCity: string) => {
-    const newDistrict = DISTRICTS[newCity] || newCity;
-    onChange({ hometown: newCity, district: newDistrict });
-  };
-
+/** Step 3 of onboarding: where the member grew up. */
+export default function HometownStep({ data, onChange }: StepProps) {
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Your Hometown</h2>
-        <p className="text-xs text-gray-500 mt-1">
-          Connect with others who grew up in the same streets, schools, and districts.
-        </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="Hometown country"
+          placeholder="India"
+          value={data.hometownCountry}
+          onChange={(event) => onChange({ hometownCountry: event.target.value })}
+        />
+        <Input
+          label="Hometown city"
+          placeholder="Jaipur"
+          value={data.hometownCity}
+          onChange={(event) => onChange({ hometownCity: event.target.value })}
+        />
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Origin State</label>
-        <select
-          value={homeState}
-          onChange={(e) => handleStateChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          {STATES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Hometown City</label>
-        {availableCities.length > 0 ? (
-          <select
-            value={hometown}
-            onChange={(e) => handleCityChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {availableCities.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <Input
-            value={hometown}
-            onChange={(e) => handleCityChange(e.target.value)}
-            placeholder="Enter your hometown city"
-          />
-        )}
-      </div>
-
-      <Input
-        label="District"
-        value={district}
-        onChange={(e) => onChange({ district: e.target.value })}
-        placeholder="District name"
-      />
+      <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+        We only ever show your city, never your address — so you stay private while still finding
+        people who share your roots.
+      </p>
     </div>
-  );
-};
+  )
+}

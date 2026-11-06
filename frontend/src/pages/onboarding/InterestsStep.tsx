@@ -1,55 +1,60 @@
-import React from 'react';
-import { INTERESTS } from '@/data/constants';
+import type { OnboardingFormData } from '@/types/user.types'
+import { INTEREST_OPTIONS } from '@/utils/constants'
+import { cn } from '@/utils/helpers'
 
-interface InterestsStepProps {
-  selectedInterests: string[];
-  onChange: (interests: string[]) => void;
+interface StepProps {
+  data: OnboardingFormData
+  onChange: (patch: Partial<OnboardingFormData>) => void
 }
 
-export const InterestsStep: React.FC<InterestsStepProps> = ({
-  selectedInterests,
-  onChange,
-}) => {
-  const toggleInterest = (interest: string) => {
-    if (selectedInterests.includes(interest)) {
-      onChange(selectedInterests.filter((i) => i !== interest));
-    } else {
-      onChange([...selectedInterests, interest]);
+const MAX_INTERESTS = 8
+
+/** Step 5 of onboarding: pick interests that power smarter matches. */
+export default function InterestsStep({ data, onChange }: StepProps) {
+  const selected = data.interests
+
+  function toggleInterest(interest: string) {
+    if (selected.includes(interest)) {
+      onChange({ interests: selected.filter((item) => item !== interest) })
+      return
     }
-  };
+    if (selected.length >= MAX_INTERESTS) return
+    onChange({ interests: [...selected, interest] })
+  }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Your Interests & Hobbies</h2>
-        <p className="text-xs text-gray-500 mt-1">
-          Pick a few topics to help you discover friends with similar passions.
-        </p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="muted">Pick up to {MAX_INTERESTS} interests to help us match you.</p>
+        <span className="shrink-0 text-sm font-medium text-slate-700">
+          {selected.length}/{MAX_INTERESTS} selected
+        </span>
       </div>
 
-      <div className="flex flex-wrap gap-2.5">
-        {INTERESTS.map((interest) => {
-          const isSelected = selectedInterests.includes(interest);
+      <div className="flex flex-wrap gap-2">
+        {INTEREST_OPTIONS.map((interest) => {
+          const isSelected = selected.includes(interest)
+          const isDisabled = !isSelected && selected.length >= MAX_INTERESTS
           return (
             <button
-              type="button"
               key={interest}
+              type="button"
+              disabled={isDisabled}
+              aria-pressed={isSelected}
               onClick={() => toggleInterest(interest)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+              className={cn(
+                'rounded-full border px-3 py-1.5 text-sm transition',
                 isSelected
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-              }`}
+                  ? 'border-brand-500 bg-brand-500 text-white'
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-brand-400',
+                isDisabled && 'cursor-not-allowed opacity-50',
+              )}
             >
-              {interest} {isSelected ? '✓' : '+'}
+              {interest}
             </button>
-          );
+          )
         })}
       </div>
-
-      <p className="text-xs text-gray-400">
-        Selected: {selectedInterests.length} {selectedInterests.length === 1 ? 'interest' : 'interests'}
-      </p>
     </div>
-  );
-};
+  )
+}

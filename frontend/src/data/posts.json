@@ -1,91 +1,122 @@
 [
   {
-    "id": "post-1",
-    "communityId": "comm-tamil",
-    "communityName": "Gurugram Tamil Sangam",
-    "authorId": "u-priya",
-    "author": {
-      "id": "u-priya",
-      "fullName": "Priya Karthik",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
-      "motherTongue": "Tamil",
-      "hometown": "Madurai, Tamil Nadu"
-    },
-    "content": "Any authentic filter coffee recommendations around DLF Phase 2 or Galleria Market? Craving that fresh Kumbakonam degree coffee aroma before work! ☕️",
-    "imageUrl": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
-    "likeCount": 18,
-    "likes": 18,
-    "commentCount": 3,
-    "isLikedByCurrentUser": false,
-    "comments": [
-      {
-        "id": "c-1",
-        "postId": "post-1",
-        "authorId": "user_1",
-        "author": {
-          "id": "user_1",
-          "fullName": "Rajesh Kumar",
-          "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rajesh"
-        },
-        "content": "Try Madurai Mess near Supermart 1! Very authentic taste and crispy medu vadas too.",
-        "likeCount": 4,
-        "createdAt": "2026-11-03T19:00:00Z"
-      },
-      {
-        "id": "c-2",
-        "postId": "post-1",
-        "authorId": "user-demo",
-        "author": {
-          "id": "user-demo",
-          "fullName": "Arun Selvam",
-          "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Arun"
-        },
-        "content": "Seconded! We should organise a small morning filter coffee meetup this Sunday.",
-        "likeCount": 2,
-        "createdAt": "2026-11-03T20:15:00Z"
-      }
-    ],
-    "createdAt": "2026-11-03T18:40:00Z"
-  },
-  {
-    "id": "post-2",
-    "communityId": "comm-telugu",
-    "communityName": "Telugu Techies & Migrants - Cyber City",
-    "authorId": "u-suresh",
-    "author": {
-      "id": "u-suresh",
-      "fullName": "Suresh Varma",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Suresh",
-      "motherTongue": "Telugu",
-      "hometown": "Visakhapatnam, Andhra Pradesh"
-    },
-    "content": "Sunday cricket match planned at Sector 29 ground! Need 3 more players for a friendly 10-over tennis ball match. Ping me if you want to join!",
-    "imageUrl": "https://images.unsplash.com/photo-1531415074868-036b1c57e3ce?auto=format&fit=crop&w=800&q=80",
+    "id": 1,
+    "communityId": 1,
+    "userId": 1,
+    "content": "Reminder: our monthly Hindi meetup is this Friday at 7pm in Karama. Bring something homemade if you can!",
+    "imageUrl": null,
     "likeCount": 24,
-    "likes": 24,
-    "commentCount": 5,
-    "isLikedByCurrentUser": true,
-    "comments": [],
-    "createdAt": "2026-11-04T08:30:00Z"
+    "commentCount": 6,
+    "createdAt": "2026-11-04T06:30:00Z"
   },
   {
-    "id": "post-3",
-    "communityId": "comm-hindi",
-    "communityName": "Gurugram Migrants General Circle",
-    "authorId": "u-ananya",
-    "author": {
-      "id": "u-ananya",
-      "fullName": "Ananya Sharma",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya",
-      "motherTongue": "Hindi",
-      "hometown": "Lucknow, Uttar Pradesh"
-    },
-    "content": "Looking for a female flatmate in a 3BHK high-rise in Sector 56 near Rapid Metro station. Fully furnished, gated society with gym & pool. Move-in next week. DM for pictures!",
-    "likeCount": 15,
-    "likes": 15,
+    "id": 2,
+    "communityId": 1,
+    "userId": 5,
+    "content": "Anyone know a good driving school in Al Quoz? Finally getting my UAE licence.",
+    "imageUrl": null,
+    "likeCount": 11,
+    "commentCount": 9,
+    "createdAt": "2026-11-03T14:10:00Z"
+  },
+  {
+    "id": 3,
+    "communityId": 1,
+    "userId": 10,
+    "content": "Sharing my thali recipe that survives Dubai summer heat. Ask me anything in the comments.",
+    "imageUrl": null,
+    "likeCount": 38,
+    "commentCount": 12,
+    "createdAt": "2026-11-02T09:45:00Z"
+  },
+  {
+    "id": 4,
+    "communityId": 2,
+    "userId": 2,
+    "content": "Onam sadya potluck sign-up sheet is open. We need 3 more people for payasam duty.",
+    "imageUrl": null,
+    "likeCount": 31,
+    "commentCount": 8,
+    "createdAt": "2026-11-03T18:20:00Z"
+  },
+  {
+    "id": 5,
+    "communityId": 2,
+    "userId": 6,
+    "content": "Went to the new Kerala restaurant in Karama. Verdict: the fish curry is worth the drive.",
+    "imageUrl": null,
+    "likeCount": 19,
+    "commentCount": 4,
+    "createdAt": "2026-11-01T13:00:00Z"
+  },
+  {
+    "id": 6,
+    "communityId": 3,
+    "userId": 9,
+    "content": "Carnatic music class for beginners starts Sunday. Free for the first session.",
+    "imageUrl": null,
+    "likeCount": 27,
+    "commentCount": 5,
+    "createdAt": "2026-11-02T16:40:00Z"
+  },
+  {
+    "id": 7,
+    "communityId": 3,
+    "userId": 1,
+    "content": "Cross-posting from Hindi Dubai — a few of us are carpooling to the Tamil food festival.",
+    "imageUrl": null,
+    "likeCount": 9,
     "commentCount": 2,
-    "isLikedByCurrentUser": false,
-    "comments": [],
-    "createdAt": "2026-11-04T10:15:00Z"
+    "createdAt": "2026-10-31T08:15:00Z"
+  },
+  {
+    "id": 8,
+    "communityId": 4,
+    "userId": 8,
+    "content": "Bhangra practice moved indoors because of the heat. Same time, Sharjah community hall.",
+    "imageUrl": null,
+    "likeCount": 22,
+    "commentCount": 3,
+    "createdAt": "2026-11-03T11:05:00Z"
+  },
+  {
+    "id": 9,
+    "communityId": 5,
+    "userId": 4,
+    "content": "Poetry evening theme this month: 'distance'. Two minutes per person, Urdu or English.",
+    "imageUrl": null,
+    "likeCount": 16,
+    "commentCount": 7,
+    "createdAt": "2026-11-01T20:00:00Z"
+  },
+  {
+    "id": 10,
+    "communityId": 6,
+    "userId": 11,
+    "content": "Dashain celebration confirmed for next Saturday. Volunteers needed for setup at 4pm.",
+    "imageUrl": null,
+    "likeCount": 29,
+    "commentCount": 10,
+    "createdAt": "2026-11-02T05:50:00Z"
+  },
+  {
+    "id": 11,
+    "communityId": 6,
+    "userId": 12,
+    "content": "Newcomer here — how do I get my documents attested? Any recent experience?",
+    "imageUrl": null,
+    "likeCount": 7,
+    "commentCount": 11,
+    "createdAt": "2026-11-04T12:25:00Z"
+  },
+  {
+    "id": 12,
+    "communityId": 1,
+    "userId": 3,
+    "content": "Job opening for a warehouse supervisor in Jebel Ali. Happy to refer someone from the group.",
+    "imageUrl": null,
+    "likeCount": 42,
+    "commentCount": 15,
+    "createdAt": "2026-11-04T15:35:00Z"
   }
 ]

@@ -1,142 +1,181 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import {
-  MapPin,
-  Compass,
-  ArrowLeft,
-  MessageSquare,
-  Sparkles,
-  Home,
-} from 'lucide-react';
-import { useUserContext } from '@/context/UserContext';
-import { useConnectionContext } from '@/context/ConnectionContext';
-import { Avatar } from '@/components/common/Avatar';
-import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
-import { ConnectionButton } from '@/components/shared/ConnectionButton';
+import { useCallback, useState } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { languageById } from '@/services/userService'
+import { messageService } from '@/services/messageService'
+import { useAuth } from '@/hooks/useAuth'
+import { useConnections } from '@/hooks/useConnections'
+import { useUsers } from '@/hooks/useUsers'
+import { PROFICIENCY_LABELS, ROUTES } from '@/utils/constants'
+import { formatDate } from '@/utils/formatters'
+import Avatar from '@/components/common/Avatar'
+import Badge from '@/components/common/Badge'
+import Button from '@/components/common/Button'
+import EmptyState from '@/components/common/EmptyState'
+import Loader from '@/components/common/Loader'
+import ConnectionButton from '@/components/shared/ConnectionButton'
+import LocationBadge from '@/components/shared/LocationBadge'
 
-export const UserProfilePage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const { getUserById } = useUserContext();
-  const {
-    sendRequest,
-    acceptRequest,
-    rejectRequest,
-    getConnectionStatus,
-  } = useConnectionContext();
+/** Public profile of another member, with connection and messaging actions. */
+export default function UserProfilePage() {
+  const { userId: userIdParam } = useParams<{ userId: string }>()
+  const profileUserId = Number(userIdParam)
+  const { user } = useAuth()
+  const { users, isLoading } = useUsers()
+  const { isConnected } = useConnections()
+  const navigate = useNavigate()
+  const [isOpeningChat, setIsOpeningChat] = useState(false)
 
-  const user = getUserById(id || '');
+  const openChat = useCallback(async () => {
+    if (!user) return
+    setIsOpeningChat(true)
+    try {
+      const conversation = await messageService.getOrCreateConversation(user.id, profileUserId)
+      navigate(`${ROUTES.messages}/${conversation.id}`)
+    } finally {
+      setIsOpeningChat(false)
+    }
+  }, [navigate, profileUserId, user])
 
-  if (!user) {
-    return (
-      <div className="p-12 text-center max-w-md mx-auto">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Member Not Found</h2>
-        <p className="text-xs text-gray-500 mb-4">The profile you are looking for may have moved or doesn't exist.</p>
-        <Link to="/discover">
-          <Button size="sm">Back to Discover</Button>
-        </Link>
-      </div>
-    );
+  if (user && profileUserId === user.id) {
+    return <Navigate to={ROUTES.profile} replace />
   }
 
-  const motherTongue = typeof user.motherTongue === 'string' ? user.motherTongue : (user.motherTongue as any)?.name || 'Language';
-  const hometownCity = user.hometown?.city || 'Hometown';
-  const hometownState = user.hometown?.state || 'State';
-  const locality = user.currentLocation?.locality || 'Gurugram';
-  const distance = user.approximateDistance || (user.distanceFromCurrentUser ? `${user.distanceFromCurrentUser} km away` : 'Nearby');
-  const status = getConnectionStatus(user.id);
+  if (isLoading) {
+    return <Loader label="Loading profile…" />
+  }
+
+  const member = users.find((row) => row.id === profileUserId)
+
+  if (!member) {
+    return (
+      <div className="mx-auto w-full max-w-3xl">
+        <EmptyState
+          title="Member not found"
+          description="This profile may have been removed or the link is incorrect."
+          action={
+            <Link to={ROUTES.discover}>
+              <Button variant="secondary">Back to discover</Button>
+            </Link>
+          }
+        />
+      </div>
+    )
+  }
+
+  const { profile } = member
+  const name = `${profile.firstName} ${profile.lastName}`.trim()
+  const connected = isConnected(member.id)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <Link
-        to="/discover"
-        className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-indigo-600 transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-        Back to People Directory
-      </Link>
-
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-        <div className="h-36 bg-gradient-to-r from-indigo-700 via-blue-600 to-indigo-800" />
-        <div className="px-6 pb-6 pt-0 relative">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between -mt-16 sm:-mt-14 mb-4 gap-4">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end space-y-3 sm:space-y-0 sm:space-x-4">
-              <div className="w-24 h-24 rounded-2xl ring-4 ring-white bg-white shadow-md overflow-hidden">
-                <Avatar
-                  src={user.avatar || user.photo}
-                  name={user.fullName}
-                  size="xl"
-                  className="w-full h-full rounded-2xl"
-                />
+    <div className="mx-auto w-full max-w-4xl space-y-6">
+      <section className="card">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <Avatar name={name} src={profile.avatarUrl} size="xl" />
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="page-title">{name}</h1>
+                {member.isVerified ? <Badge variant="success">Verified</Badge> : null}
               </div>
-              <div className="text-center sm:text-left">
-                <div className="flex items-center space-x-2 justify-center sm:justify-start">
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">{user.fullName}</h1>
-                  <Badge variant="primary" size="sm" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
-                    {motherTongue}
-                  </Badge>
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">{user.profession || 'Migrant Member'}</p>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                {profile.currentCity ? (
+                  <LocationBadge
+                    city={profile.currentCity}
+                    country={profile.currentCountry}
+                    approximate
+                  />
+                ) : null}
+                {profile.privacy.showHometown && profile.hometownCity ? (
+                  <span className="text-slate-500">
+                    From {[profile.hometownCity, profile.hometownCountry].filter(Boolean).join(', ')}
+                  </span>
+                ) : null}
               </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <ConnectionButton
-                status={status}
-                onConnect={() => sendRequest(user.id)}
-                onAccept={() => acceptRequest(user.id)}
-                onReject={() => rejectRequest(user.id)}
-              />
-              <Link to="/messages">
-                <Button size="sm" variant="outline" className="text-xs">
-                  <MessageSquare className="w-3.5 h-3.5 mr-1" />
-                  Message
-                </Button>
-              </Link>
+              {profile.bio ? (
+                <p className="max-w-xl text-sm text-slate-600">{profile.bio}</p>
+              ) : null}
             </div>
           </div>
 
-          <p className="text-sm text-gray-700 leading-relaxed max-w-2xl mt-4">
-            {user.bio || 'Exploring communities and meeting fellow hometown friends in NCR.'}
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-6 border-t border-gray-100 text-xs text-gray-600">
-            <div className="flex items-center space-x-2">
-              <Compass className="w-4 h-4 text-indigo-600 shrink-0" />
-              <span>Hometown: <strong className="text-gray-900 font-semibold">{hometownCity}, {hometownState}</strong></span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Location: <strong className="text-gray-900 font-semibold">{locality} ({distance})</strong></span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Home className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Living In: <strong className="text-gray-900 font-semibold">{user.livingSituation || 'Rented Apartment'}</strong></span>
-            </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <ConnectionButton userId={member.id} size="md" />
+            {connected ? (
+              <Button
+                variant="secondary"
+                isLoading={isOpeningChat}
+                onClick={() => void openChat()}
+              >
+                Message
+              </Button>
+            ) : null}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Interests Card */}
-      {user.interests && user.interests.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs space-y-3">
-          <h3 className="font-bold text-gray-900 text-sm flex items-center">
-            <Sparkles className="w-4 h-4 mr-2 text-amber-500" />
-            Interests & Hobbies
-          </h3>
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Languages</h2>
+        {profile.languages.length === 0 ? (
+          <p className="muted">No languages added yet.</p>
+        ) : (
           <div className="flex flex-wrap gap-2">
-            {user.interests.map((interest) => (
-              <span
-                key={interest}
-                className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium"
-              >
+            {profile.languages.map((entry) => {
+              const language = languageById(entry.languageId)
+              if (!language) return null
+              return (
+                <span
+                  key={entry.languageId}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700"
+                >
+                  {language.name}
+                  <span className="text-xs text-slate-500">
+                    {PROFICIENCY_LABELS[entry.proficiency]}
+                  </span>
+                  {entry.isPrimary ? (
+                    <Badge variant="brand" size="sm">
+                      Primary
+                    </Badge>
+                  ) : null}
+                </span>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Interests</h2>
+        {profile.interests.length === 0 ? (
+          <p className="muted">No interests added yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {profile.interests.map((interest) => (
+              <Badge key={interest} variant="neutral" size="md">
                 {interest}
-              </span>
+              </Badge>
             ))}
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+      </section>
 
+      <section className="card space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">About</h2>
+        <dl className="space-y-2 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Member since</dt>
+            <dd className="font-medium text-slate-800">{formatDate(member.createdAt)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Verification</dt>
+            <dd>
+              {member.isVerified ? (
+                <Badge variant="success">Verified</Badge>
+              ) : (
+                <Badge variant="warning">Unverified</Badge>
+              )}
+            </dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+  )
+}

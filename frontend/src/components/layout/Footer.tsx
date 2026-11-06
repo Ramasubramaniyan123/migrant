@@ -1,20 +1,27 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
+import { APP_NAME } from '@/utils/constants'
 
-export const Footer: React.FC = () => {
+/** Simple site footer with branding and quick auth links. */
+export default function Footer() {
+  const year = new Date().getFullYear()
+
   return (
-    <footer className="bg-gray-50 border-t border-gray-200 py-6 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-          <div className="text-gray-600 text-sm">© 2024 MigrantCommunity. All rights reserved.</div>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
-            <Link to="/about" className="text-gray-600 hover:text-blue-600 transition-colors">About</Link>
-            <Link to="/privacy" className="text-gray-600 hover:text-blue-600 transition-colors">Privacy</Link>
-            <Link to="/terms" className="text-gray-600 hover:text-blue-600 transition-colors">Terms</Link>
-            <Link to="/contact" className="text-gray-600 hover:text-blue-600 transition-colors">Contact</Link>
-          </div>
-        </div>
+    <footer className="border-t border-slate-200 bg-white">
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:flex-row lg:px-8">
+        <p className="font-medium text-slate-700">{APP_NAME}</p>
+        <p>© {year} {APP_NAME}</p>
+        <nav aria-label="Footer navigation" className="flex items-center gap-4">
+          <Link to="/" className="hover:text-brand-700">
+            Home
+          </Link>
+          <Link to="/login" className="hover:text-brand-700">
+            Log in
+          </Link>
+          <Link to="/register" className="hover:text-brand-700">
+            Register
+          </Link>
+        </nav>
       </div>
     </footer>
-  );
-};
+  )
+}

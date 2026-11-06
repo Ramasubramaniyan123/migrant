@@ -1,42 +1,112 @@
-[
-  {
-    "id": "msg-1",
-    "conversationId": "conv-1",
-    "senderId": "u-priya",
-    "receiverId": "user-demo",
-    "content": "Vanakkam Arun! Saw that you also moved from Tenkasi to Gurugram. Are you working in Cyber City?",
-    "status": "read",
-    "timestamp": "2026-11-03T16:20:00Z",
-    "createdAt": "2026-11-03T16:20:00Z"
-  },
-  {
-    "id": "msg-2",
-    "conversationId": "conv-1",
-    "senderId": "user-demo",
-    "receiverId": "u-priya",
-    "content": "Vanakkam Priya! Yes, I joined an engineering team at DLF Cyber City Building 10. How long have you been in Gurugram?",
-    "status": "read",
-    "timestamp": "2026-11-03T16:25:00Z",
-    "createdAt": "2026-11-03T16:25:00Z"
-  },
-  {
-    "id": "msg-3",
-    "conversationId": "conv-1",
-    "senderId": "u-priya",
-    "receiverId": "user-demo",
-    "content": "About 7 months now! Still getting used to the winter weather, but finding Tamil folks nearby has made it so much better.",
-    "status": "delivered",
-    "timestamp": "2026-11-03T16:32:00Z",
-    "createdAt": "2026-11-03T16:32:00Z"
-  },
-  {
-    "id": "msg-4",
-    "conversationId": "conv-2",
-    "senderId": "u-suresh",
-    "receiverId": "user-demo",
-    "content": "Hey Arun! Are you up for tennis-ball cricket this Sunday at Sector 29? We have a fun group playing every weekend.",
-    "status": "delivered",
-    "timestamp": "2026-11-04T08:10:00Z",
-    "createdAt": "2026-11-04T08:10:00Z"
-  }
-]
+{
+  "conversations": [
+    {
+      "id": 1,
+      "createdBy": 1,
+      "createdAt": "2026-10-13T09:35:00Z",
+      "updatedAt": "2026-11-04T18:22:00Z"
+    },
+    {
+      "id": 2,
+      "createdBy": 8,
+      "createdAt": "2026-10-06T08:20:00Z",
+      "updatedAt": "2026-11-03T20:10:00Z"
+    },
+    {
+      "id": 3,
+      "createdBy": 1,
+      "createdAt": "2026-09-29T17:05:00Z",
+      "updatedAt": "2026-11-02T07:45:00Z"
+    }
+  ],
+  "members": [
+    { "id": 1, "conversationId": 1, "userId": 1, "lastReadAt": "2026-11-04T18:25:00Z" },
+    { "id": 2, "conversationId": 1, "userId": 5 },
+    { "id": 3, "conversationId": 2, "userId": 1, "lastReadAt": "2026-11-03T19:00:00Z" },
+    { "id": 4, "conversationId": 2, "userId": 8 },
+    { "id": 5, "conversationId": 3, "userId": 1, "lastReadAt": "2026-11-01T08:00:00Z" },
+    { "id": 6, "conversationId": 3, "userId": 11 }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "conversationId": 1,
+      "senderId": 5,
+      "content": "Hey Aarav! Saw you're also from Jaipur. How long have you been in Dubai?",
+      "isRead": true,
+      "createdAt": "2026-10-13T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "conversationId": 1,
+      "senderId": 1,
+      "content": "Three years now! Whereabouts are you staying?",
+      "isRead": true,
+      "createdAt": "2026-10-13T10:15:00Z"
+    },
+    {
+      "id": 3,
+      "conversationId": 1,
+      "senderId": 5,
+      "content": "Deira, near the metro. Thinking of moving closer to work though.",
+      "isRead": true,
+      "createdAt": "2026-10-13T10:22:00Z"
+    },
+    {
+      "id": 4,
+      "conversationId": 1,
+      "senderId": 1,
+      "content": "Karama is a good middle ground. Happy to show you around this weekend.",
+      "isRead": true,
+      "createdAt": "2026-11-02T18:05:00Z"
+    },
+    {
+      "id": 5,
+      "conversationId": 1,
+      "senderId": 5,
+      "content": "That would be great. Saturday afternoon works?",
+      "isRead": false,
+      "createdAt": "2026-11-04T18:22:00Z"
+    },
+    {
+      "id": 6,
+      "conversationId": 2,
+      "senderId": 8,
+      "content": "Bhangra practice is indoors this week, join us if you're free!",
+      "isRead": true,
+      "createdAt": "2026-11-03T19:40:00Z"
+    },
+    {
+      "id": 7,
+      "conversationId": 2,
+      "senderId": 1,
+      "content": "I'll try to make it after work. What time does it start?",
+      "isRead": true,
+      "createdAt": "2026-11-03T19:52:00Z"
+    },
+    {
+      "id": 8,
+      "conversationId": 2,
+      "senderId": 8,
+      "content": "8:30pm at the Sharjah community hall.",
+      "isRead": false,
+      "createdAt": "2026-11-03T20:10:00Z"
+    },
+    {
+      "id": 9,
+      "conversationId": 3,
+      "senderId": 11,
+      "content": "Bro, do you know anyone who can help with document attestation?",
+      "isRead": true,
+      "createdAt": "2026-11-01T07:30:00Z"
+    },
+    {
+      "id": 10,
+      "conversationId": 3,
+      "senderId": 1,
+      "content": "Yes, I'll send you the details of the typing centre I used.",
+      "isRead": true,
+      "createdAt": "2026-11-02T07:45:00Z"
+    }
+  ]
+}
