@@ -54,17 +54,17 @@ export default function Modal({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'relative z-10 w-full overflow-hidden rounded-lg bg-white shadow-xl animate-slide-up',
+          'relative z-10 w-full overflow-hidden rounded-lg bg-white shadow-xl animate-slide-up dark:border dark:border-slate-800 dark:bg-slate-900',
           SIZE_CLASSES[size],
         )}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <svg
               viewBox="0 0 24 24"
@@ -80,10 +80,10 @@ export default function Modal({
           </button>
         </div>
 
-        <div className="px-5 py-4">{children}</div>
+        <div className="px-5 py-4 dark:text-slate-200">{children}</div>
 
         {footer ? (
-          <div className="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+          <div className="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950">
             {footer}
           </div>
         ) : null}

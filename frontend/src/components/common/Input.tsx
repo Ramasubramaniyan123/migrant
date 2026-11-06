@@ -15,7 +15,7 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 const FIELD_BASE =
-  'w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus-visible:outline-none'
+  'w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus-visible:outline-none dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500'
 
 /** Single-line text field with label, hint and inline validation message. */
 export default function Input({ label, error, hint, id, className, ...rest }: InputProps) {
@@ -26,7 +26,7 @@ export default function Input({ label, error, hint, id, className, ...rest }: In
   return (
     <div className="flex flex-col gap-1.5">
       {label ? (
-        <label htmlFor={inputId} className="text-sm font-medium text-slate-700">
+        <label htmlFor={inputId} className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
         </label>
       ) : null}
@@ -39,16 +39,16 @@ export default function Input({ label, error, hint, id, className, ...rest }: In
           FIELD_BASE,
           error
             ? 'border-red-400 focus:border-red-500 focus-visible:ring-red-500'
-            : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500',
+            : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500 dark:border-slate-700 dark:focus:border-brand-400',
           className,
         )}
       />
       {error ? (
-        <p id={`${inputId}-error`} className="text-xs text-red-600">
+        <p id={`${inputId}-error`} className="text-xs text-red-600 dark:text-red-400">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${inputId}-hint`} className="text-xs text-slate-500">
+        <p id={`${inputId}-hint`} className="text-xs text-slate-500 dark:text-slate-400">
           {hint}
         </p>
       ) : null}
@@ -73,7 +73,7 @@ export function Textarea({
   return (
     <div className="flex flex-col gap-1.5">
       {label ? (
-        <label htmlFor={textareaId} className="text-sm font-medium text-slate-700">
+        <label htmlFor={textareaId} className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
         </label>
       ) : null}
@@ -88,16 +88,16 @@ export function Textarea({
           'resize-y',
           error
             ? 'border-red-400 focus:border-red-500 focus-visible:ring-red-500'
-            : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500',
+            : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500 dark:border-slate-700 dark:focus:border-brand-400',
           className,
         )}
       />
       {error ? (
-        <p id={`${textareaId}-error`} className="text-xs text-red-600">
+        <p id={`${textareaId}-error`} className="text-xs text-red-600 dark:text-red-400">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${textareaId}-hint`} className="text-xs text-slate-500">
+        <p id={`${textareaId}-hint`} className="text-xs text-slate-500 dark:text-slate-400">
           {hint}
         </p>
       ) : null}

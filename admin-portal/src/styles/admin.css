@@ -1,0 +1,23 @@
+/* Admin-specific styles: dense tables, sidebar scroll, print-friendly audit views */
+
+.admin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
+
+/* Keep table rows visually calm on hover */
+.data-table tbody tr {
+  @apply transition-colors hover:bg-slate-50;
+}
+
+.dark .data-table tbody tr:hover {
+  @apply bg-slate-800/60;
+}

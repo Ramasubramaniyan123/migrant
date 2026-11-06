@@ -42,6 +42,27 @@ Datasource credentials are supplied through environment variables in production.
 > externally callable path is therefore `/api/api/<feature>/...`. This context path is
 > part of the pre-existing configuration and has been left untouched.
 
+## Admin authentication
+
+The admin API under `/v1/admin/**` requires a signed bearer token. Admin passwords
+are BCrypt-hashed, and the initial `SUPER_ADMIN` is created only when both
+`ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` are configured. The password
+must be at least 12 characters. No default administrator credentials are provided.
+
+Set `JWT_SECRET` to a random value of at least 32 bytes in production. In development,
+an ephemeral signing key is generated when it is omitted, so issued tokens are
+invalidated when the application restarts. Admin logout revocation is also held in
+memory and is lost on restart; persistent revocation and administrator storage are
+part of the pending database integration.
+
+Role gates currently protect administrator management (`SUPER_ADMIN`), settings
+(`SUPER_ADMIN` or `ADMIN`), moderation (`SUPER_ADMIN`, `ADMIN` or `MODERATOR`), and
+analytics/audit reads (`SUPER_ADMIN`, `ADMIN` or `ANALYST`). Other admin endpoints
+require an authenticated administrator.
+
+Password reset endpoints return `501 Not Implemented` until a reset-token store and
+email delivery provider are configured.
+
 ## Flyway migrations
 
 Database migrations live in `src/main/resources/db/migration/` as `V*.sql` files:

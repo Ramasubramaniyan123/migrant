@@ -16,8 +16,13 @@ server:
     context-path: /api
 
 jwt:
-  secret: ${JWT_SECRET:your-super-secret-jwt-key-change-this-in-production}
+  secret: ${JWT_SECRET:}
   expiration: ${JWT_EXPIRATION:86400000}
+
+admin:
+  bootstrap:
+    email: ${ADMIN_BOOTSTRAP_EMAIL:}
+    password: ${ADMIN_BOOTSTRAP_PASSWORD:}
 
 logging:
   level:
