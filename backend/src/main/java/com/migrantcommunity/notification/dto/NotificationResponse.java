@@ -1,5 +1,15 @@
 package com.migrantcommunity.notification.dto;
 
-/** A single in-app notification. */
-public record NotificationResponse(String id, String type, String message, boolean read) {
-}
+import com.migrantcommunity.common.enums.NotificationType;
+
+import java.time.Instant;
+
+public record NotificationResponse(
+    Long id,
+    NotificationType type,
+    String title,
+    String content,
+    Long relatedId,
+    boolean read,
+    Instant createdAt
+) {}
