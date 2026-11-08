@@ -9,7 +9,6 @@ import com.migrantcommunity.connection.dto.ConnectionResponse;
 import com.migrantcommunity.connection.entity.Connection;
 import com.migrantcommunity.connection.repository.BlockRepository;
 import com.migrantcommunity.connection.repository.ConnectionRepository;
-import com.migrantcommunity.language.entity.UserLanguage;
 import com.migrantcommunity.language.repository.UserLanguageRepository;
 import com.migrantcommunity.notification.service.NotificationService;
 import com.migrantcommunity.profile.entity.Profile;
@@ -21,8 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 

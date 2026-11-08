@@ -13,8 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import com.migrantcommunity.user.entity.User;
-import com.migrantcommunity.user.repository.UserRepository;
 
 import java.io.IOException;
 

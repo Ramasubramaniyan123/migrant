@@ -3,7 +3,6 @@ package com.migrantcommunity.moderation.entity;
 import com.migrantcommunity.common.enums.ReportCategory;
 import com.migrantcommunity.common.enums.ReportStatus;
 import com.migrantcommunity.common.enums.ReportTargetType;
-import com.migrantcommunity.post.entity.Post;
 import com.migrantcommunity.user.entity.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;

@@ -6,7 +6,6 @@ import com.migrantcommunity.common.exception.ForbiddenException;
 import com.migrantcommunity.common.exception.ResourceNotFoundException;
 import com.migrantcommunity.common.security.CurrentUserProvider;
 import com.migrantcommunity.community.entity.Community;
-import com.migrantcommunity.community.entity.CommunityMember;
 import com.migrantcommunity.community.repository.CommunityMemberRepository;
 import com.migrantcommunity.community.repository.CommunityRepository;
 import com.migrantcommunity.notification.service.NotificationService;

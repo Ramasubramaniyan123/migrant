@@ -5,7 +5,6 @@ import com.migrantcommunity.admin.dto.EngagementMetrics;
 import com.migrantcommunity.admin.dto.LanguageDistribution;
 import com.migrantcommunity.admin.dto.TimeSeriesPoint;
 import com.migrantcommunity.connection.repository.ConnectionRepository;
-import com.migrantcommunity.messaging.repository.MessageRepository;
 import com.migrantcommunity.post.repository.PostRepository;
 import com.migrantcommunity.profile.repository.ProfileRepository;
 import com.migrantcommunity.security.UserSessionRepository;
@@ -27,20 +26,17 @@ public class AdminAnalyticsService {
     private final UserSessionRepository userSessionRepository;
     private final PostRepository postRepository;
     private final ConnectionRepository connectionRepository;
-    private final MessageRepository messageRepository;
     private final ProfileRepository profileRepository;
 
     public AdminAnalyticsService(UserRepository userRepository,
                                  UserSessionRepository userSessionRepository,
                                  PostRepository postRepository,
                                  ConnectionRepository connectionRepository,
-                                 MessageRepository messageRepository,
                                  ProfileRepository profileRepository) {
         this.userRepository = userRepository;
         this.userSessionRepository = userSessionRepository;
         this.postRepository = postRepository;
         this.connectionRepository = connectionRepository;
-        this.messageRepository = messageRepository;
         this.profileRepository = profileRepository;
     }
 

@@ -1,6 +1,5 @@
 package com.migrantcommunity.user.service;
 
-import com.migrantcommunity.audit.entity.AuditLog;
 import com.migrantcommunity.audit.repository.AuditLogRepository;
 import com.migrantcommunity.common.enums.UserStatus;
 import com.migrantcommunity.language.entity.UserLanguage;
@@ -19,9 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional

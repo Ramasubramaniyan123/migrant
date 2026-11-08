@@ -19,8 +19,6 @@ import com.migrantcommunity.security.UserSessionRepository;
 import com.migrantcommunity.security.jwt.JwtService;
 import com.migrantcommunity.user.entity.User;
 import com.migrantcommunity.user.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,11 +34,9 @@ import java.util.UUID;
 @Transactional
 public class AuthService {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final long VERIFICATION_TOKEN_TTL_HOURS = 24;
     private static final long RESET_TOKEN_TTL_MINUTES = 30;
-    private static final long SESSION_TTL_DAYS = 7;
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;

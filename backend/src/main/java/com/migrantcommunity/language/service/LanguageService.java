@@ -1,7 +1,6 @@
 package com.migrantcommunity.language.service;
 
 import com.migrantcommunity.language.dto.LanguageResponse;
-import com.migrantcommunity.language.entity.Language;
 import com.migrantcommunity.language.repository.LanguageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,6 +1,5 @@
 package com.migrantcommunity.moderation.service;
 
-import com.migrantcommunity.common.enums.NotificationType;
 import com.migrantcommunity.common.enums.ReportCategory;
 import com.migrantcommunity.common.enums.ReportStatus;
 import com.migrantcommunity.common.enums.ReportTargetType;
@@ -10,9 +9,7 @@ import com.migrantcommunity.common.exception.ResourceNotFoundException;
 import com.migrantcommunity.common.security.CurrentUserProvider;
 import com.migrantcommunity.moderation.entity.Report;
 import com.migrantcommunity.moderation.repository.ReportRepository;
-import com.migrantcommunity.notification.service.NotificationService;
 import com.migrantcommunity.user.entity.User;
-import com.migrantcommunity.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,17 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ModerationService {
 
     private final ReportRepository reportRepository;
-    private final UserRepository userRepository;
-    private final NotificationService notificationService;
     private final CurrentUserProvider currentUserProvider;
 
     public ModerationService(ReportRepository reportRepository,
-                             UserRepository userRepository,
-                             NotificationService notificationService,
                              CurrentUserProvider currentUserProvider) {
         this.reportRepository = reportRepository;
-        this.userRepository = userRepository;
-        this.notificationService = notificationService;
         this.currentUserProvider = currentUserProvider;
     }
 
@@ -71,10 +62,5 @@ public class ModerationService {
             throw new ForbiddenException("You can only view your own reports");
         }
         return report;
-    }
-
-    private User getUser(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
     }
 }

@@ -1,6 +1,5 @@
 package com.migrantcommunity.event.service;
 
-import com.migrantcommunity.common.enums.EventStatus;
 import com.migrantcommunity.community.entity.Community;
 import com.migrantcommunity.community.repository.CommunityRepository;
 import com.migrantcommunity.event.dto.CommunityEvent;

@@ -1,6 +1,5 @@
 package com.migrantcommunity.community.entity;
 
-import com.migrantcommunity.community.entity.Community;
 import com.migrantcommunity.user.entity.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;

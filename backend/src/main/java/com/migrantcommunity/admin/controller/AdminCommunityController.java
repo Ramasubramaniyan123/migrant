@@ -6,7 +6,6 @@ import com.migrantcommunity.community.service.AdminCommunityService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/admin/communities")

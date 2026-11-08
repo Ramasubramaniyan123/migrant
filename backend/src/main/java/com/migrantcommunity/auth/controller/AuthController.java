@@ -10,7 +10,6 @@ import com.migrantcommunity.auth.dto.UserSummary;
 import com.migrantcommunity.auth.service.AuthService;
 import com.migrantcommunity.common.response.ApiResponse;
 import com.migrantcommunity.security.CustomUserDetails;
-import com.migrantcommunity.user.entity.User;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

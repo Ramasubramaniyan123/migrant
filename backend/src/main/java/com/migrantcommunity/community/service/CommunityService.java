@@ -19,7 +19,6 @@ import com.migrantcommunity.language.repository.LanguageRepository;
 import com.migrantcommunity.notification.service.NotificationService;
 import com.migrantcommunity.common.enums.NotificationType;
 import com.migrantcommunity.profile.entity.Profile;
-import com.migrantcommunity.profile.repository.ProfileRepository;
 import com.migrantcommunity.user.entity.User;
 import com.migrantcommunity.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
@@ -42,7 +41,6 @@ public class CommunityService {
     private final CommunityInvitationRepository invitationRepository;
     private final LanguageRepository languageRepository;
     private final UserRepository userRepository;
-    private final ProfileRepository profileRepository;
     private final NotificationService notificationService;
     private final CurrentUserProvider currentUserProvider;
 
@@ -51,7 +49,6 @@ public class CommunityService {
                             CommunityInvitationRepository invitationRepository,
                             LanguageRepository languageRepository,
                             UserRepository userRepository,
-                            ProfileRepository profileRepository,
                             NotificationService notificationService,
                             CurrentUserProvider currentUserProvider) {
         this.communityRepository = communityRepository;
@@ -59,7 +56,6 @@ public class CommunityService {
         this.invitationRepository = invitationRepository;
         this.languageRepository = languageRepository;
         this.userRepository = userRepository;
-        this.profileRepository = profileRepository;
         this.notificationService = notificationService;
         this.currentUserProvider = currentUserProvider;
     }

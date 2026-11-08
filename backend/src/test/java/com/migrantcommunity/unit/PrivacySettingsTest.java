@@ -1,6 +1,5 @@
 package com.migrantcommunity.unit;
 
-import com.migrantcommunity.common.exception.BadRequestException;
 import com.migrantcommunity.profile.PrivacySettings;
 import org.junit.jupiter.api.Test;
 

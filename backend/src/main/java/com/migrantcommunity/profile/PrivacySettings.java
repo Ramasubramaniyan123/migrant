@@ -2,7 +2,6 @@ package com.migrantcommunity.profile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.migrantcommunity.profile.entity.Profile;
-import org.springframework.stereotype.Component;
 
 /**
  * Privacy preferences stored as JSON on {@link Profile#getPrivacySettings()}.

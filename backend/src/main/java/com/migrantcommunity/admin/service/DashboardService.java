@@ -4,11 +4,9 @@ import com.migrantcommunity.admin.dto.*;
 import com.migrantcommunity.common.enums.ReportStatus;
 import com.migrantcommunity.community.repository.CommunityRepository;
 import com.migrantcommunity.connection.repository.ConnectionRepository;
-import com.migrantcommunity.event.repository.CommunityEventRepository;
 import com.migrantcommunity.messaging.repository.MessageRepository;
 import com.migrantcommunity.moderation.repository.ReportRepository;
 import com.migrantcommunity.post.repository.PostRepository;
-import com.migrantcommunity.user.entity.User;
 import com.migrantcommunity.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,14 +25,12 @@ public class DashboardService {
     private final PostRepository postRepository;
     private final MessageRepository messageRepository;
     private final ReportRepository reportRepository;
-    private final CommunityEventRepository eventRepository;
     private final com.migrantcommunity.profile.repository.ProfileRepository profileRepository;
     private final com.migrantcommunity.audit.repository.AuditLogRepository auditLogRepository;
 
     public DashboardService(UserRepository userRepository, CommunityRepository communityRepository,
                             ConnectionRepository connectionRepository, PostRepository postRepository,
                             MessageRepository messageRepository, ReportRepository reportRepository,
-                            CommunityEventRepository eventRepository,
                             com.migrantcommunity.profile.repository.ProfileRepository profileRepository,
                             com.migrantcommunity.audit.repository.AuditLogRepository auditLogRepository) {
         this.userRepository = userRepository;
@@ -43,7 +39,6 @@ public class DashboardService {
         this.postRepository = postRepository;
         this.messageRepository = messageRepository;
         this.reportRepository = reportRepository;
-        this.eventRepository = eventRepository;
         this.profileRepository = profileRepository;
         this.auditLogRepository = auditLogRepository;
     }

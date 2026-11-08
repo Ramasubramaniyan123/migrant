@@ -8,7 +8,6 @@ import com.migrantcommunity.community.repository.CommunityRepository;
 import com.migrantcommunity.post.repository.PostRepository;
 import com.migrantcommunity.profile.entity.Profile;
 import com.migrantcommunity.user.entity.User;
-import com.migrantcommunity.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,16 +25,13 @@ public class AdminCommunityService {
     private final CommunityRepository communityRepository;
     private final CommunityMemberRepository memberRepository;
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
 
     public AdminCommunityService(CommunityRepository communityRepository,
                                  CommunityMemberRepository memberRepository,
-                                 PostRepository postRepository,
-                                 UserRepository userRepository) {
+                                 PostRepository postRepository) {
         this.communityRepository = communityRepository;
         this.memberRepository = memberRepository;
         this.postRepository = postRepository;
-        this.userRepository = userRepository;
     }
 
     public static record CommunityListResult(List<Community> items, long total, int page, int pageSize) {}

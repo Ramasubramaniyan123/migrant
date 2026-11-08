@@ -6,7 +6,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.migrantcommunity.user.entity.User;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 public class CustomUserDetails implements UserDetails {
 

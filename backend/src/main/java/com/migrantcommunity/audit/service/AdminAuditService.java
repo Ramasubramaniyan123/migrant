@@ -4,7 +4,6 @@ import com.migrantcommunity.admin.entity.Administrator;
 import com.migrantcommunity.admin.repository.AdministratorRepository;
 import com.migrantcommunity.audit.dto.AuditLog;
 import com.migrantcommunity.audit.repository.AuditLogRepository;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -7,7 +7,6 @@ import com.migrantcommunity.common.security.CurrentUserProvider;
 import com.migrantcommunity.discovery.dto.DiscoveredUser;
 import com.migrantcommunity.discovery.repository.DiscoveryRepository;
 import com.migrantcommunity.discovery.repository.DiscoveryRow;
-import com.migrantcommunity.language.entity.UserLanguage;
 import com.migrantcommunity.language.repository.UserLanguageRepository;
 import com.migrantcommunity.profile.PrivacySettings;
 import com.migrantcommunity.profile.entity.Profile;

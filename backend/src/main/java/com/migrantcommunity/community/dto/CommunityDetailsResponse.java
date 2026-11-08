@@ -1,7 +1,6 @@
 package com.migrantcommunity.community.dto;
 
 import java.time.Instant;
-import java.util.List;
 
 /** Detailed community view. */
 public record CommunityDetailsResponse(

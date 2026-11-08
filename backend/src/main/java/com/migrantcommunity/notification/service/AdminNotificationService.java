@@ -9,7 +9,6 @@ import com.migrantcommunity.notification.repository.NotificationRepository;
 import com.migrantcommunity.notification.repository.PlatformNotificationRepository;
 import com.migrantcommunity.user.entity.User;
 import com.migrantcommunity.user.repository.UserRepository;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

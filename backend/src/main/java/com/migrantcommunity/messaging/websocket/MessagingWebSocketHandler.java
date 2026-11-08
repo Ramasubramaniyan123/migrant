@@ -1,6 +1,5 @@
 package com.migrantcommunity.messaging.websocket;
 
-import com.migrantcommunity.messaging.dto.MessageDto;
 import com.migrantcommunity.messaging.service.MessagingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
