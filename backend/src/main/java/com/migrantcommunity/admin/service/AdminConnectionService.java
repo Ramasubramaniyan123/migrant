@@ -37,12 +37,11 @@ public class AdminConnectionService {
     }
     
     public Map<String, Object> stats() {
-        long total = connectionRepository.count();
         return Map.of(
-            "totalConnections", total,
-            "pendingRequests", 0L,
-            "accepted", 0L,
-            "rejected", 0L
+            "totalConnections", connectionRepository.count(),
+            "pendingRequests", connectionRepository.countByStatus(com.migrantcommunity.common.enums.ConnectionStatus.PENDING),
+            "accepted", connectionRepository.countByStatus(com.migrantcommunity.common.enums.ConnectionStatus.ACCEPTED),
+            "rejected", connectionRepository.countByStatus(com.migrantcommunity.common.enums.ConnectionStatus.REJECTED)
         );
     }
     

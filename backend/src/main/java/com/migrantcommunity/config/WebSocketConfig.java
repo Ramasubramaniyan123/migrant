@@ -1,16 +1,82 @@
 package com.migrantcommunity.config;
 
+import com.migrantcommunity.security.jwt.JwtService;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.config.ChannelRegistration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+import java.security.Principal;
+import java.util.List;
 
 @Configuration
-@EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final JwtService jwtService;
+
+    public WebSocketConfig(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        // Messaging WebSocket endpoints are registered here when the messaging module is wired.
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic", "/queue");
+        registry.setApplicationDestinationPrefixes("/app");
+        registry.setUserDestinationPrefix("/user");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+                .withSockJS();
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(
+                        message, StompHeaderAccessor.class);
+                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    String token = extractToken(accessor);
+                    if (token == null) {
+                        throw new IllegalArgumentException("Missing JWT token");
+                    }
+                    try {
+                        var claims = jwtService.parse(token);
+                        String userId = String.valueOf(claims.get("userId"));
+                        accessor.setUser(new Principal() {
+                            @Override
+                            public String getName() {
+                                return userId;
+                            }
+                        });
+                    } catch (Exception ex) {
+                        throw new IllegalArgumentException("Invalid JWT token");
+                    }
+                }
+                return message;
+            }
+
+            private String extractToken(StompHeaderAccessor accessor) {
+                List<String> auth = accessor.getNativeHeader("Authorization");
+                if (auth != null && !auth.isEmpty() && auth.get(0).startsWith("Bearer ")) {
+                    return auth.get(0).substring(7).trim();
+                }
+                String query = accessor.getFirstNativeHeader("query");
+                return query;
+            }
+        });
     }
 }

@@ -15,18 +15,18 @@ export default function RecentUsers({
                 </span>}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{u.fullName}</p>
-                <p className="truncate text-xs text-slate-500">
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                   {u.motherTongue} · {u.currentCity}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1">
                 <StatusBadge tone={statusTone(u.status)}>{statusLabel(u.status)}</StatusBadge>
-                <span className="text-[11px] text-slate-400">{formatRelativeTime(u.joinedAt)}</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">{formatRelativeTime(u.joinedAt)}</span>
               </div>
             </Link>
           </li>)}
       </ul>
-      <Link to={ADMIN_ROUTES.users} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700">
+      <Link to={ADMIN_ROUTES.users} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
         View all users <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>;

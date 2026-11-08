@@ -35,13 +35,13 @@ export default function Modal({
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
           <div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
-            {description ? <p className="mt-0.5 text-sm text-slate-500">{description}</p> : null}
+            {description ? <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p> : null}
           </div>
-          <button onClick={onClose} aria-label="Close dialog" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
+          <button onClick={onClose} aria-label="Close dialog" className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200">
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-4">{children}</div>
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-4 dark:text-slate-200">{children}</div>
         {footer ? <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-700">
             {footer}
           </div> : null}

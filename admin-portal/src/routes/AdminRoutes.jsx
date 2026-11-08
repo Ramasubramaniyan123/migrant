@@ -7,6 +7,7 @@ import ProtectedAdminRoute from './ProtectedAdminRoute';
 import PermissionRoute from './PermissionRoute';
 import { ADMIN_ROUTES } from '@/utils/constants';
 import Loader from '@/components/common/Loader';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import { lazy, Suspense } from 'react';
 
 // Auth pages (eager — first paint)
@@ -76,8 +77,9 @@ export default function AdminRoutes() {
       <ThemeProvider>
         <AdminAuthProvider>
           <AdminUserProvider>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
                 {/* Public auth routes */}
                 <Route path={ADMIN_ROUTES.login} element={<AdminLoginPage />} />
                 <Route path={ADMIN_ROUTES.forgotPassword} element={<ForgotPasswordPage />} />
@@ -172,7 +174,8 @@ export default function AdminRoutes() {
                 </Route>
               </Routes>
             </Suspense>
-          </AdminUserProvider>
+          </ErrorBoundary>
+        </AdminUserProvider>
         </AdminAuthProvider>
       </ThemeProvider>
     </BrowserRouter>;

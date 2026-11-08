@@ -40,6 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authorization.substring(7).trim();
         try {
             Claims claims = jwtService.parse(token);
+            // Only access tokens may authenticate API requests; refresh tokens are rejected.
+            if ("refresh".equals(claims.get("type", String.class))) {
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
+            }
             String email = claims.getSubject();
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);

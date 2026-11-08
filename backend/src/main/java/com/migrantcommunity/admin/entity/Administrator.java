@@ -30,6 +30,9 @@ public class Administrator {
     @Column(name = "last_name", length = 100)
     private String lastName;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private AdminRole role = AdminRole.MODERATOR;
@@ -75,6 +78,9 @@ public class Administrator {
 
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 
     public AdminRole getRole() { return role; }
     public void setRole(AdminRole role) { this.role = role; }

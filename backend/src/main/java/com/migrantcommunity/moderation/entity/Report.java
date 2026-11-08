@@ -35,6 +35,12 @@ public class Report {
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
+    @Column(name = "target_preview", length = 500)
+    private String targetPreview;
+
+    @Column(length = 20)
+    private String priority = "MEDIUM";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private ReportCategory category;
@@ -92,6 +98,12 @@ public class Report {
 
     public Long getTargetId() { return targetId; }
     public void setTargetId(Long targetId) { this.targetId = targetId; }
+
+    public String getTargetPreview() { return targetPreview; }
+    public void setTargetPreview(String targetPreview) { this.targetPreview = targetPreview; }
+
+    public String getPriority() { return priority; }
+    public void setPriority(String priority) { this.priority = priority; }
 
     public ReportCategory getCategory() { return category; }
     public void setCategory(ReportCategory category) { this.category = category; }

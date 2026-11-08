@@ -14,6 +14,9 @@ import java.util.Optional;
 
 @Repository
 public interface ConnectionRepository extends JpaRepository<Connection, Long> {
+    long countByCreatedAtBetween(java.time.Instant start, java.time.Instant end);
+    long countByStatus(com.migrantcommunity.common.enums.ConnectionStatus status);
+
     
     @Query("SELECT c FROM Connection c WHERE (c.requester.id = :userId OR c.receiver.id = :userId) AND c.status = :status")
     Page<Connection> findByUserIdAndStatus(@Param("userId") Long userId, 

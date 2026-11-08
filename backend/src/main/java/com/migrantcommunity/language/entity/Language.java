@@ -28,6 +28,9 @@ public class Language {
     @Column(name = "native_name", length = 100)
     private String nativeName;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
+
     @OneToMany(mappedBy = "language", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserLanguage> userLanguages = new HashSet<>();
 
@@ -61,6 +64,9 @@ public class Language {
 
     public String getNativeName() { return nativeName; }
     public void setNativeName(String nativeName) { this.nativeName = nativeName; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
     public Set<UserLanguage> getUserLanguages() { return userLanguages; }
     public void setUserLanguages(Set<UserLanguage> userLanguages) { this.userLanguages = userLanguages; }

@@ -49,6 +49,9 @@ public class Profile {
     @Column(name = "hometown_city", length = 100)
     private String hometownCity;
 
+    @Column(name = "current_city", length = 100)
+    private String currentCity;
+
     @Column(name = "current_location")
     private Point currentLocation;
 
@@ -74,7 +77,7 @@ public class Profile {
 
     public Profile(Long id, User user, String firstName, String lastName, LocalDate dateOfBirth, String gender,
                    String bio, String profilePictureUrl, String hometownCountry, String hometownCity,
-                   Point currentLocation, Double locationAccuracyKm, String privacySettings,
+                   String currentCity, Point currentLocation, Double locationAccuracyKm, String privacySettings,
                    boolean discoveryEnabled, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.user = user;
@@ -86,6 +89,7 @@ public class Profile {
         this.profilePictureUrl = profilePictureUrl;
         this.hometownCountry = hometownCountry;
         this.hometownCity = hometownCity;
+        this.currentCity = currentCity;
         this.currentLocation = currentLocation;
         this.locationAccuracyKm = locationAccuracyKm;
         this.privacySettings = privacySettings;
@@ -114,6 +118,8 @@ public class Profile {
     public void setHometownCountry(String hometownCountry) { this.hometownCountry = hometownCountry; }
     public String getHometownCity() { return hometownCity; }
     public void setHometownCity(String hometownCity) { this.hometownCity = hometownCity; }
+    public String getCurrentCity() { return currentCity; }
+    public void setCurrentCity(String currentCity) { this.currentCity = currentCity; }
     public Point getCurrentLocation() { return currentLocation; }
     public void setCurrentLocation(Point currentLocation) { this.currentLocation = currentLocation; }
     public Double getLocationAccuracyKm() { return locationAccuracyKm; }

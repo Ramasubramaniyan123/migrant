@@ -11,10 +11,15 @@ import java.util.Optional;
 
 @Repository
 public interface UserLanguageRepository extends JpaRepository<UserLanguage, Long> {
-    
+
     List<UserLanguage> findByUserId(Long userId);
+
+    @Query("SELECT ul FROM UserLanguage ul JOIN FETCH ul.language WHERE ul.user.id IN :userIds")
+    List<UserLanguage> findAllByUserIdIn(@Param("userIds") List<Long> userIds);
     
     List<UserLanguage> findByLanguageId(Long languageId);
+
+    long countByLanguageId(Long languageId);
     
     @Query("SELECT ul FROM UserLanguage ul WHERE ul.user.id = :userId AND ul.primary = true")
     Optional<UserLanguage> findPrimaryLanguageByUserId(@Param("userId") Long userId);

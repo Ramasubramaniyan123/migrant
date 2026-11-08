@@ -1,22 +1,26 @@
 package com.migrantcommunity.language.service;
 
 import com.migrantcommunity.language.dto.LanguageResponse;
+import com.migrantcommunity.language.entity.Language;
+import com.migrantcommunity.language.repository.LanguageRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** Placeholder language reference-data logic for the prototype. */
 @Service
+@Transactional(readOnly = true)
 public class LanguageService {
 
-    /**
-     * Returns placeholder reference data.
-     * The real implementation will read the languages table from the database.
-     */
+    private final LanguageRepository languageRepository;
+
+    public LanguageService(LanguageRepository languageRepository) {
+        this.languageRepository = languageRepository;
+    }
+
     public List<LanguageResponse> allLanguages() {
-        return List.of(
-                new LanguageResponse("en", "English", "English"),
-                new LanguageResponse("hi", "Hindi", "हिन्दी"),
-                new LanguageResponse("ta", "Tamil", "தமிழ்"));
+        return languageRepository.findAll().stream()
+                .map(l -> new LanguageResponse(l.getCode(), l.getName(), l.getNativeName()))
+                .toList();
     }
 }

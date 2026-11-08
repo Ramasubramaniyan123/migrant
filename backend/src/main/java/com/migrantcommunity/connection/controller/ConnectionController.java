@@ -19,7 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/connections")
+@RequestMapping("/v1/connections")
 @Tag(name = "Connections", description = "Connection management endpoints")
 public class ConnectionController {
 

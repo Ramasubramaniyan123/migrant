@@ -36,6 +36,13 @@ public class Community {
     @Column(name = "location_city", length = 100)
     private String locationCity;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "community_type", length = 30)
+    private com.migrantcommunity.common.enums.CommunityType type;
+
+    @Column(length = 100)
+    private String hometown;
+
     @Column(name = "is_public")
     private boolean publicCommunity = true;
 
@@ -89,6 +96,12 @@ public class Community {
 
     public String getLocationCity() { return locationCity; }
     public void setLocationCity(String locationCity) { this.locationCity = locationCity; }
+
+    public com.migrantcommunity.common.enums.CommunityType getType() { return type; }
+    public void setType(com.migrantcommunity.common.enums.CommunityType type) { this.type = type; }
+
+    public String getHometown() { return hometown; }
+    public void setHometown(String hometown) { this.hometown = hometown; }
 
     public boolean isPublicCommunity() { return publicCommunity; }
     public void setPublicCommunity(boolean publicCommunity) { this.publicCommunity = publicCommunity; }

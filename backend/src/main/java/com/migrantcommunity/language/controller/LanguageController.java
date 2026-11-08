@@ -10,7 +10,7 @@ import java.util.List;
 
 /** REST entry point for language reference-data endpoints. */
 @RestController
-@RequestMapping("/api/language")
+@RequestMapping("/v1/languages")
 public class LanguageController {
 
     private final LanguageService languageService;

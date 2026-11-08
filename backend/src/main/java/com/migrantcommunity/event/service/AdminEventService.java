@@ -1,36 +1,144 @@
 package com.migrantcommunity.event.service;
 
 import com.migrantcommunity.common.enums.EventStatus;
+import com.migrantcommunity.community.entity.Community;
+import com.migrantcommunity.community.repository.CommunityRepository;
 import com.migrantcommunity.event.dto.CommunityEvent;
 import com.migrantcommunity.event.dto.EventParticipant;
+import com.migrantcommunity.event.repository.CommunityEventRepository;
+import com.migrantcommunity.event.repository.EventParticipantRepository;
+import com.migrantcommunity.profile.entity.Profile;
+import com.migrantcommunity.user.entity.User;
+import com.migrantcommunity.user.repository.UserRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AdminEventService {
-    private final List<CommunityEvent> events = new ArrayList<>();
-    private final List<EventParticipant> participants = new ArrayList<>();
 
-    public AdminEventService() { seed(); }
-    private void seed() {
-        events.add(new CommunityEvent("evt_1","Pongal Celebration","Festival","com_2","Tamil Sangam Delhi","Community Hall","Delhi","2025-01-14T10:00:00Z","2025-01-14T18:00:00Z",200,45,EventStatus.UPCOMING,"usr_2","User 2",null,"2024-12-01T00:00:00Z"));
-        events.add(new CommunityEvent("evt_2","Mumbai Meetup","Networking","com_1","Mumbai Migrants","Park","Mumbai","2025-01-20T10:00:00Z","2025-01-20T14:00:00Z",100,30,EventStatus.UPCOMING,"usr_1","User 1",null,"2024-12-02T00:00:00Z"));
+    private final CommunityEventRepository eventRepository;
+    private final EventParticipantRepository participantRepository;
+    private final CommunityRepository communityRepository;
+    private final UserRepository userRepository;
+
+    public AdminEventService(CommunityEventRepository eventRepository,
+                             EventParticipantRepository participantRepository,
+                             CommunityRepository communityRepository,
+                             UserRepository userRepository) {
+        this.eventRepository = eventRepository;
+        this.participantRepository = participantRepository;
+        this.communityRepository = communityRepository;
+        this.userRepository = userRepository;
     }
-    public List<CommunityEvent> list() { return new ArrayList<>(events); }
-    public CommunityEvent getById(String id) { return events.stream().filter(e -> e.id().equals(id)).findFirst().orElseThrow(() -> new IllegalArgumentException("Event not found")); }
-    public CommunityEvent create(CommunityEvent p) {
-        CommunityEvent e = new CommunityEvent("evt_"+(events.size()+1), p.title(), p.description(), p.communityId(), p.communityName(), p.location(), p.city(), p.startsAt(), p.endsAt(), p.capacity(), 0, EventStatus.UPCOMING, p.organizerId(), p.organizerName(), p.imageUrl(), java.time.Instant.now().toString());
-        events.add(e); return e;
+
+    @Transactional(readOnly = true)
+    public List<CommunityEvent> list() {
+        return eventRepository.findAll().stream()
+                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
+                .map(this::toDto).toList();
     }
-    public CommunityEvent update(String id, CommunityEvent p) {
-        CommunityEvent e = getById(id);
-        CommunityEvent u = new CommunityEvent(e.id(), p.title()!=null?p.title():e.title(), p.description()!=null?p.description():e.description(), p.communityId()!=null?p.communityId():e.communityId(), p.communityName()!=null?p.communityName():e.communityName(), p.location()!=null?p.location():e.location(), p.city()!=null?p.city():e.city(), p.startsAt()!=null?p.startsAt():e.startsAt(), p.endsAt()!=null?p.endsAt():e.endsAt(), p.capacity()!=null?p.capacity():e.capacity(), e.participantCount(), p.status()!=null?p.status():e.status(), e.organizerId(), e.organizerName(), p.imageUrl()!=null?p.imageUrl():e.imageUrl(), e.createdAt());
-        replace(u); return u;
+
+    @Transactional(readOnly = true)
+    public CommunityEvent getById(String id) {
+        return toDto(getEntity(id));
     }
-    public void delete(String id) { if (!events.removeIf(e -> e.id().equals(id))) throw new IllegalArgumentException("Event not found"); }
-    public List<EventParticipant> participants(String eventId) { return participants.stream().filter(p -> p.eventId().equals(eventId)).collect(Collectors.toList()); }
-    private void replace(CommunityEvent e) { for (int i = 0; i < events.size(); i++) if (events.get(i).id().equals(e.id())) { events.set(i, e); break; } }
+
+    public CommunityEvent create(CommunityEvent payload) {
+        com.migrantcommunity.event.entity.CommunityEvent entity =
+                new com.migrantcommunity.event.entity.CommunityEvent();
+        applyPayload(entity, payload);
+        return toDto(eventRepository.save(entity));
+    }
+
+    public CommunityEvent update(String id, CommunityEvent payload) {
+        com.migrantcommunity.event.entity.CommunityEvent entity = getEntity(id);
+        applyPayload(entity, payload);
+        return toDto(eventRepository.save(entity));
+    }
+
+    public void delete(String id) {
+        eventRepository.delete(getEntity(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventParticipant> participants(String eventId) {
+        Long eid = parseId(eventId);
+        return participantRepository.findByEventId(eid, Pageable.unpaged()).getContent().stream()
+                .map(this::toParticipantDto).toList();
+    }
+
+    private void applyPayload(com.migrantcommunity.event.entity.CommunityEvent entity, CommunityEvent payload) {
+        if (payload.title() != null) entity.setTitle(payload.title());
+        if (payload.description() != null) entity.setDescription(payload.description());
+        if (payload.location() != null) entity.setLocation(payload.location());
+        if (payload.communityId() != null) {
+            entity.setCommunity(communityRepository.findById(parseId(payload.communityId())).orElse(null));
+        }
+        if (payload.organizerId() != null) {
+            entity.setOrganizer(userRepository.findById(parseId(payload.organizerId())).orElse(null));
+        }
+        if (payload.startsAt() != null) entity.setStartTime(Instant.parse(payload.startsAt()));
+        if (payload.endsAt() != null) entity.setEndTime(Instant.parse(payload.endsAt()));
+        if (payload.capacity() != null) entity.setMaxParticipants(payload.capacity());
+        if (payload.status() != null) entity.setStatus(payload.status());
+    }
+
+    private com.migrantcommunity.event.entity.CommunityEvent getEntity(String id) {
+        return eventRepository.findById(parseId(id))
+                .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+    }
+
+    private Long parseId(String id) {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Event not found");
+        }
+    }
+
+    private CommunityEvent toDto(com.migrantcommunity.event.entity.CommunityEvent e) {
+        Community community = e.getCommunity();
+        User organizer = e.getOrganizer();
+        return new CommunityEvent(
+                String.valueOf(e.getId()),
+                e.getTitle(),
+                e.getDescription(),
+                community != null ? String.valueOf(community.getId()) : null,
+                community != null ? community.getName() : null,
+                e.getLocation(),
+                community != null ? community.getLocationCity() : null,
+                e.getStartTime() != null ? e.getStartTime().toString() : null,
+                e.getEndTime() != null ? e.getEndTime().toString() : null,
+                e.getMaxParticipants(),
+                participantRepository.countAttendingByEventId(e.getId()),
+                e.getStatus(),
+                organizer != null ? String.valueOf(organizer.getId()) : null,
+                organizer != null ? displayName(organizer) : null,
+                null,
+                e.getCreatedAt() != null ? e.getCreatedAt().toString() : null);
+    }
+
+    private EventParticipant toParticipantDto(com.migrantcommunity.event.entity.EventParticipant p) {
+        User user = p.getUser();
+        return new EventParticipant(
+                String.valueOf(p.getId()),
+                String.valueOf(p.getEvent().getId()),
+                user != null ? String.valueOf(user.getId()) : null,
+                user != null ? displayName(user) : "Unknown",
+                p.getStatus(),
+                p.getJoinedAt() != null ? p.getJoinedAt().toString() : null);
+    }
+
+    private String displayName(User user) {
+        Profile profile = user.getProfile();
+        if (profile != null && profile.getFirstName() != null) {
+            return profile.getFirstName() + (profile.getLastName() != null ? " " + profile.getLastName() : "");
+        }
+        return user.getEmail();
+    }
 }

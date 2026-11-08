@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Link2, UserCheck, UserX } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/common/Button';
@@ -81,8 +81,8 @@ export default function UsersPage() {
             </div>
           )}
           <div>
-            <p className="font-medium text-slate-900">{u.fullName}</p>
-            <p className="text-xs text-slate-500">{u.id}</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100">{u.fullName}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{u.id}</p>
           </div>
         </div>
       )
@@ -140,7 +140,7 @@ export default function UsersPage() {
         title="Users"
         description="Manage registered migrant community members."
         actions={
-          <Link to={ADMIN_ROUTES.suspendedUsers} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 h-10 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Link to={ADMIN_ROUTES.suspendedUsers} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 h-10 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
             <Link2 className="h-4 w-4" />
             View suspended
           </Link>

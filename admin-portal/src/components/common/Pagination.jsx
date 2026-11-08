@@ -14,16 +14,16 @@ export default function Pagination({
   const to = Math.min(page * pageSize, total);
   const pages = buildPageList(page, totalPages);
   return <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row dark:border-slate-700">
-      <p className="text-sm text-slate-500">
-        Showing <span className="font-medium text-slate-700 dark:text-slate-300">{from}–{to}</span> of{' '}
-        <span className="font-medium text-slate-700 dark:text-slate-300">{total}</span> {itemLabel}
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Showing <span className="font-medium text-slate-700 dark:text-slate-200">{from}–{to}</span> of{' '}
+        <span className="font-medium text-slate-700 dark:text-slate-200">{total}</span> {itemLabel}
       </p>
 
       <div className="flex items-center gap-1.5">
         <Button variant="ghost" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1} aria-label="Previous page">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        {pages.map((p, i) => p === '…' ? <span key={`ellipsis-${i}`} className="px-2 text-sm text-slate-400">
+        {pages.map((p, i) => p === '…' ? <span key={`ellipsis-${i}`} className="px-2 text-sm text-slate-400 dark:text-slate-500">
               …
             </span> : <button key={p} onClick={() => onPageChange(p)} className={cn('h-8 min-w-8 rounded-lg px-2 text-sm font-medium transition-colors', p === page ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800')} aria-current={p === page ? 'page' : undefined}>
               {p}

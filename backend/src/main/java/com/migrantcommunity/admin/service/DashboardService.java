@@ -1,55 +1,119 @@
 package com.migrantcommunity.admin.service;
 
 import com.migrantcommunity.admin.dto.*;
-import com.migrantcommunity.moderation.dto.Report;
-import com.migrantcommunity.common.enums.ReportCategory;
 import com.migrantcommunity.common.enums.ReportStatus;
-import com.migrantcommunity.common.enums.ReportTargetType;
+import com.migrantcommunity.community.repository.CommunityRepository;
+import com.migrantcommunity.connection.repository.ConnectionRepository;
+import com.migrantcommunity.event.repository.CommunityEventRepository;
+import com.migrantcommunity.messaging.repository.MessageRepository;
+import com.migrantcommunity.moderation.repository.ReportRepository;
+import com.migrantcommunity.post.repository.PostRepository;
+import com.migrantcommunity.user.entity.User;
+import com.migrantcommunity.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class DashboardService {
 
+    private final UserRepository userRepository;
+    private final CommunityRepository communityRepository;
+    private final ConnectionRepository connectionRepository;
+    private final PostRepository postRepository;
+    private final MessageRepository messageRepository;
+    private final ReportRepository reportRepository;
+    private final CommunityEventRepository eventRepository;
+    private final com.migrantcommunity.profile.repository.ProfileRepository profileRepository;
+    private final com.migrantcommunity.audit.repository.AuditLogRepository auditLogRepository;
+
+    public DashboardService(UserRepository userRepository, CommunityRepository communityRepository,
+                            ConnectionRepository connectionRepository, PostRepository postRepository,
+                            MessageRepository messageRepository, ReportRepository reportRepository,
+                            CommunityEventRepository eventRepository,
+                            com.migrantcommunity.profile.repository.ProfileRepository profileRepository,
+                            com.migrantcommunity.audit.repository.AuditLogRepository auditLogRepository) {
+        this.userRepository = userRepository;
+        this.communityRepository = communityRepository;
+        this.connectionRepository = connectionRepository;
+        this.postRepository = postRepository;
+        this.messageRepository = messageRepository;
+        this.reportRepository = reportRepository;
+        this.eventRepository = eventRepository;
+        this.profileRepository = profileRepository;
+        this.auditLogRepository = auditLogRepository;
+    }
+
     public DashboardStatistics getStatistics() {
-        return new DashboardStatistics(4745, 1820, 38, 107, 68, 64, 5600, 12, 8, 1198, 12400);
+        Instant now = Instant.now();
+        return new DashboardStatistics(
+                userRepository.count(),
+                userRepository.countByActive(true),
+                userRepository.countByCreatedAtAfter(now.minus(1, ChronoUnit.DAYS)),
+                userRepository.countByCreatedAtAfter(now.minus(7, ChronoUnit.DAYS)),
+                communityRepository.count(),
+                communityRepository.count(),
+                connectionRepository.count(),
+                reportRepository.countByStatus(ReportStatus.PENDING),
+                reportRepository.countByStatus(ReportStatus.UNDER_REVIEW),
+                postRepository.count(),
+                messageRepository.count());
     }
 
     public DashboardOverview getOverview() {
-        List<TimeSeriesPoint> growth = new ArrayList<>();
-        String[] days = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
-        for (int i = 0; i < days.length; i++) {
-            growth.add(new TimeSeriesPoint(days[i], 4600 + i * 20, 1700 + i * 15, 1100 + i * 10, 5500 + i * 25));
-        }
-        List<LanguageDistribution> langs = List.of(
-                new LanguageDistribution("Hindi", 1820, 38.4),
-                new LanguageDistribution("Tamil", 620, 13.1),
-                new LanguageDistribution("Telugu", 540, 11.4),
-                new LanguageDistribution("Bengali", 480, 10.1),
-                new LanguageDistribution("Marathi", 420, 8.9),
-                new LanguageDistribution("Others", 865, 18.1)
-        );
-        List<CityDistribution> cities = List.of(
-                new CityDistribution("Mumbai", 1520, 32.0),
-                new CityDistribution("Delhi", 980, 20.7),
-                new CityDistribution("Bengaluru", 760, 16.0),
-                new CityDistribution("Pune", 540, 11.4),
-                new CityDistribution("Chennai", 480, 10.1),
-                new CityDistribution("Others", 465, 9.8)
-        );
-        List<ActivityItem> activity = List.of(
-                new ActivityItem("act_1", "USER_JOINED", "New user registered", "Aarav Sharma", "2025-01-01T10:00:00Z"),
-                new ActivityItem("act_2", "COMMUNITY_CREATED", "New community created", "Priya Nair", "2025-01-01T09:30:00Z"),
-                new ActivityItem("act_3", "POST_CREATED", "New post in Mumbai Migrants", "Rahul Verma", "2025-01-01T09:00:00Z"),
-                new ActivityItem("act_4", "REPORT_FILED", "Content reported", "System", "2025-01-01T08:30:00Z"),
-                new ActivityItem("act_5", "ADMIN_ACTION", "User suspended", "Moderator", "2025-01-01T08:00:00Z")
-        );
-        List<Report> pending = List.of(
-                new Report("rep_1", ReportTargetType.POST, "post_1", "Offensive language in post", "usr_10", "Ravi Kumar", ReportCategory.HATE_SPEECH, "Contains hate speech", ReportStatus.PENDING, "HIGH", null, "2025-01-01T07:00:00Z", null, null),
-                new Report("rep_2", ReportTargetType.USER, "usr_20", "Fake profile suspected", "usr_11", "Anita Das", ReportCategory.FAKE_PROFILE, "Profile looks fake", ReportStatus.UNDER_REVIEW, "MEDIUM", "adm_003", "2025-01-01T06:00:00Z", null, null)
-        );
+        Instant weekAgo = Instant.now().minus(7, ChronoUnit.DAYS);
+        List<TimeSeriesPoint> growth = userRepository.countRegistrationsSince(weekAgo).stream()
+                .map(row -> new TimeSeriesPoint(String.valueOf(row[0]), ((Number) row[1]).longValue(), 0, 0, 0))
+                .toList();
+
+        List<Object[]> langRows = userRepository.countUsersByLanguage();
+        long langTotal = langRows.stream().mapToLong(r -> ((Number) r[1]).longValue()).sum();
+        List<LanguageDistribution> langs = langRows.stream()
+                .map(r -> new LanguageDistribution(String.valueOf(r[0]), ((Number) r[1]).longValue(),
+                        langTotal == 0 ? 0 : ((Number) r[1]).doubleValue() / langTotal * 100))
+                .toList();
+
+        List<CityDistribution> cities = profileRepository.countUsersByCity().stream()
+                .map(r -> new CityDistribution(String.valueOf(r[0]), ((Number) r[1]).longValue(), 0))
+                .toList();
+
+        List<ActivityItem> activity = auditLogRepository.findAll().stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .limit(10)
+                .map(log -> new ActivityItem(
+                        String.valueOf(log.getId()),
+                        log.getAction(),
+                        log.getDetails() != null ? log.getDetails() : log.getAction(),
+                        log.getAdmin() != null
+                                ? ((log.getAdmin().getFirstName() != null ? log.getAdmin().getFirstName() : "")
+                                   + (log.getAdmin().getLastName() != null ? " " + log.getAdmin().getLastName() : "")).trim()
+                                : "System",
+                        log.getCreatedAt() != null ? log.getCreatedAt().toString() : null))
+                .toList();
+        List<com.migrantcommunity.moderation.dto.Report> pending = reportRepository
+                .findByStatusOrderByCreatedAtDesc(ReportStatus.PENDING,
+                        org.springframework.data.domain.PageRequest.of(0, 10))
+                .getContent().stream()
+                .map(r -> new com.migrantcommunity.moderation.dto.Report(
+                        String.valueOf(r.getId()),
+                        r.getTargetType(),
+                        r.getTargetId() != null ? String.valueOf(r.getTargetId()) : null,
+                        r.getTargetPreview(),
+                        r.getReporter() != null ? String.valueOf(r.getReporter().getId()) : null,
+                        r.getReporter() != null ? r.getReporter().getEmail() : "Unknown",
+                        r.getCategory(),
+                        r.getDescription(),
+                        r.getStatus(),
+                        r.getPriority(),
+                        null,
+                        r.getCreatedAt() != null ? r.getCreatedAt().toString() : null,
+                        null,
+                        null))
+                .toList();
         return new DashboardOverview(getStatistics(), growth, langs, cities, activity, pending);
     }
 }

@@ -2,49 +2,108 @@ package com.migrantcommunity.location.service;
 
 import com.migrantcommunity.location.dto.City;
 import com.migrantcommunity.location.dto.Locality;
+import com.migrantcommunity.location.entity.Location;
+import com.migrantcommunity.location.repository.LocationRepository;
+import com.migrantcommunity.profile.repository.ProfileRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AdminLocationService {
-    private final List<City> cities = new ArrayList<>();
-    private final List<Locality> localities = new ArrayList<>();
 
-    public AdminLocationService() { seed(); }
-    private void seed() {
-        cities.add(new City("city_1","Mumbai","Maharashtra",1520,8));
-        cities.add(new City("city_2","Delhi","Delhi",980,5));
-        cities.add(new City("city_3","Bengaluru","Karnataka",760,6));
-        localities.add(new Locality("loc_1","Andheri","city_1","Mumbai",420));
-        localities.add(new Locality("loc_2","Bandra","city_1","Mumbai",310));
-        localities.add(new Locality("loc_3","Dwarka","city_2","Delhi",280));
+    private final LocationRepository locationRepository;
+    private final ProfileRepository profileRepository;
+
+    public AdminLocationService(LocationRepository locationRepository,
+                                ProfileRepository profileRepository) {
+        this.locationRepository = locationRepository;
+        this.profileRepository = profileRepository;
     }
-    public List<City> listCities() { return new ArrayList<>(cities); }
+
+    @Transactional(readOnly = true)
+    public List<City> listCities() {
+        return locationRepository.findByType(Location.Type.CITY).stream()
+                .map(this::toCityDto).toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<Locality> listLocalities(String cityId) {
-        if (cityId == null || cityId.isBlank()) return new ArrayList<>(localities);
-        return localities.stream().filter(l->l.cityId().equals(cityId)).collect(Collectors.toList());
+        List<Location> rows;
+        if (cityId == null || cityId.isBlank()) {
+            rows = locationRepository.findByType(Location.Type.LOCALITY);
+        } else {
+            rows = locationRepository.findByParentId(parseId(cityId));
+        }
+        return rows.stream()
+                .filter(l -> l.getType() == Location.Type.LOCALITY || cityId != null && !cityId.isBlank())
+                .map(this::toLocalityDto).toList();
     }
+
     public Locality createLocality(String name, String cityId) {
-        City city = cities.stream().filter(c->c.id().equals(cityId)).findFirst().orElseThrow(()->new IllegalArgumentException("City not found"));
-        Locality l = new Locality("loc_"+(localities.size()+1), name.trim(), city.id(), city.name(), 0);
-        localities.add(l);
-        // update city localityCount
-        City uc = new City(city.id(), city.name(), city.state(), city.userCount(), city.localityCount()+1);
-        replaceCity(uc);
-        return l;
+        Location city = locationRepository.findById(parseId(cityId))
+                .filter(l -> l.getType() == Location.Type.CITY)
+                .orElseThrow(() -> new IllegalArgumentException("City not found"));
+        Location locality = new Location();
+        locality.setName(name.trim());
+        locality.setType(Location.Type.LOCALITY);
+        locality.setParent(city);
+        locality.setCountry(city.getCountry());
+        locality.setState(city.getState());
+        locality.setCity(city.getName());
+        return toLocalityDto(locationRepository.save(locality));
     }
+
     public Locality updateLocality(String id, String name) {
-        Locality l = localities.stream().filter(x->x.id().equals(id)).findFirst().orElseThrow(()->new IllegalArgumentException("Locality not found"));
-        Locality u = new Locality(l.id(), name!=null?name.trim():l.name(), l.cityId(), l.cityName(), l.userCount());
-        replaceLocality(u); return u;
+        Location locality = locationRepository.findById(parseId(id))
+                .filter(l -> l.getType() == Location.Type.LOCALITY)
+                .orElseThrow(() -> new IllegalArgumentException("Locality not found"));
+        if (name != null && !name.isBlank()) {
+            locality.setName(name.trim());
+        }
+        return toLocalityDto(locationRepository.save(locality));
     }
-    public static record LocStats(long totalCities,long totalLocalities,long usersInTrackedLocations){}
+
+    public static record LocStats(long totalCities, long totalLocalities, long usersInTrackedLocations) {}
+
+    @Transactional(readOnly = true)
     public LocStats getStats() {
-        return new LocStats(cities.size(), localities.size(), cities.stream().mapToLong(City::userCount).sum());
+        long cities = locationRepository.countByType(Location.Type.CITY);
+        long localities = locationRepository.countByType(Location.Type.LOCALITY);
+        long users = locationRepository.findByType(Location.Type.CITY).stream()
+                .mapToLong(c -> profileRepository.countUsersInCity(c.getName()))
+                .sum();
+        return new LocStats(cities, localities, users);
     }
-    private void replaceCity(City c){ for(int i=0;i<cities.size();i++) if(cities.get(i).id().equals(c.id())){cities.set(i,c);break;} }
-    private void replaceLocality(Locality l){ for(int i=0;i<localities.size();i++) if(localities.get(i).id().equals(l.id())){localities.set(i,l);break;} }
+
+    private City toCityDto(Location l) {
+        long localities = locationRepository.findByParentId(l.getId()).stream()
+                .filter(x -> x.getType() == Location.Type.LOCALITY).count();
+        return new City(
+                String.valueOf(l.getId()),
+                l.getName(),
+                l.getState(),
+                profileRepository.countUsersInCity(l.getName()),
+                localities);
+    }
+
+    private Locality toLocalityDto(Location l) {
+        Location parent = l.getParent();
+        return new Locality(
+                String.valueOf(l.getId()),
+                l.getName(),
+                parent != null ? String.valueOf(parent.getId()) : null,
+                parent != null ? parent.getName() : l.getCity(),
+                profileRepository.countUsersInCity(l.getName()));
+    }
+
+    private Long parseId(String id) {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Location not found");
+        }
+    }
 }

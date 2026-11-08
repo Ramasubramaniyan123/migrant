@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** REST entry point for location endpoints. */
 @RestController
-@RequestMapping("/api/location")
+@RequestMapping("/v1/locations")
 public class LocationController {
 
     private final LocationService locationService;

@@ -10,10 +10,10 @@ export default function Breadcrumb({
       {items.map((item, i) => {
       const isLast = i === items.length - 1;
       return <Fragment key={`${item.label}-${i}`}>
-            {i > 0 ? <ChevronRight className="h-3.5 w-3.5 text-slate-400" /> : null}
-            {item.to && !isLast ? <Link to={item.to} className="text-slate-500 hover:text-blue-600 dark:text-slate-400">
+            {i > 0 ? <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" /> : null}
+            {item.to && !isLast ? <Link to={item.to} className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
                 {item.label}
-              </Link> : <span className={cn(isLast ? 'font-medium text-slate-900 dark:text-slate-100' : 'text-slate-500')}>
+              </Link> : <span className={cn(isLast ? 'font-medium text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400')}>
                 {item.label}
               </span>}
           </Fragment>;

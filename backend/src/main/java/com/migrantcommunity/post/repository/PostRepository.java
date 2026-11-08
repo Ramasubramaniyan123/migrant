@@ -12,8 +12,15 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
+    long countByCreatedAtBetween(java.time.Instant start, java.time.Instant end);
+
     
     Page<Post> findByCommunityIdOrderByCreatedAtDesc(Long communityId, Pageable pageable);
+
+    Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    @Query("SELECT p FROM Post p JOIN p.community c WHERE c.publicCommunity = true ORDER BY p.createdAt DESC")
+    Page<Post> findByPublicCommunityOrderByCreatedAtDesc(Pageable pageable);
     
     Page<Post> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
         "admin.bootstrap.password=test-admin-password-123",
         "jwt.secret=test-jwt-signing-secret-that-is-long-enough-123456"
 })
+@ActiveProfiles("test")
 class AdminAuthServiceTest {
 
     @Autowired

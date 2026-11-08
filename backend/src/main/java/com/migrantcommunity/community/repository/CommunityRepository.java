@@ -36,4 +36,27 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     Optional<Community> findByName(String name);
     
     boolean existsByName(String name);
+
+    long countByPublicCommunityTrue();
+
+    @Query("SELECT COALESCE(SUM(c.memberCount), 0) FROM Community c")
+    long sumMemberCount();
+
+    @Query("SELECT c.type, COUNT(c) FROM Community c GROUP BY c.type")
+    java.util.List<Object[]> countByType();
+
+    @Query("SELECT DISTINCT c FROM Community c " +
+           "WHERE (:search IS NULL " +
+           "       OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "       OR LOWER(c.description) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "  AND (:type IS NULL OR c.type = :type) " +
+           "  AND (:city IS NULL OR c.locationCity = :city) " +
+           "  AND (:activeOnly = false OR c.publicCommunity = true) " +
+           "  AND (:inactiveOnly = false OR c.publicCommunity = false)")
+    Page<Community> searchForAdmin(@Param("search") String search,
+                                   @Param("type") com.migrantcommunity.common.enums.CommunityType type,
+                                   @Param("city") String city,
+                                   @Param("activeOnly") boolean activeOnly,
+                                   @Param("inactiveOnly") boolean inactiveOnly,
+                                   Pageable pageable);
 }

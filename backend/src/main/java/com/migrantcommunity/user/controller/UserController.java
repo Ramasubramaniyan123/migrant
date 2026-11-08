@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** REST entry point for user account endpoints. */
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/v1/users")
 public class UserController {
 
     private final UserService userService;

@@ -1,38 +1,107 @@
 package com.migrantcommunity.language.service;
 
+import com.migrantcommunity.community.repository.CommunityRepository;
 import com.migrantcommunity.language.dto.Language;
+import com.migrantcommunity.language.repository.LanguageRepository;
+import com.migrantcommunity.language.repository.UserLanguageRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
 @Service
+@Transactional
 public class AdminLanguageService {
-    private final List<Language> languages = new ArrayList<>();
-    public AdminLanguageService() { seed(); }
-    private void seed() {
-        languages.add(new Language("lang_1","Hindi","हिन्दी","hi",true,1820,12));
-        languages.add(new Language("lang_2","Tamil","தமிழ்","ta",true,620,5));
-        languages.add(new Language("lang_3","Telugu","తెలుగు","te",true,540,4));
-        languages.add(new Language("lang_4","Bengali","বাংলা","bn",true,480,3));
-        languages.add(new Language("lang_5","Marathi","मराठी","mr",false,420,2));
+
+    private final LanguageRepository languageRepository;
+    private final UserLanguageRepository userLanguageRepository;
+    private final CommunityRepository communityRepository;
+
+    public AdminLanguageService(LanguageRepository languageRepository,
+                                UserLanguageRepository userLanguageRepository,
+                                CommunityRepository communityRepository) {
+        this.languageRepository = languageRepository;
+        this.userLanguageRepository = userLanguageRepository;
+        this.communityRepository = communityRepository;
     }
-    public List<Language> list() { return new ArrayList<>(languages); }
-    public Language create(String name,String nativeName,String code) {
-        String c=code.trim().toLowerCase();
-        if (languages.stream().anyMatch(l->l.code().equals(c))) throw new IllegalArgumentException("A language with this code already exists");
-        Language l=new Language("lang_"+(languages.size()+1),name.trim(),nativeName.trim(),c,true,0,0);
-        languages.add(l); return l;
+
+    @Transactional(readOnly = true)
+    public List<Language> list() {
+        return languageRepository.findAll().stream().map(this::toDto).toList();
     }
-    public Language update(String id,String name,String nativeName,String code,Boolean isActive) {
-        Language l=getById(id);
-        Language u=new Language(l.id(), name!=null?name:l.name(), nativeName!=null?nativeName:l.nativeName(), code!=null?code.trim().toLowerCase():l.code(), isActive!=null?isActive:l.isActive(), l.userCount(), l.communityCount());
-        replace(u); return u;
+
+    public Language create(String name, String nativeName, String code) {
+        String c = code == null ? "" : code.trim().toLowerCase(Locale.ROOT);
+        if (c.isEmpty()) {
+            throw new IllegalArgumentException("Language code is required");
+        }
+        if (languageRepository.existsByCode(c)) {
+            throw new IllegalArgumentException("A language with this code already exists");
+        }
+        com.migrantcommunity.language.entity.Language entity = new com.migrantcommunity.language.entity.Language();
+        entity.setName(name.trim());
+        entity.setNativeName(nativeName == null ? null : nativeName.trim());
+        entity.setCode(c);
+        entity.setActive(true);
+        return toDto(languageRepository.save(entity));
     }
-    public Language setActive(String id,boolean isActive){ return update(id,null,null,null,isActive); }
-    public Language getById(String id){ return languages.stream().filter(l->l.id().equals(id)).findFirst().orElseThrow(()->new IllegalArgumentException("Language not found")); }
-    public static record LangStats(long total,long active,long totalUsers){}
-    public LangStats getStats(){ return new LangStats(languages.size(),languages.stream().filter(Language::isActive).count(),languages.stream().mapToLong(Language::userCount).sum()); }
-    private void replace(Language l){ for(int i=0;i<languages.size();i++) if(languages.get(i).id().equals(l.id())){languages.set(i,l);break;} }
+
+    public Language update(String id, String name, String nativeName, String code, Boolean isActive) {
+        com.migrantcommunity.language.entity.Language entity = getEntity(id);
+        if (name != null) entity.setName(name.trim());
+        if (nativeName != null) entity.setNativeName(nativeName.trim());
+        if (code != null) {
+            String c = code.trim().toLowerCase(Locale.ROOT);
+            if (!c.equals(entity.getCode()) && languageRepository.existsByCode(c)) {
+                throw new IllegalArgumentException("A language with this code already exists");
+            }
+            entity.setCode(c);
+        }
+        if (isActive != null) entity.setActive(isActive);
+        return toDto(languageRepository.save(entity));
+    }
+
+    public Language setActive(String id, boolean isActive) {
+        return update(id, null, null, null, isActive);
+    }
+
+    @Transactional(readOnly = true)
+    public Language getById(String id) {
+        return toDto(getEntity(id));
+    }
+
+    public static record LangStats(long total, long active, long totalUsers) {}
+
+    @Transactional(readOnly = true)
+    public LangStats getStats() {
+        List<com.migrantcommunity.language.entity.Language> all = languageRepository.findAll();
+        long totalUsers = all.stream().mapToLong(l -> userLanguageRepository.countByLanguageId(l.getId())).sum();
+        return new LangStats(all.size(),
+                all.stream().filter(com.migrantcommunity.language.entity.Language::isActive).count(), totalUsers);
+    }
+
+    private com.migrantcommunity.language.entity.Language getEntity(String id) {
+        return languageRepository.findById(parseId(id))
+                .orElseThrow(() -> new IllegalArgumentException("Language not found"));
+    }
+
+    private Long parseId(String id) {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Language not found");
+        }
+    }
+
+    private Language toDto(com.migrantcommunity.language.entity.Language l) {
+        return new Language(
+                String.valueOf(l.getId()),
+                l.getName(),
+                l.getNativeName(),
+                l.getCode(),
+                l.isActive(),
+                userLanguageRepository.countByLanguageId(l.getId()),
+                communityRepository.countByLanguageId(l.getId()));
+    }
 }

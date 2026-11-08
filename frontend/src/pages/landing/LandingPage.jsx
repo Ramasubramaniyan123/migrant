@@ -1,6 +1,7 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import Badge from '@/components/common/Badge';
 import Button from '@/components/common/Button';
+import ThemeToggle from '@/components/common/ThemeToggle';
 import Footer from '@/components/layout/Footer';
 import communitiesSeed from '@/data/communities.json';
 import { useAuth } from '@/hooks/useAuth';
@@ -83,17 +84,18 @@ export default function LandingPage() {
     value: `${DISCOVERY_RADIUS_KM} km`,
     label: 'discovery radius'
   }];
-  return <div className="min-h-full bg-white">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
+  return <div className="min-h-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link to={ROUTES.landing} className="flex items-center gap-2 text-sm font-semibold text-slate-900 sm:text-base">
+          <Link to={ROUTES.landing} className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-base">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
               M
             </span>
             <span className="truncate">{APP_NAME}</span>
           </Link>
           <nav className="flex items-center gap-2">
-            <Link to={ROUTES.login} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
+            <ThemeToggle />
+            <Link to={ROUTES.login} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
               Sign in
             </Link>
             <Link to={ROUTES.register} className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">

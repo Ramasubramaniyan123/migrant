@@ -27,17 +27,17 @@ export default function ActivityFeed({
   className
 }) {
   if (items.length === 0) {
-    return <p className="py-6 text-center text-sm text-slate-500">No recent activity</p>;
+    return <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">No recent activity</p>;
   }
   return <ul className={cn('space-y-3', className)}>
-      {items.map(item => <li key={item.id} className="flex items-start gap-3">
-          <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', TYPE_STYLES[item.type].dot)} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-slate-700 dark:text-slate-300">{item.description}</p>
-            <p className="text-xs text-slate-400">
-              {TYPE_STYLES[item.type].label} · {formatRelativeTime(item.createdAt)}
-            </p>
-          </div>
-        </li>)}
-    </ul>;
+    {items.map(item => <li key={item.id} className="flex items-start gap-3">
+      <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', TYPE_STYLES[item.type].dot)} />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-slate-700 dark:text-slate-200">{item.description}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          {TYPE_STYLES[item.type].label} · {formatRelativeTime(item.createdAt)}
+        </p>
+      </div>
+    </li>)}
+  </ul>;
 }

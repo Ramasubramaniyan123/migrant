@@ -47,7 +47,7 @@ export default function AdminNavbar({
   };
   const initials = (profile?.name ?? admin?.name ?? 'A').split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
   return <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-      <button onClick={onMenuClick} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden dark:hover:bg-slate-800" aria-label="Open navigation">
+      <button onClick={onMenuClick} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800" aria-label="Open navigation">
         <Menu className="h-5 w-5" />
       </button>
 
@@ -87,13 +87,13 @@ export default function AdminNavbar({
               </span>
               <span className="hidden text-left md:block">
                 <span className="block text-sm font-medium text-slate-900 dark:text-slate-100">{profile?.name}</span>
-                <span className="block text-xs text-slate-500">{profile ? ADMIN_ROLE_LABELS[profile.role] : ''}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">{profile ? ADMIN_ROLE_LABELS[profile.role] : ''}</span>
               </span>
             </button>}>
           {close => <>
               <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{profile?.name}</p>
-                <p className="truncate text-xs text-slate-500">{profile?.email}</p>
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">{profile?.email}</p>
                 {profile ? <StatusBadge tone="blue" className="mt-1.5">{ADMIN_ROLE_LABELS[profile.role]}</StatusBadge> : null}
               </div>
               <DropdownItem onClick={() => {

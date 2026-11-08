@@ -41,7 +41,7 @@ export default function QuickActions() {
           </span>
           <span>
             <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">{a.label}</span>
-            <span className="block text-xs text-slate-500">{a.description}</span>
+            <span className="block text-xs text-slate-500 dark:text-slate-400">{a.description}</span>
           </span>
         </Link>)}
     </div>;

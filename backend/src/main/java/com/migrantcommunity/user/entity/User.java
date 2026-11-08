@@ -33,6 +33,11 @@ public class User {
     @Column(name = "is_verified")
     private boolean verified = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status", nullable = false, length = 50)
+    private com.migrantcommunity.common.enums.UserStatus accountStatus =
+            com.migrantcommunity.common.enums.UserStatus.ACTIVE;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
@@ -71,6 +76,8 @@ public class User {
     public void setActive(boolean active) { this.active = active; }
     public boolean isVerified() { return verified; }
     public void setVerified(boolean verified) { this.verified = verified; }
+    public com.migrantcommunity.common.enums.UserStatus getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(com.migrantcommunity.common.enums.UserStatus accountStatus) { this.accountStatus = accountStatus; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

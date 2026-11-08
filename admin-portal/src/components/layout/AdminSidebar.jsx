@@ -106,7 +106,7 @@ export default function AdminSidebar({
         </div>
         {!sidebarCollapsed ? <div className="ml-3 min-w-0">
             <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">MigrantConnect</p>
-            <p className="truncate text-xs text-slate-500">Admin Console</p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">Admin Console</p>
           </div> : null}
       </div>
 
@@ -116,7 +116,7 @@ export default function AdminSidebar({
         const visible = section.items.filter(item => !item.permission || hasPermission(admin?.role, item.permission));
         if (visible.length === 0) return null;
         return <div key={section.title} className="mb-5">
-              {!sidebarCollapsed ? <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              {!sidebarCollapsed ? <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {section.title}
                 </p> : <div className="mx-3 mb-2 border-t border-slate-200 dark:border-slate-800" />}
               <div className="space-y-0.5">
@@ -133,7 +133,7 @@ export default function AdminSidebar({
 
       {/* Collapse toggle */}
       <div className="border-t border-slate-200 p-3 dark:border-slate-800">
-        <button onClick={toggleSidebar} className={cn('flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800', sidebarCollapsed && 'justify-center px-0')} aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+        <button onClick={toggleSidebar} className={cn('flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200', sidebarCollapsed && 'justify-center px-0')} aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
           {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           {!sidebarCollapsed ? <span>Collapse</span> : null}
         </button>
