@@ -33,12 +33,13 @@ public class JwtService {
     public String issueAccessToken(User user) {
         Instant issuedAt = Instant.now();
         return Jwts.builder()
-                .setSubject(user.getEmail())
+                .subject(user.getEmail())
                 .claim("userId", user.getId())
                 .claim("role", user.getRole().name())
-                .setId(UUID.randomUUID().toString())
-                .setIssuedAt(Date.from(issuedAt))
-                .setExpiration(Date.from(issuedAt.plusMillis(expirationMillis)))
+                .claim("tokenUse", "user")
+                .id(UUID.randomUUID().toString())
+                .issuedAt(Date.from(issuedAt))
+                .expiration(Date.from(issuedAt.plusMillis(expirationMillis)))
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -46,22 +47,23 @@ public class JwtService {
     public String issueRefreshToken(User user) {
         Instant issuedAt = Instant.now();
         return Jwts.builder()
-                .setSubject(user.getEmail())
+                .subject(user.getEmail())
                 .claim("type", "refresh")
+                .claim("tokenUse", "user")
                 .claim("userId", user.getId())
-                .setId(UUID.randomUUID().toString())
-                .setIssuedAt(Date.from(issuedAt))
-                .setExpiration(Date.from(issuedAt.plusMillis(refreshExpirationMillis)))
+                .id(UUID.randomUUID().toString())
+                .issuedAt(Date.from(issuedAt))
+                .expiration(Date.from(issuedAt.plusMillis(refreshExpirationMillis)))
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public Claims parse(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(signingKey)
+        return Jwts.parser()
+                .verifyWith(signingKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     private SecretKey createSigningKey(String configuredSecret) {

@@ -1,26 +1,43 @@
-import notificationsSeed from '@/data/notifications.json';
-import { clone } from '@/utils/helpers';
-import { mockResponse } from './api';
-let notifications = clone(notificationsSeed);
+import { request } from './api';
+
+function toNotification(dto, userId) {
+  return {
+    id: Number(dto.id),
+    userId: Number(userId),
+    type: dto.type,
+    title: dto.title ?? '',
+    content: dto.content ?? '',
+    relatedId: dto.relatedId ?? undefined,
+    isRead: Boolean(dto.read),
+    createdAt: dto.createdAt
+  };
+}
+
+async function fetchPage(path) {
+  const page = await request(path);
+  return page?.content ?? [];
+}
+
 export const notificationService = {
   async getForUser(userId) {
-    const rows = notifications.filter(notification => notification.userId === userId).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-    return mockResponse(rows);
+    const rows = await fetchPage('/v1/notifications?size=100');
+    return rows
+      .map(dto => toNotification(dto, userId))
+      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   },
+
   async markRead(id) {
-    const notification = notifications.find(row => row.id === id);
-    if (notification) notification.isRead = true;
-    return mockResponse(notification, 60);
+    await request(`/v1/notifications/${id}/read`, { method: 'PUT' });
   },
+
   async markAllRead(userId) {
-    notifications = notifications.map(notification => notification.userId === userId ? {
-      ...notification,
-      isRead: true
-    } : notification);
-    return mockResponse(notifications.filter(row => row.userId === userId), 80);
+    await request('/v1/notifications/read-all', { method: 'PUT' });
+    return notificationService.getForUser(userId);
   },
+
+  /** No bulk-delete endpoint — clears each notification individually. */
   async clear(userId) {
-    notifications = notifications.filter(notification => notification.userId !== userId);
-    return mockResponse(undefined, 80);
+    const rows = await notificationService.getForUser(userId);
+    await Promise.all(rows.map(row => request(`/v1/notifications/${row.id}`, { method: 'DELETE' })));
   }
 };

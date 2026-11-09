@@ -94,16 +94,6 @@ export default function AdminLoginPage() {
             </Button>
           </form>
         </div>
-
-        <div className="card mt-4 border-dashed p-4 text-center">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-            Demo credentials
-          </p>
-          <p className="mt-1 font-mono text-sm text-slate-600">
-            priya.sharma@migrantconnect.in
-          </p>
-          <p className="font-mono text-sm text-slate-600">admin123</p>
-        </div>
       </div>
     </div>
   );

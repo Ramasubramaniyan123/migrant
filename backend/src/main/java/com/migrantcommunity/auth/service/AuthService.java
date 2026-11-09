@@ -102,7 +102,8 @@ public class AuthService {
     public AuthResponse login(String email, String password, String ipAddress, String userAgent) {
         User user = userRepository.findByEmail(email.toLowerCase().trim())
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
-        if (!user.isActive()) {
+        if (!user.isActive()
+                || user.getAccountStatus() != com.migrantcommunity.common.enums.UserStatus.ACTIVE) {
             throw new BadRequestException("Account is suspended");
         }
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
@@ -120,7 +121,8 @@ public class AuthService {
             throw new BadRequestException("Refresh token is expired or revoked");
         }
         User user = stored.getUser();
-        if (!user.isActive()) {
+        if (!user.isActive()
+                || user.getAccountStatus() != com.migrantcommunity.common.enums.UserStatus.ACTIVE) {
             throw new BadRequestException("Account is suspended");
         }
         // Rotation: revoke the presented token before issuing a new pair.

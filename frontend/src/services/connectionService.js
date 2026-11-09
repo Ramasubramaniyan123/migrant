@@ -1,72 +1,138 @@
-import connectionsSeed from '@/data/connections.json';
-import { clone } from '@/utils/helpers';
-import { mockResponse, nextId } from './api';
+import { request } from './api';
 
 /**
- * In-memory connection store seeded from `src/data/connections.json`.
- * Kept module-scoped so screens stay in sync during a session.
+ * Connection store backed by `/v1/connections`.
+ *
+ * `statusBetween` / `connectedUserIds` are synchronous helpers used during
+ * render, so every list call also refreshes a module-level cache that the
+ * sync helpers read. Mutations update the cache optimistically.
  */
-let connections = clone(connectionsSeed);
+let cache = [];
+
+function toConnection(dto) {
+  return {
+    id: Number(dto.id),
+    requesterId: Number(dto.requesterId),
+    receiverId: Number(dto.receiverId),
+    requesterName: dto.requesterName,
+    receiverName: dto.receiverName,
+    status: dto.status,
+    matchScore: dto.matchScore !== null && dto.matchScore !== undefined ? Number(dto.matchScore) : 0,
+    matchedBy: dto.matchedBy ?? 'LOCATION',
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt
+  };
+}
+
+function remember(connections) {
+  const mapped = connections.map(toConnection);
+  const byId = new Map(cache.map(row => [row.id, row]));
+  mapped.forEach(row => byId.set(row.id, row));
+  cache = [...byId.values()];
+  return mapped;
+}
+
+async function fetchPage(path) {
+  const page = await request(path);
+  return (page?.content ?? []).map(toConnection);
+}
+
+/** All connections visible to the current user: pending (both directions) + accepted. */
+async function fetchAll() {
+  const [pending, accepted] = await Promise.all([
+    fetchPage('/v1/connections?status=PENDING&size=100'),
+    fetchPage('/v1/connections?status=ACCEPTED&size=100')
+  ]);
+  const merged = new Map();
+  [...pending, ...accepted].forEach(row => merged.set(row.id, row));
+  cache = [...merged.values()];
+  return cache;
+}
+
 export const connectionService = {
   async getForUser(userId) {
-    return mockResponse(connections.filter(connection => connection.requesterId === userId || connection.receiverId === userId));
+    return fetchAll();
   },
+
   async getReceivedRequests(userId) {
-    return mockResponse(connections.filter(connection => connection.receiverId === userId && connection.status === 'PENDING'));
+    const rows = await fetchPage('/v1/connections/pending?size=100');
+    remember(rows);
+    return rows;
   },
+
   async getSentRequests(userId) {
-    return mockResponse(connections.filter(connection => connection.requesterId === userId && connection.status === 'PENDING'));
+    const rows = await fetchPage('/v1/connections/sent?size=100');
+    remember(rows);
+    return rows;
   },
+
   async getAccepted(userId) {
-    return mockResponse(connections.filter(connection => connection.status === 'ACCEPTED' && (connection.requesterId === userId || connection.receiverId === userId)));
+    const rows = await fetchPage('/v1/connections?status=ACCEPTED&size=100');
+    remember(rows);
+    return rows;
   },
+
   async sendRequest(requesterId, receiverId, matchScore, matchedBy) {
-    const existing = connections.find(connection => connection.requesterId === requesterId && connection.receiverId === receiverId || connection.requesterId === receiverId && connection.receiverId === requesterId);
-    if (existing) {
-      existing.status = 'PENDING';
-      existing.updatedAt = new Date().toISOString();
-      return mockResponse(existing);
-    }
-    const now = new Date().toISOString();
-    const created = {
-      id: nextId(connections),
-      requesterId,
-      receiverId,
-      status: 'PENDING',
-      matchScore,
-      matchedBy,
-      createdAt: now,
-      updatedAt: now
-    };
-    connections = [...connections, created];
-    return mockResponse(created);
+    const created = toConnection(
+      await request('/v1/connections/request', {
+        method: 'POST',
+        body: { receiverId: Number(receiverId) }
+      })
+    );
+    // The API does not accept matchScore/matchedBy — keep them for display.
+    created.matchScore = matchScore ?? created.matchScore;
+    created.matchedBy = matchedBy ?? created.matchedBy;
+    remember([created]);
+    return created;
   },
+
   async updateStatus(connectionId, status) {
-    const connection = connections.find(row => row.id === connectionId);
-    if (!connection) throw new Error(`Connection ${connectionId} not found`);
-    connection.status = status;
-    connection.updatedAt = new Date().toISOString();
-    return mockResponse(connection);
+    const verb = status === 'ACCEPTED' ? 'accept' : status === 'REJECTED' ? 'reject' : null;
+    if (!verb) throw new Error(`Unsupported connection status: ${status}`);
+    const updated = toConnection(
+      await request(`/v1/connections/${connectionId}/${verb}`, { method: 'POST' })
+    );
+    remember([updated]);
+    return updated;
   },
+
   async acceptRequest(connectionId) {
     return this.updateStatus(connectionId, 'ACCEPTED');
   },
+
   async rejectRequest(connectionId) {
     return this.updateStatus(connectionId, 'REJECTED');
   },
+
   async cancelRequest(connectionId) {
-    connections = connections.filter(row => row.id !== connectionId);
-    return mockResponse(undefined, 120);
+    await request(`/v1/connections/${connectionId}/cancel`, { method: 'DELETE' });
+    cache = cache.filter(row => row.id !== Number(connectionId));
   },
+
   async removeConnection(connectionId) {
-    connections = connections.filter(row => row.id !== connectionId);
-    return mockResponse(undefined, 120);
+    await request(`/v1/connections/${connectionId}`, { method: 'DELETE' });
+    cache = cache.filter(row => row.id !== Number(connectionId));
   },
+
   /** Synchronous helper used by the connection context for badge states. */
   statusBetween(userA, userB) {
-    return connections.find(connection => connection.requesterId === userA && connection.receiverId === userB || connection.requesterId === userB && connection.receiverId === userA);
+    const a = Number(userA);
+    const b = Number(userB);
+    return cache.find(
+      connection =>
+        (connection.requesterId === a && connection.receiverId === b) ||
+        (connection.requesterId === b && connection.receiverId === a)
+    );
   },
+
   connectedUserIds(userId) {
-    return connections.filter(connection => connection.status === 'ACCEPTED' && (connection.requesterId === userId || connection.receiverId === userId)).map(connection => connection.requesterId === userId ? connection.receiverId : connection.requesterId);
+    const id = Number(userId);
+    return cache
+      .filter(
+        connection =>
+          connection.status === 'ACCEPTED' &&
+          (connection.requesterId === id || connection.receiverId === id)
+      )
+      .map(connection => (connection.requesterId === id ? connection.receiverId : connection.requesterId));
   }
 };

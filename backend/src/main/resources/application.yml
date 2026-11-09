@@ -32,7 +32,9 @@ server:
     context-path: /api
 
 jwt:
-  secret: ${JWT_SECRET:change-me-in-production-min-32-chars}
+  # Leave unset outside production: services generate an ephemeral random key.
+  # Production must provide JWT_SECRET (see application-prod.yml).
+  secret: ${JWT_SECRET:}
   expiration: ${JWT_EXPIRATION:86400000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 

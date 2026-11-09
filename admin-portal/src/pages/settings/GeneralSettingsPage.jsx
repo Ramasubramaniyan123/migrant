@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/common/Button';
 import { Input, Select } from '@/components/common/Input';
+import { usePageSettings } from '@/hooks/usePageSettings';
 import { ADMIN_ROUTES } from '@/utils/constants';
 import { CheckCircle2 } from 'lucide-react';
-
-const STORAGE_KEY = 'admin_portal_settings';
-const PAGE_KEY = 'general';
 
 const DEFAULTS = {
   platformName: 'MigrantConnect',
@@ -17,39 +14,12 @@ const DEFAULTS = {
   itemsPerPage: '20'
 };
 
-function readSaved() {
-  try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-    return { ...DEFAULTS, ...(all[PAGE_KEY] ?? {}) };
-  } catch {
-    return { ...DEFAULTS };
-  }
-}
-
 export default function GeneralSettingsPage() {
-  const [form, setForm] = useState(DEFAULTS);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setForm(readSaved());
-  }, []);
-
-  const setField = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    setSaved(false);
-  };
+  const { form, setField, save, saved, isSaving, error } = usePageSettings('generalSettings', DEFAULTS);
 
   const handleSave = e => {
     e.preventDefault();
-    try {
-      const all = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-      all[PAGE_KEY] = form;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      // ignore storage errors in prototype
-    }
+    void save();
   };
 
   return (
@@ -63,6 +33,10 @@ export default function GeneralSettingsPage() {
           { label: 'General' }
         ]}
       />
+
+      {error ? (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      ) : null}
 
       <form onSubmit={handleSave} className="card space-y-5 p-6">
         <Input
@@ -115,7 +89,7 @@ export default function GeneralSettingsPage() {
               <CheckCircle2 className="h-4 w-4" /> Settings saved
             </span>
           ) : null}
-          <Button type="submit">Save changes</Button>
+          <Button type="submit" isLoading={isSaving}>Save changes</Button>
         </div>
       </form>
     </div>

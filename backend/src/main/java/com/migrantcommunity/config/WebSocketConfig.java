@@ -55,7 +55,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     }
                     try {
                         var claims = jwtService.parse(token);
-                        String userId = String.valueOf(claims.get("userId"));
+                        // Only user access tokens may open a messaging socket;
+                        // refresh and admin-portal tokens are rejected.
+                        Object userIdClaim = claims.get("userId");
+                        boolean usable = userIdClaim != null
+                                && !"refresh".equals(claims.get("type", String.class))
+                                && !"admin".equals(claims.get("tokenUse", String.class));
+                        if (!usable) {
+                            throw new IllegalArgumentException("Token not permitted for WebSocket");
+                        }
+                        String userId = String.valueOf(userIdClaim);
                         accessor.setUser(new Principal() {
                             @Override
                             public String getName() {
@@ -64,6 +73,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         });
                     } catch (Exception ex) {
                         throw new IllegalArgumentException("Invalid JWT token");
+                    }
+                }
+                if (accessor != null && StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                    // Clients may only subscribe to their own /user destinations;
+                    // /topic and raw /queue channels are not exposed.
+                    String destination = accessor.getDestination();
+                    if (destination == null || !destination.startsWith("/user/")) {
+                        throw new IllegalArgumentException("Subscription not permitted");
                     }
                 }
                 return message;

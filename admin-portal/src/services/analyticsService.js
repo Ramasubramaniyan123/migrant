@@ -1,37 +1,33 @@
-import { MOCK_USER_GROWTH, MOCK_LANGUAGE_DISTRIBUTION, MOCK_CITY_DISTRIBUTION, MOCK_ENGAGEMENT } from '@/data/mockAnalytics';
-import { mockRequest } from './api';
+import { api } from './api';
+
+const BASE = '/admin/analytics';
+
+/** Platform analytics — /v1/admin/analytics/*. */
 export const analyticsService = {
-  async getUserGrowth(range = {}) {
-    return mockRequest(() => MOCK_USER_GROWTH, 400);
+  async getUserGrowth() {
+    // List<TimeSeriesPoint> { date, users, activeUsers, posts, connections }
+    return api.get(`${BASE}/users`);
   },
+
   async getLanguageDistribution() {
-    return mockRequest(() => MOCK_LANGUAGE_DISTRIBUTION, 350);
+    // List<LanguageDistribution> { language, users, percentage }
+    return api.get(`${BASE}/languages`);
   },
+
   async getCityDistribution() {
-    return mockRequest(() => MOCK_CITY_DISTRIBUTION, 350);
+    // List<CityDistribution> { city, users, percentage }
+    return api.get(`${BASE}/locations`);
   },
+
   async getEngagement() {
-    return mockRequest(() => MOCK_ENGAGEMENT, 350);
+    // EngagementMetrics { dailyActiveUsers, weeklyActiveUsers, monthlyActiveUsers,
+    // avgPostsPerUser, avgConnectionsPerUser, retentionDay7, retentionDay30 }
+    return api.get(`${BASE}/engagement`);
   },
+
   async getRetentionCohorts() {
-    return mockRequest(() => [{
-      cohort: 'Week of Oct 27',
-      size: 320,
-      day1: 78,
-      day7: 61,
-      day30: 42
-    }, {
-      cohort: 'Week of Nov 3',
-      size: 287,
-      day1: 81,
-      day7: 64,
-      day30: null
-    }, {
-      cohort: 'This week',
-      size: 145,
-      day1: 84,
-      day7: null,
-      day30: null
-    }], 400);
+    // No cohort-retention endpoint exists yet — return an empty result rather
+    // than fabricated data.
+    return [];
   }
 };

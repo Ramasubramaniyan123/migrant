@@ -38,11 +38,16 @@ public class CustomUserDetails implements UserDetails {
     public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() { return user.isActive(); }
+    public boolean isAccountNonLocked() {
+        return user.isActive()
+                && user.getAccountStatus() == com.migrantcommunity.common.enums.UserStatus.ACTIVE;
+    }
 
     @Override
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return user.isActive() && user.isVerified(); }
+    public boolean isEnabled() {
+        return isAccountNonLocked() && user.isVerified();
+    }
 }

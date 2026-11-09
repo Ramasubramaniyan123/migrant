@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 export default function ProtectedRoute() {
   const {
     isAuthenticated,
-    isLoading
+    isLoading,
+    verificationRequired
   } = useAuth();
   const location = useLocation();
   if (isLoading) {
@@ -16,6 +17,11 @@ export default function ProtectedRoute() {
     return <Navigate to="/login" replace state={{
       from: location.pathname
     }} />;
+  }
+  // The backend rejects every API call for unverified accounts — send the
+  // user to the verification screen instead of letting pages fail with 401s.
+  if (verificationRequired) {
+    return <Navigate to="/verify-email" replace />;
   }
   return <Outlet />;
 }

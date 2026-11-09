@@ -1,78 +1,62 @@
-import { MOCK_ADMINS } from '@/data/mockAdmins';
-import { clone } from '@/utils/helpers';
-import { mockRequest, MockStore } from './api';
-const store = new MockStore('admin_portal_admins', () => clone(MOCK_ADMINS));
-/** Demo credentials: any admin email + password "admin123". */
+import { api, ApiError } from './api';
+
+const ADMIN_PATH = '/admin';
+
+/**
+ * Admin authentication & administrator management.
+ * Backed by /v1/admin/auth/* and /v1/admin/administrators (SUPER_ADMIN only
+ * for management endpoints — the server enforces the role).
+ */
 export const adminAuthService = {
   async login(payload) {
-    return mockRequest(() => {
-      const admin = store.findMany(a => a.email.toLowerCase() === payload.email.trim().toLowerCase())[0];
-      if (!admin) {
-        throw new Error('No administrator account found for this email');
-      }
-      if (admin.status === 'SUSPENDED') {
-        throw new Error('This administrator account has been suspended');
-      }
-      if (payload.password !== 'admin123') {
-        throw new Error('Incorrect password');
-      }
-      store.update(admin.id, {
-        lastLoginAt: new Date().toISOString()
-      });
-      const token = `demo-token-${admin.id}-${Date.now()}`;
-      return {
-        admin,
-        token
-      };
-    }, 500);
+    // Returns { admin, token } — the raw AdminLoginResponse body.
+    const result = await api.post(`${ADMIN_PATH}/auth/login`, {
+      email: payload.email,
+      password: payload.password
+    });
+    return { admin: result.admin, token: result.token };
   },
+
   async logout() {
-    await mockRequest(() => undefined, 150);
+    // Best-effort server-side token revocation; session cleanup happens in
+    // the auth context regardless of the outcome.
+    try {
+      await api.post(`${ADMIN_PATH}/auth/logout`);
+    } catch {
+      // Token may already be expired/revoked — ignore.
+    }
   },
+
   async requestPasswordReset(email) {
-    await mockRequest(() => {
-      const exists = store.findMany(a => a.email.toLowerCase() === email.trim().toLowerCase()).length > 0;
-      if (!exists) {
-        // Do not reveal whether the email exists
-        return;
-      }
-      return;
-    }, 400);
+    // Always resolves silently — the backend never reveals whether the email exists.
+    await api.post(`${ADMIN_PATH}/auth/forgot-password`, { email });
   },
+
   async resetPassword(token, newPassword) {
-    await mockRequest(() => {
-      if (!token || token.length < 10) {
-        throw new Error('Invalid or expired reset token');
-      }
-      if (newPassword.length < 8) {
-        throw new Error('Password must be at least 8 characters');
-      }
-    }, 400);
+    if (!token) throw new ApiError('Reset token is required', 400);
+    if (typeof newPassword !== 'string' || newPassword.length < 12) {
+      throw new ApiError('Password must be at least 12 characters', 400);
+    }
+    await api.post(`${ADMIN_PATH}/auth/reset-password`, { token, newPassword });
   },
+
   async listAdmins() {
-    return mockRequest(() => store.all());
+    return api.get(`${ADMIN_PATH}/administrators`);
   },
+
   async createAdmin(payload) {
-    return mockRequest(() => {
-      const exists = store.findMany(a => a.email.toLowerCase() === payload.email.toLowerCase())[0];
-      if (exists) throw new Error('An administrator with this email already exists');
-      return store.create({
-        name: payload.name,
-        email: payload.email,
-        role: payload.role,
-        status: 'INVITED',
-        createdAt: new Date().toISOString()
-      });
-    }, 400);
+    return api.post(`${ADMIN_PATH}/administrators`, {
+      name: payload.name,
+      email: payload.email,
+      role: payload.role
+    });
   },
+
   async updateAdminRole(id, role) {
-    return mockRequest(() => store.update(id, {
-      role
-    }), 300);
+    return api.patch(`${ADMIN_PATH}/administrators/${id}/role`, { role });
   },
+
   async updateAdminStatus(id, status) {
-    return mockRequest(() => store.update(id, {
-      status
-    }), 300);
+    return api.patch(`${ADMIN_PATH}/administrators/${id}/status`, { status });
   }
 };

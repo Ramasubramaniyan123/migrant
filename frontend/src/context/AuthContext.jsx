@@ -8,14 +8,30 @@ export function AuthProvider({
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [verificationRequired, setVerificationRequired] = useState(false);
   useEffect(() => {
     const session = authService.getCurrentSession();
-    setUser(session?.user ?? null);
+    const stored = session?.user ?? null;
+    setUser(stored);
+    setVerificationRequired(stored?.isVerified === false);
     setIsLoading(false);
+    // Refresh the profile from the API so a session restored after email
+    // verification (or profile edits on another device) stays accurate.
+    if (stored) {
+      authService.fetchCurrentUser().then(fresh => {
+        authService.updateStoredUser(fresh);
+        setUser(fresh);
+        setVerificationRequired(fresh.isVerified === false);
+      }).catch(() => {
+        // Keep the stored session — individual screens surface API errors.
+      });
+    }
+    void userService.loadLanguages();
   }, []);
   const persist = useCallback(next => {
     authService.updateStoredUser(next);
     setUser(next);
+    setVerificationRequired(next?.isVerified === false);
   }, []);
   const login = useCallback(async payload => {
     setIsLoading(true);
@@ -50,6 +66,7 @@ export function AuthProvider({
   const logout = useCallback(async () => {
     await authService.logout();
     setUser(null);
+    setVerificationRequired(false);
   }, []);
   const updateProfile = useCallback(async patch => {
     if (!user) return;
@@ -67,13 +84,14 @@ export function AuthProvider({
     isAdmin: user?.role === 'ADMIN',
     isLoading,
     error,
+    verificationRequired,
     login,
     register,
     logout,
     updateProfile,
     completeOnboarding,
     clearError: () => setError(null)
-  }), [completeOnboarding, error, isLoading, login, logout, register, updateProfile, user]);
+  }), [completeOnboarding, error, isLoading, login, logout, register, updateProfile, user, verificationRequired]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 export function useAuthContext() {

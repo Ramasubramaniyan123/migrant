@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/common/Button';
 import { Input, Select } from '@/components/common/Input';
+import { usePageSettings } from '@/hooks/usePageSettings';
 import { ADMIN_ROUTES } from '@/utils/constants';
 import { CheckCircle2 } from 'lucide-react';
-
-const STORAGE_KEY = 'admin_portal_settings';
-const PAGE_KEY = 'platform';
 
 const DEFAULTS = {
   allowRegistration: true,
@@ -18,15 +15,6 @@ const DEFAULTS = {
   enableNotifications: true,
   enableAnalyticsTracking: true
 };
-
-function readSaved() {
-  try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-    return { ...DEFAULTS, ...(all[PAGE_KEY] ?? {}) };
-  } catch {
-    return { ...DEFAULTS };
-  }
-}
 
 function Toggle({ label, hint, checked, onChange }) {
   return (
@@ -46,29 +34,11 @@ function Toggle({ label, hint, checked, onChange }) {
 }
 
 export default function PlatformSettingsPage() {
-  const [form, setForm] = useState(DEFAULTS);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setForm(readSaved());
-  }, []);
-
-  const setField = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    setSaved(false);
-  };
+  const { form, setField, save, saved, isSaving, error } = usePageSettings('platformSettings', DEFAULTS);
 
   const handleSave = e => {
     e.preventDefault();
-    try {
-      const all = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-      all[PAGE_KEY] = form;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      // ignore storage errors in prototype
-    }
+    void save();
   };
 
   return (
@@ -82,6 +52,10 @@ export default function PlatformSettingsPage() {
           { label: 'Platform' }
         ]}
       />
+
+      {error ? (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      ) : null}
 
       <form onSubmit={handleSave} className="space-y-5">
         <div className="card space-y-3 p-6">
@@ -126,7 +100,7 @@ export default function PlatformSettingsPage() {
               <CheckCircle2 className="h-4 w-4" /> Settings saved
             </span>
           ) : null}
-          <Button type="submit">Save changes</Button>
+          <Button type="submit" isLoading={isSaving}>Save changes</Button>
         </div>
       </form>
     </div>

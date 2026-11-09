@@ -1,61 +1,73 @@
-import { MOCK_EVENTS, MOCK_EVENT_PARTICIPANTS } from '@/data/mockEvents';
-import { clone } from '@/utils/helpers';
-import { mockRequest, MockStore } from './api';
-const store = new MockStore('admin_portal_events', () => clone(MOCK_EVENTS));
-const participantStore = new MockStore('admin_portal_event_participants', () => clone(MOCK_EVENT_PARTICIPANTS));
+import { api } from './api';
+
+const BASE = '/admin/events';
+
+function toPayload(payload) {
+  // The backend CommunityEvent record ignores communityName/city (city is
+  // derived from the community) and computes nothing else server-side.
+  return {
+    title: payload.title,
+    description: payload.description,
+    communityId: payload.communityId,
+    location: payload.location,
+    startsAt: payload.startsAt,
+    endsAt: payload.endsAt,
+    capacity: payload.capacity,
+    status: payload.status,
+    organizerId: payload.organizerId
+  };
+}
+
+function deriveStatus(payload) {
+  if (payload.status) return payload.status;
+  if (!payload.startsAt) return undefined;
+  return new Date(payload.startsAt) < new Date() ? 'ONGOING' : 'UPCOMING';
+}
+
+/** Community event administration — /v1/admin/events/*. */
 export const eventService = {
   async list(params = {}) {
-    return mockRequest(() => {
-      const {
-        status = 'ALL',
-        city = 'ALL',
-        search = ''
-      } = params;
-      let items = store.all();
-      if (status !== 'ALL') items = items.filter(e => e.status === status);
-      if (city !== 'ALL') items = items.filter(e => e.city === city);
-      const q = search.trim().toLowerCase();
-      if (q) items = items.filter(e => e.title.toLowerCase().includes(q) || e.communityName.toLowerCase().includes(q));
-      items.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-      return clone(items);
-    }, 350);
+    const { status = 'ALL', city = 'ALL', search = '' } = params;
+    // Backend returns the full unpaginated list; filtering stays client-side.
+    const events = await api.get(BASE);
+    const q = search.trim().toLowerCase();
+    return events
+      .filter(e => (status === 'ALL' || e.status === status)
+        && (city === 'ALL' || e.city === city)
+        && (!q || (e.title ?? '').toLowerCase().includes(q)
+          || (e.communityName ?? '').toLowerCase().includes(q)))
+      .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
   },
+
   async getById(id) {
-    return mockRequest(() => clone(store.find(id)), 250);
+    return api.get(`${BASE}/${id}`);
   },
+
   async create(payload) {
-    return mockRequest(() => {
-      const now = new Date();
-      const startsAt = new Date(payload.startsAt);
-      const status = startsAt < now ? 'ONGOING' : 'UPCOMING';
-      return store.create({
-        ...payload,
-        status,
-        participantCount: 0,
-        createdAt: new Date().toISOString()
-      });
-    }, 400);
+    return api.post(BASE, toPayload({ ...payload, status: deriveStatus(payload) }));
   },
+
   async update(id, patch) {
-    return mockRequest(() => store.update(id, patch), 350);
+    return api.put(`${BASE}/${id}`, toPayload(patch));
   },
+
   async cancel(id) {
-    return mockRequest(() => store.update(id, {
-      status: 'CANCELLED'
-    }), 350);
+    // No dedicated cancel endpoint — update the status via PUT.
+    return api.put(`${BASE}/${id}`, { status: 'CANCELLED' });
   },
+
   async listParticipants(eventId) {
-    return mockRequest(() => clone(participantStore.findMany(p => p.eventId === eventId)), 300);
+    return api.get(`${BASE}/${eventId}/participants`);
   },
+
   async getStats() {
-    return mockRequest(() => {
-      const all = store.all();
-      return {
-        total: all.length,
-        upcoming: all.filter(e => e.status === 'UPCOMING').length,
-        ongoing: all.filter(e => e.status === 'ONGOING').length,
-        totalParticipants: all.reduce((s, e) => s + e.participantCount, 0)
-      };
-    }, 250);
+    // No stats endpoint — aggregate the real event list client-side.
+    const events = await api.get(BASE);
+    return {
+      total: events.length,
+      upcoming: events.filter(e => e.status === 'UPCOMING').length,
+      ongoing: events.filter(e => e.status === 'ONGOING').length,
+      totalParticipants: events.reduce((s, e) => s + (e.participantCount ?? 0), 0)
+    };
   }
 };

@@ -38,8 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authorization.substring(7).trim();
         try {
             Claims claims = jwtService.parse(token);
-            // Only access tokens may authenticate API requests; refresh tokens are rejected.
-            if ("refresh".equals(claims.get("type", String.class))) {
+            // Only user access tokens may authenticate API requests; refresh and
+            // admin-portal tokens are rejected.
+            if ("refresh".equals(claims.get("type", String.class))
+                    || "admin".equals(claims.get("tokenUse", String.class))) {
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
                 return;
@@ -47,6 +49,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = claims.getSubject();
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                // Enforce account state on every request: deactivated or
+                // unverified accounts must not retain access via existing tokens.
+                if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

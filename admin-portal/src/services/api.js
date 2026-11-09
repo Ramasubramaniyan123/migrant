@@ -1,8 +1,15 @@
-import { sleep } from '@/utils/helpers';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
+import axios from 'axios';
 
-/** Simulated network latency for prototype mode. */
-const MOCK_LATENCY_MS = 350;
+/**
+ * Base URL for the Spring Boot admin API. Defaults to the Vite dev-server
+ * proxy path (`/api` -> http://localhost:8080) so no CORS setup is needed in
+ * development. Override with VITE_API_BASE_URL for other environments.
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+
+const SESSION_STORAGE_KEY = 'admin_portal_session';
+const LOGIN_PATH = '/login';
+
 export class ApiError extends Error {
   constructor(message, status = 500) {
     super(message);
@@ -11,91 +18,98 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Wraps a mock operation with simulated latency. When the real Spring Boot
- * backend is ready, services can call axios against API_BASE_URL instead.
- */
-export async function mockRequest(fn, latency = MOCK_LATENCY_MS) {
-  await sleep(latency);
-  return fn();
+function readToken() {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw)?.token ?? null;
+  } catch {
+    return null;
+  }
 }
 
-/**
- * localStorage-backed collection store. Seed data is cloned on first read so
- * mutations stay isolated and persist across reloads during the prototype.
- */
-export class MockStore {
-  cache = null;
-  constructor(key, seed) {
-    this.key = key;
-    this.seed = seed;
+function clearSessionAndRedirect() {
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch {
+    // storage unavailable — still redirect
   }
-  load() {
-    if (this.cache) return this.cache;
-    try {
-      const raw = localStorage.getItem(this.key);
-      if (raw) {
-        this.cache = JSON.parse(raw);
-        return this.cache;
-      }
-    } catch {
-      // corrupted storage — fall through to seed
-    }
-    this.cache = this.seed();
-    this.persist();
-    return this.cache;
-  }
-  persist() {
-    try {
-      localStorage.setItem(this.key, JSON.stringify(this.cache ?? []));
-    } catch {
-      // storage full or unavailable — prototype continues in-memory
-    }
-  }
-  all() {
-    return [...this.load()];
-  }
-  find(id) {
-    return this.load().find(item => item.id === id);
-  }
-  findMany(predicate) {
-    return this.load().filter(predicate);
-  }
-  create(data) {
-    const items = this.load();
-    const record = {
-      id: data.id ?? this.nextId(items),
-      ...data
-    };
-    items.push(record);
-    this.persist();
-    return record;
-  }
-  update(id, patch) {
-    const items = this.load();
-    const index = items.findIndex(item => item.id === id);
-    if (index === -1) return undefined;
-    items[index] = {
-      ...items[index],
-      ...patch
-    };
-    this.persist();
-    return items[index];
-  }
-  remove(id) {
-    const items = this.load();
-    const index = items.findIndex(item => item.id === id);
-    if (index === -1) return false;
-    items.splice(index, 1);
-    this.persist();
-    return true;
-  }
-  nextId(items) {
-    const prefix = items.length > 0 ? items[items.length - 1].id.replace(/\d+$/, '') : '';
-    const max = items.reduce((acc, item) => {
-      const n = parseInt(item.id.replace(/\D/g, ''), 10);
-      return Number.isNaN(n) ? acc : Math.max(acc, n);
-    }, 0);
-    return `${prefix}${max + 1}`;
+  if (window.location.pathname !== LOGIN_PATH) {
+    window.location.assign(LOGIN_PATH);
   }
 }
+
+const http = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 30000
+});
+
+http.interceptors.request.use(config => {
+  const token = readToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+function extractErrorMessage(error) {
+  const data = error.response?.data;
+  if (data && typeof data === 'object') {
+    // ApiResponse error shape: { success:false, message, data? }
+    if (typeof data.message === 'string' && data.message) return data.message;
+    // Validation errors carry a field->message map in `data`.
+    if (data.data && typeof data.data === 'object') {
+      const first = Object.values(data.data).find(v => typeof v === 'string');
+      if (first) return first;
+    }
+  }
+  if (typeof data === 'string' && data) return data;
+  if (error.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
+  if (!error.response) return 'Cannot reach the server. Is the backend running?';
+  return error.message || 'Request failed';
+}
+
+http.interceptors.response.use(
+  response => response,
+  error => {
+    const status = error.response?.status ?? 0;
+    const url = error.config?.url ?? '';
+    const isAuthEndpoint = url.includes('/admin/auth/');
+
+    // Expired/revoked admin token — drop the session and send the user to login.
+    if (status === 401 && !isAuthEndpoint && readToken()) {
+      clearSessionAndRedirect();
+    }
+
+    return Promise.reject(new ApiError(extractErrorMessage(error), status));
+  }
+);
+
+/**
+ * Performs an API call and returns the unwrapped payload. Admin endpoints
+ * return DTOs directly; if a response is ever ApiResponse-wrapped
+ * ({ success, message, data }) the `data` payload is returned instead.
+ */
+export async function apiRequest(method, url, { params, data } = {}) {
+  const response = await http.request({ method, url, params, data });
+  const body = response.data;
+  if (
+    body &&
+    typeof body === 'object' &&
+    !Array.isArray(body) &&
+    body.success === true &&
+    'data' in body
+  ) {
+    return body.data;
+  }
+  return body;
+}
+
+export const api = {
+  get: (url, config) => apiRequest('get', url, config),
+  post: (url, data, config) => apiRequest('post', url, { ...config, data }),
+  put: (url, data, config) => apiRequest('put', url, { ...config, data }),
+  patch: (url, data, config) => apiRequest('patch', url, { ...config, data }),
+  delete: (url, config) => apiRequest('delete', url, config)
+};

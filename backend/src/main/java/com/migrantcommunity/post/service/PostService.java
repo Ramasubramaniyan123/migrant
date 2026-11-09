@@ -123,12 +123,14 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostDetailsResponse details(Long postId) {
         Post post = getPost(postId);
+        requirePostVisibility(post);
         return toDetails(post, currentUserProvider.requireUserId());
     }
 
     public CommentResponse addComment(CreateCommentRequest request) {
         User me = currentUserProvider.requireUser();
         Post post = getPost(request.postId());
+        requirePostVisibility(post);
         Comment comment = new Comment();
         comment.setPost(post);
         comment.setUser(me);
@@ -178,7 +180,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public Page<CommentResponse> comments(Long postId, Pageable pageable) {
-        getPost(postId);
+        requirePostVisibility(getPost(postId));
         return commentRepository.findByPostIdAndParentCommentIsNullOrderByCreatedAtAsc(postId, pageable)
                 .map(this::toCommentResponse);
     }
@@ -186,6 +188,7 @@ public class PostService {
     public void react(Long postId, String type) {
         User me = currentUserProvider.requireUser();
         Post post = getPost(postId);
+        requirePostVisibility(post);
         if (reactionRepository.existsByPostIdAndUserId(postId, me.getId())) {
             throw new BadRequestException("Already reacted to this post");
         }
@@ -206,7 +209,7 @@ public class PostService {
 
     public void unreact(Long postId) {
         User me = currentUserProvider.requireUser();
-        getPost(postId);
+        requirePostVisibility(getPost(postId));
         if (reactionRepository.existsByPostIdAndUserId(postId, me.getId())) {
             reactionRepository.deleteByPostIdAndUserId(postId, me.getId());
             Post post = getPost(postId);
@@ -218,6 +221,17 @@ public class PostService {
     @Transactional(readOnly = true)
     public boolean hasReacted(Long postId) {
         return reactionRepository.existsByPostIdAndUserId(postId, currentUserProvider.requireUserId());
+    }
+
+    /** Posts inside private communities are only visible to members. */
+    private void requirePostVisibility(Post post) {
+        Community community = post.getCommunity();
+        if (community != null && !community.isPublicCommunity()) {
+            User me = currentUserProvider.requireUser();
+            if (!communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), me.getId())) {
+                throw new ForbiddenException("You must be a member to view this community's posts");
+            }
+        }
     }
 
     private void requireMembership(Community community) {

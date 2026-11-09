@@ -1,77 +1,53 @@
-import { MOCK_COMMUNITIES, MOCK_COMMUNITY_MEMBERS } from '@/data/mockCommunities';
-import { clone } from '@/utils/helpers';
-import { mockRequest, MockStore } from './api';
-const store = new MockStore('admin_portal_communities', () => clone(MOCK_COMMUNITIES));
-const memberStore = new MockStore('admin_portal_community_members', () => clone(MOCK_COMMUNITY_MEMBERS));
+import { api } from './api';
+
+const BASE = '/admin/communities';
+
+/** Community administration — /v1/admin/communities/*. */
 export const communityService = {
   async list(params = {}) {
-    return mockRequest(() => {
-      const {
-        search = '',
-        type = 'ALL',
-        city = 'ALL',
-        status = 'ALL'
-      } = params;
-      const page = params.page ?? 1;
-      const pageSize = params.pageSize ?? 10;
-      let items = store.all();
-      const q = search.trim().toLowerCase();
-      if (q) items = items.filter(c => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q));
-      if (type !== 'ALL') items = items.filter(c => c.type === type);
-      if (city !== 'ALL') items = items.filter(c => c.city === city);
-      if (status === 'ACTIVE') items = items.filter(c => c.isActive);
-      if (status === 'INACTIVE') items = items.filter(c => !c.isActive);
-      const total = items.length;
-      const start = (page - 1) * pageSize;
-      return {
-        items: items.slice(start, start + pageSize),
-        total,
-        page,
-        pageSize
-      };
-    }, 400);
+    const { search = '', type = 'ALL', city = 'ALL', status = 'ALL', page = 1, pageSize = 10 } = params;
+    // Backend returns CommunityListResult { items, total, page, pageSize }.
+    return api.get(BASE, {
+      params: { search, type, city, status, page, pageSize }
+    });
   },
+
   async getById(id) {
-    return mockRequest(() => clone(store.find(id)), 250);
+    return api.get(`${BASE}/${id}`);
   },
+
   async create(payload) {
-    return mockRequest(() => {
-      return store.create({
-        ...payload,
-        memberCount: 1,
-        postCount: 0,
-        createdAt: new Date().toISOString()
-      });
-    }, 400);
+    return api.post(BASE, payload);
   },
+
   async update(id, patch) {
-    return mockRequest(() => store.update(id, patch), 350);
+    const updated = await api.put(`${BASE}/${id}`, patch);
+    // The backend only maps `isActive: true` on update; deactivation requires
+    // the dedicated endpoint, so keep the flag in sync explicitly.
+    if (patch && typeof patch.isActive === 'boolean') {
+      return api.patch(`${BASE}/${id}/active`, null, {
+        params: { isActive: patch.isActive }
+      }).catch(() => updated);
+    }
+    return updated;
   },
+
   async setActive(id, isActive) {
-    return mockRequest(() => store.update(id, {
-      isActive
-    }), 300);
+    return api.patch(`${BASE}/${id}/active`, null, {
+      params: { isActive }
+    });
   },
+
   async delete(id) {
-    return mockRequest(() => {
-      if (!store.remove(id)) throw new Error('Community not found');
-    }, 350);
+    await api.delete(`${BASE}/${id}`);
   },
+
   async listMembers(communityId) {
-    return mockRequest(() => clone(memberStore.findMany(m => m.communityId === communityId)), 300);
+    return api.get(`${BASE}/${communityId}/members`);
   },
+
   async getStats() {
-    return mockRequest(() => {
-      const all = store.all();
-      return {
-        total: all.length,
-        active: all.filter(c => c.isActive).length,
-        totalMembers: all.reduce((s, c) => s + c.memberCount, 0),
-        byType: all.reduce((acc, c) => {
-          acc[c.type] = (acc[c.type] ?? 0) + 1;
-          return acc;
-        }, {})
-      };
-    }, 300);
+    // { total, active, totalMembers, byType }
+    return api.get(`${BASE}/stats`);
   }
 };

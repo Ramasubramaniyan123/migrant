@@ -1,76 +1,97 @@
-import messagesSeed from '@/data/messages.json';
-import { clone } from '@/utils/helpers';
-import { mockResponse, nextId } from './api';
-const store = clone(messagesSeed);
-function peerIdFor(conversationId, userId) {
-  const peer = store.members.find(member => member.conversationId === conversationId && member.userId !== userId);
-  return peer?.userId ?? userId;
+import { request } from './api';
+
+/* ------------------------------------------------------------------ *
+ * Messaging — REST polling against `/v1/messaging` (the STOMP/WebSocket *
+ * channel exists but the UI polls, so no socket wiring is required).    *
+ * ------------------------------------------------------------------ */
+
+function memberToPeer(members, userId) {
+  const id = Number(userId);
+  return (members ?? []).find(member => Number(member.userId) !== id) ?? members?.[0];
 }
+
+function toConversationSummary(dto, userId) {
+  const peer = memberToPeer(dto.members, userId);
+  return {
+    conversation: {
+      id: Number(dto.id),
+      createdBy: Number(userId),
+      createdAt: dto.lastMessageAt ?? new Date(0).toISOString(),
+      updatedAt: dto.lastMessageAt ?? new Date(0).toISOString()
+    },
+    peerId: peer ? Number(peer.userId) : Number(userId),
+    peer: peer
+      ? { userId: Number(peer.userId), displayName: peer.displayName, avatarUrl: peer.avatarUrl }
+      : undefined,
+    lastMessage: dto.lastMessage
+      ? {
+          id: null,
+          conversationId: Number(dto.id),
+          senderId: peer ? Number(peer.userId) : undefined,
+          content: dto.lastMessage,
+          isRead: true,
+          createdAt: dto.lastMessageAt
+        }
+      : undefined,
+    unreadCount: dto.unreadCount ?? 0
+  };
+}
+
+function toMessage(dto) {
+  return {
+    id: Number(dto.id),
+    conversationId: Number(dto.conversationId),
+    senderId: Number(dto.senderId),
+    senderName: dto.senderName ?? undefined,
+    content: dto.content ?? '',
+    isRead: Boolean(dto.read),
+    createdAt: dto.createdAt
+  };
+}
+
+async function fetchPage(path) {
+  const page = await request(path);
+  return page?.content ?? [];
+}
+
 export const messageService = {
   async getConversations(userId) {
-    const summaries = store.conversations.filter(conversation => store.members.some(member => member.conversationId === conversation.id && member.userId === userId)).map(conversation => {
-      const threadMessages = store.messages.filter(message => message.conversationId === conversation.id).sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
-      return {
-        conversation,
-        peerId: peerIdFor(conversation.id, userId),
-        lastMessage: threadMessages.at(-1),
-        unreadCount: threadMessages.filter(message => message.senderId !== userId && !message.isRead).length
-      };
-    }).sort((a, b) => Date.parse(b.lastMessage?.createdAt ?? b.conversation.updatedAt) - Date.parse(a.lastMessage?.createdAt ?? a.conversation.updatedAt));
-    return mockResponse(summaries);
+    const rows = await fetchPage('/v1/messaging/conversations?size=100');
+    return rows
+      .map(dto => toConversationSummary(dto, userId))
+      .sort(
+        (a, b) =>
+          Date.parse(b.lastMessage?.createdAt ?? b.conversation.updatedAt) -
+          Date.parse(a.lastMessage?.createdAt ?? a.conversation.updatedAt)
+      );
   },
+
   async getMessages(conversationId) {
-    const thread = store.messages.filter(message => message.conversationId === conversationId).sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
-    return mockResponse(thread);
+    const rows = await fetchPage(`/v1/messaging/conversations/${conversationId}/messages?size=100`);
+    return rows
+      .map(toMessage)
+      .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
   },
+
   async sendMessage(conversationId, senderId, content) {
-    const now = new Date().toISOString();
-    const message = {
-      id: nextId(store.messages),
-      conversationId,
-      senderId,
-      content: content.trim(),
-      isRead: false,
-      createdAt: now
-    };
-    store.messages.push(message);
-    const conversation = store.conversations.find(row => row.id === conversationId);
-    if (conversation) conversation.updatedAt = now;
-    return mockResponse(message, 120);
+    const sent = await request('/v1/messaging/send', {
+      method: 'POST',
+      body: { conversationId: Number(conversationId), content: content.trim() }
+    });
+    return toMessage(sent);
   },
+
   async markConversationRead(conversationId, userId) {
-    store.messages.forEach(message => {
-      if (message.conversationId === conversationId && message.senderId !== userId) {
-        message.isRead = true;
-      }
-    });
-    const member = store.members.find(row => row.conversationId === conversationId && row.userId === userId);
-    if (member) member.lastReadAt = new Date().toISOString();
-    return mockResponse(undefined, 60);
+    await request(`/v1/messaging/conversations/${conversationId}/read`, { method: 'POST' });
   },
+
+  /** `POST /v1/messaging/conversations` creates-or-returns the 1:1 thread. */
   async getOrCreateConversation(userId, otherUserId) {
-    const existing = store.conversations.find(conversation => {
-      const memberIds = store.members.filter(member => member.conversationId === conversation.id).map(member => member.userId);
-      return memberIds.includes(userId) && memberIds.includes(otherUserId);
+    const summary = await request('/v1/messaging/conversations', {
+      method: 'POST',
+      body: { userId: Number(otherUserId) }
     });
-    if (existing) return mockResponse(existing);
-    const now = new Date().toISOString();
-    const conversation = {
-      id: nextId(store.conversations),
-      createdBy: userId,
-      createdAt: now,
-      updatedAt: now
-    };
-    store.conversations.push(conversation);
-    store.members.push({
-      id: nextId(store.members),
-      conversationId: conversation.id,
-      userId
-    }, {
-      id: nextId(store.members) + 1,
-      conversationId: conversation.id,
-      userId: otherUserId
-    });
-    return mockResponse(conversation);
+    const mapped = toConversationSummary(summary, userId);
+    return mapped.conversation;
   }
 };

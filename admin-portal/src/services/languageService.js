@@ -1,42 +1,38 @@
-import { MOCK_LANGUAGES } from '@/data/mockLanguages';
-import { clone } from '@/utils/helpers';
-import { mockRequest, MockStore } from './api';
-const store = new MockStore('admin_portal_languages', () => clone(MOCK_LANGUAGES));
+import { api } from './api';
+
+const BASE = '/admin/languages';
+
+/** Language administration — /v1/admin/languages/*. */
 export const languageService = {
   async list() {
-    return mockRequest(() => store.all());
+    return api.get(BASE);
   },
+
   async create(payload) {
-    return mockRequest(() => {
-      const code = payload.code.trim().toLowerCase();
-      const exists = store.findMany(l => l.code === code)[0];
-      if (exists) throw new Error('A language with this code already exists');
-      return store.create({
-        name: payload.name.trim(),
-        nativeName: payload.nativeName.trim(),
-        code,
-        isActive: true,
-        userCount: 0,
-        communityCount: 0
-      });
-    }, 400);
+    return api.post(BASE, {
+      name: payload.name,
+      nativeName: payload.nativeName,
+      code: payload.code
+    });
   },
+
   async update(id, patch) {
-    return mockRequest(() => store.update(id, patch), 350);
+    return api.put(`${BASE}/${id}`, {
+      name: patch.name,
+      nativeName: patch.nativeName,
+      code: patch.code,
+      isActive: patch.isActive
+    });
   },
+
   async setActive(id, isActive) {
-    return mockRequest(() => store.update(id, {
-      isActive
-    }), 300);
+    return api.patch(`${BASE}/${id}/active`, null, {
+      params: { isActive }
+    });
   },
+
   async getStats() {
-    return mockRequest(() => {
-      const all = store.all();
-      return {
-        total: all.length,
-        active: all.filter(l => l.isActive).length,
-        totalUsers: all.reduce((s, l) => s + l.userCount, 0)
-      };
-    }, 250);
+    // { total, active, totalUsers }
+    return api.get(`${BASE}/stats`);
   }
 };

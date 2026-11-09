@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/common/Button';
 import { Textarea, Select } from '@/components/common/Input';
+import { usePageSettings } from '@/hooks/usePageSettings';
 import { ADMIN_ROUTES } from '@/utils/constants';
 import { AlertTriangle, CheckCircle2, Wrench } from 'lucide-react';
 import { cn } from '@/utils/helpers';
-
-const STORAGE_KEY = 'admin_portal_settings';
-const PAGE_KEY = 'maintenance';
 
 const DEFAULTS = {
   maintenanceMode: false,
@@ -17,39 +14,12 @@ const DEFAULTS = {
   allowAdminAccess: true
 };
 
-function readSaved() {
-  try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-    return { ...DEFAULTS, ...(all[PAGE_KEY] ?? {}) };
-  } catch {
-    return { ...DEFAULTS };
-  }
-}
-
 export default function MaintenancePage() {
-  const [form, setForm] = useState(DEFAULTS);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setForm(readSaved());
-  }, []);
-
-  const setField = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    setSaved(false);
-  };
+  const { form, setField, save, saved, isSaving, error } = usePageSettings('maintenanceSettings', DEFAULTS);
 
   const handleSave = e => {
     e.preventDefault();
-    try {
-      const all = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-      all[PAGE_KEY] = form;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      // ignore storage errors in prototype
-    }
+    void save();
   };
 
   return (
@@ -63,6 +33,10 @@ export default function MaintenancePage() {
           { label: 'Maintenance' }
         ]}
       />
+
+      {error ? (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      ) : null}
 
       {form.maintenanceMode ? (
         <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
@@ -152,7 +126,7 @@ export default function MaintenancePage() {
               <CheckCircle2 className="h-4 w-4" /> Settings saved
             </span>
           ) : null}
-          <Button type="submit">Save changes</Button>
+          <Button type="submit" isLoading={isSaving}>Save changes</Button>
         </div>
       </form>
     </div>

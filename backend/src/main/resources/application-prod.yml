@@ -12,6 +12,10 @@ spring:
   flyway:
     enabled: true
     validate-on-migrate: true
+
+jwt:
+  # No default: the application refuses to start in prod without a real secret.
+  secret: ${JWT_SECRET}
 logging:
   level:
     com.migrantcommunity: WARN

@@ -43,6 +43,7 @@ public class UploadController {
             String contentType = Files.probeContentType(path);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .header("X-Content-Type-Options", "nosniff")
                     .contentType(contentType != null ? MediaType.parseMediaType(contentType) : MediaType.APPLICATION_OCTET_STREAM)
                     .body(resource);
         } catch (BadRequestException ex) {

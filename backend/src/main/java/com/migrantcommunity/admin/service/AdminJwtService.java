@@ -38,6 +38,7 @@ public class AdminJwtService {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("role", role.name())
+                .claim("tokenUse", "admin")
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(Date.from(issuedAt))
                 .setExpiration(Date.from(issuedAt.plusMillis(expirationMillis)))
@@ -46,7 +47,7 @@ public class AdminJwtService {
     }
 
     public Claims parse(String token) {
-        return Jwts.parserBuilder()
+        return Jwts.parser()
                 .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token)

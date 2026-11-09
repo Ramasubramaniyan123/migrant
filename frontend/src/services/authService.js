@@ -1,115 +1,139 @@
 import { STORAGE_KEYS } from '@/utils/constants';
-import { ApiError, mockResponse } from './api';
-import { findUserByEmail, insertUser, allUsers } from './userService';
-/** Demo password accepted for every seeded account. */
+import { ApiError, clearSessionStorage, getAccessToken, request, setTokens } from './api';
+import { minimalUser, userService } from './userService';
+
+/** Demo password accepted for every seeded account (legacy hint only). */
 export const DEMO_PASSWORD = 'password123';
-function createEmptyUser(id, fullName, email) {
-  const [firstName, ...rest] = fullName.trim().split(' ');
-  return {
-    id,
-    email: email.trim().toLowerCase(),
-    role: 'USER',
-    isActive: true,
-    isVerified: false,
-    createdAt: new Date().toISOString(),
-    profile: {
-      firstName,
-      lastName: rest.join(' '),
-      interests: [],
-      languages: [],
-      privacy: {
-        showHometown: true,
-        showExactLocation: false,
-        allowConnectionRequests: true,
-        showOnlineStatus: true
-      },
-      onboardingCompleted: false
-    }
-  };
-}
-function persistSession(session) {
-  if (!session) {
-    localStorage.removeItem(STORAGE_KEYS.authUser);
-    localStorage.removeItem(STORAGE_KEYS.authToken);
+
+function persistSession({ user, accessToken, refreshToken }) {
+  if (!user) {
+    clearSessionStorage();
     return;
   }
-  localStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(session.user));
-  localStorage.setItem(STORAGE_KEYS.authToken, session.token);
+  localStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(user));
+  if (accessToken) localStorage.setItem(STORAGE_KEYS.authToken, accessToken);
+  if (refreshToken) localStorage.setItem(STORAGE_KEYS.authRefresh, refreshToken);
 }
+
 function readSession() {
   const raw = localStorage.getItem(STORAGE_KEYS.authUser);
-  const token = localStorage.getItem(STORAGE_KEYS.authToken);
+  const token = getAccessToken();
+  const refreshToken = localStorage.getItem(STORAGE_KEYS.authRefresh);
   if (!raw || !token) return null;
   try {
     return {
       user: JSON.parse(raw),
-      token
+      token,
+      refreshToken
     };
   } catch {
     return null;
   }
 }
+
+/**
+ * Builds the frontend session after login/register.
+ * Fetches the full profile; when the account is not yet verified the API
+ * rejects every call with 401/403, so a minimal user is kept instead and
+ * `verificationRequired` is flagged for the UI.
+ */
+async function buildSession(auth) {
+  setTokens(auth);
+  let user;
+  let verificationRequired = false;
+  try {
+    user = await userService.getCurrentUser();
+  } catch (cause) {
+    const status = cause instanceof ApiError ? cause.status : 0;
+    const denied = status === 401 || status === 403;
+    user = minimalUser(auth, { verified: denied ? false : null });
+    verificationRequired = denied;
+  }
+  persistSession({ user, accessToken: auth.accessToken, refreshToken: auth.refreshToken });
+  return {
+    user,
+    token: auth.accessToken,
+    refreshToken: auth.refreshToken,
+    verificationRequired
+  };
+}
+
 export const authService = {
-  async login({
-    email,
-    password
-  }) {
-    if (password.length < 8) {
-      throw new ApiError('Password must be at least 8 characters', 400);
-    }
-    const user = findUserByEmail(email);
-    if (!user) {
-      throw new ApiError('No account found for that email address', 404);
-    }
-    if (password !== DEMO_PASSWORD) {
-      throw new ApiError('Incorrect password', 401);
-    }
-    const session = {
-      user,
-      token: `mock-token-${user.id}`
-    };
-    persistSession(session);
-    return mockResponse(session);
+  async login({ email, password }) {
+    const auth = await request('/v1/auth/login', {
+      method: 'POST',
+      body: { email: email.trim(), password }
+    });
+    return buildSession(auth);
   },
-  async register({
-    fullName,
-    email,
-    password
-  }) {
-    if (password.length < 8) {
-      throw new ApiError('Password must be at least 8 characters', 400);
-    }
-    if (findUserByEmail(email)) {
-      throw new ApiError('An account with that email already exists', 409);
-    }
-    const nextId = allUsers().reduce((max, user) => Math.max(max, user.id), 0) + 1;
-    const user = insertUser(createEmptyUser(nextId, fullName, email));
-    const session = {
-      user,
-      token: `mock-token-${user.id}`
-    };
-    persistSession(session);
-    return mockResponse(session);
+
+  async register({ email, password }) {
+    const auth = await request('/v1/auth/register', {
+      method: 'POST',
+      body: { email: email.trim(), password, confirmPassword: password }
+    });
+    return buildSession(auth);
   },
+
   async forgotPassword(email) {
-    if (!email.trim()) throw new ApiError('Email is required', 400);
-    return mockResponse({
-      sent: true
-    }, 600);
+    return request('/v1/auth/forgot-password', {
+      method: 'POST',
+      body: { email: email.trim() }
+    });
   },
+
+  async verifyEmail(token) {
+    return request(`/v1/auth/verify-email?token=${encodeURIComponent(token)}`);
+  },
+
+  async resendVerification(email) {
+    return request(`/v1/auth/resend-verification?email=${encodeURIComponent(email.trim())}`, {
+      method: 'POST'
+    });
+  },
+
+  async resetPassword(token, newPassword) {
+    return request('/v1/auth/reset-password', {
+      method: 'POST',
+      body: { token, newPassword }
+    });
+  },
+
   async logout() {
+    try {
+      await request('/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Logout is best-effort — the local session is cleared regardless.
+    }
     persistSession(null);
-    return mockResponse(undefined, 80);
   },
+
   getCurrentSession() {
     return readSession();
   },
-  /** Used by onboarding / profile edits to keep the stored session fresh. */
-  updateStoredUser(user) {
-    const token = localStorage.getItem(STORAGE_KEYS.authToken);
+
+  /**
+   * Re-fetches the current user from the API. Used on app mount to refresh
+   * a stored session (e.g. after email verification) — throws on failure.
+   */
+  async fetchCurrentUser() {
+    const user = await userService.getCurrentUser();
+    const session = readSession();
     persistSession({
       user,
-      token: token ?? `mock-token-${user.id}`
+      accessToken: session?.token,
+      refreshToken: session?.refreshToken
+    });
+    return user;
+  },
+
+  /** Used by onboarding / profile edits to keep the stored session fresh. */
+  updateStoredUser(user) {
+    const session = readSession();
+    persistSession({
+      user,
+      accessToken: session?.token,
+      refreshToken: session?.refreshToken
     });
   }
 };
