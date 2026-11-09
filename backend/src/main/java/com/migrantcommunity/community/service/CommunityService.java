@@ -81,6 +81,7 @@ public class CommunityService {
         User me = currentUserProvider.requireUser();
         CommunityMember membership = memberRepository
                 .findByCommunityIdAndUserId(communityId, me.getId()).orElse(null);
+        requireVisibility(community, membership);
         return toDetails(community, membership);
     }
 
@@ -192,7 +193,9 @@ public class CommunityService {
 
     @Transactional(readOnly = true)
     public Page<CommunityDetailsResponse.MemberInfo> members(Long communityId, Pageable pageable) {
-        getCommunity(communityId);
+        Community community = getCommunity(communityId);
+        CommunityMember membership = currentMembership(communityId);
+        requireVisibility(community, membership);
         return memberRepository.findByCommunityId(communityId, pageable)
                 .map(cm -> new CommunityDetailsResponse.MemberInfo(
                         cm.getUser().getId(), displayName(cm.getUser()), cm.getRole(), cm.getJoinedAt()));
@@ -262,6 +265,13 @@ public class CommunityService {
     private Community getCommunity(Long id) {
         return communityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Community", "id", id));
+    }
+
+    /** Private communities are only visible to their members. */
+    private void requireVisibility(Community community, CommunityMember membership) {
+        if (!community.isPublicCommunity() && membership == null) {
+            throw new ForbiddenException("This is a private community");
+        }
     }
 
     private CommunityMember currentMembership(Long communityId) {

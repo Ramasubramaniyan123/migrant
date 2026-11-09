@@ -53,15 +53,22 @@ public class EventService {
     @Transactional(readOnly = true)
     public Page<EventResponse> upcoming(Long communityId, Pageable pageable) {
         User me = currentUserProvider.requireUser();
-        Page<CommunityEvent> page = communityId != null
-                ? eventRepository.findUpcomingEventsByCommunityId(communityId, Instant.now(), pageable)
-                : eventRepository.findByStatusOrderByStartTimeAsc(EventStatus.UPCOMING, pageable);
+        Page<CommunityEvent> page;
+        if (communityId != null) {
+            Community community = communityRepository.findById(communityId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Community", "id", communityId));
+            requireCommunityAccess(community, me.getId());
+            page = eventRepository.findUpcomingEventsByCommunityId(communityId, Instant.now(), pageable);
+        } else {
+            page = eventRepository.findVisibleUpcoming(me.getId(), pageable);
+        }
         return page.map(e -> toResponse(e, me.getId()));
     }
 
     @Transactional(readOnly = true)
     public EventResponse details(Long eventId) {
         CommunityEvent event = getEvent(eventId);
+        requireCommunityAccess(event.getCommunity(), currentUserProvider.requireUserId());
         return toResponse(event, currentUserProvider.requireUserId());
     }
 
@@ -108,8 +115,11 @@ public class EventService {
     }
 
     public void register(Long eventId) {
-        CommunityEvent event = getEvent(eventId);
         User me = currentUserProvider.requireUser();
+        // Lock the event row so concurrent registrations cannot overshoot capacity.
+        CommunityEvent event = eventRepository.findByIdForUpdate(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+        requireCommunityAccess(event.getCommunity(), me.getId());
         if (event.getStatus() == EventStatus.CANCELLED || event.getStatus() == EventStatus.COMPLETED) {
             throw new BadRequestException("Event is not open for registration");
         }
@@ -124,9 +134,14 @@ public class EventService {
         participant.setEvent(event);
         participant.setUser(me);
         participant.setStatus("ATTENDING");
-        participantRepository.save(participant);
+        try {
+            participantRepository.save(participant);
+            participantRepository.flush();
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            throw new BadRequestException("Already registered");
+        }
 
-        eventRepository.findById(eventId).ifPresent(e -> notifyParticipants(e));
+        eventRepository.findById(eventId).ifPresent(this::notifyParticipants);
     }
 
     private void notifyParticipants(CommunityEvent event) {
@@ -154,10 +169,19 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public Page<ParticipantInfo> participants(Long eventId, Pageable pageable) {
-        getEvent(eventId);
+        CommunityEvent event = getEvent(eventId);
+        requireCommunityAccess(event.getCommunity(), currentUserProvider.requireUserId());
         return participantRepository.findByEventId(eventId, pageable)
                 .map(p -> new ParticipantInfo(p.getUser().getId(), displayName(p.getUser()),
                         p.getStatus(), p.getJoinedAt()));
+    }
+
+    /** Private community events are only visible to community members. */
+    private void requireCommunityAccess(Community community, Long userId) {
+        if (!community.isPublicCommunity()
+                && !memberRepository.existsByCommunityIdAndUserId(community.getId(), userId)) {
+            throw new ForbiddenException("This is a private community");
+        }
     }
 
     private CommunityEvent getEvent(Long id) {

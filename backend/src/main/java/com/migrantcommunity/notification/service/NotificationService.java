@@ -5,6 +5,7 @@ import com.migrantcommunity.common.exception.ForbiddenException;
 import com.migrantcommunity.common.exception.ResourceNotFoundException;
 import com.migrantcommunity.notification.dto.NotificationResponse;
 import com.migrantcommunity.notification.entity.Notification;
+import com.migrantcommunity.notification.repository.NotificationPreferenceRepository;
 import com.migrantcommunity.notification.repository.NotificationRepository;
 import com.migrantcommunity.user.entity.User;
 import com.migrantcommunity.user.repository.UserRepository;
@@ -18,16 +19,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationPreferenceRepository preferenceRepository;
     private final UserRepository userRepository;
 
     public NotificationService(NotificationRepository notificationRepository,
+                             NotificationPreferenceRepository preferenceRepository,
                              UserRepository userRepository) {
         this.notificationRepository = notificationRepository;
+        this.preferenceRepository = preferenceRepository;
         this.userRepository = userRepository;
     }
 
-    public NotificationResponse createNotification(Long userId, NotificationType type, 
+    public NotificationResponse createNotification(Long userId, NotificationType type,
                                                   String title, String content, Long relatedId) {
+        if (isSuppressed(userId, type)) {
+            return null;
+        }
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
@@ -35,6 +42,20 @@ public class NotificationService {
         notification = notificationRepository.save(notification);
 
         return toResponse(notification);
+    }
+
+    /** Returns true when the recipient disabled this notification category. */
+    private boolean isSuppressed(Long userId, NotificationType type) {
+        return preferenceRepository.findById(userId)
+                .map(prefs -> switch (type) {
+                    case CONNECTION_REQUEST, CONNECTION_ACCEPTED -> !prefs.isConnectionRequests();
+                    case MESSAGE -> !prefs.isMessages();
+                    case EVENT -> !prefs.isEvents();
+                    case POST_LIKE, REACTION -> !prefs.isReactions();
+                    case COMMUNITY_INVITE, POST, COMMENT -> !prefs.isCommunityActivity();
+                    case SYSTEM -> !prefs.isAnnouncements();
+                })
+                .orElse(false);
     }
 
     @Transactional(readOnly = true)

@@ -162,6 +162,12 @@ public class MessagingService {
         if (!connectionRepository.areUsersConnected(userId, otherUserId)) {
             throw new ForbiddenException("You can only message accepted connections");
         }
+        User other = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", otherUserId));
+        if (!com.migrantcommunity.profile.PrivacySettings
+                .fromProfile(other.getProfile()).allowDirectMessages()) {
+            throw new ForbiddenException("This user is not accepting direct messages");
+        }
     }
 
     private Conversation requireMember(Long conversationId, Long userId) {

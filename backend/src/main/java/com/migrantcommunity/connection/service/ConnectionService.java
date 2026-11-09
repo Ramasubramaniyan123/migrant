@@ -60,6 +60,12 @@ public class ConnectionService {
             throw new ForbiddenException("Cannot connect with blocked user");
         }
 
+        // Privacy preference: the receiver may have disabled connection requests.
+        if (!com.migrantcommunity.profile.PrivacySettings
+                .fromProfile(receiver.getProfile()).allowConnectionRequests()) {
+            throw new ForbiddenException("This user is not accepting connection requests");
+        }
+
         // Check for existing connection
         if (connectionRepository.findByUsers(requesterId, receiverId).isPresent()) {
             throw new BadRequestException("Connection request already exists");

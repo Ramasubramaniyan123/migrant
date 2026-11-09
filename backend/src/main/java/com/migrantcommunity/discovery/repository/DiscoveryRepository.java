@@ -15,7 +15,7 @@ public interface DiscoveryRepository extends Repository<DiscoveryRow, Void> {
 
     String FILTERS = """
             AND u.id <> :userId
-            AND u.active = true
+            AND u.is_active = true
             AND p.discovery_enabled = true
             AND (:hometownCity IS NULL OR LOWER(p.hometown_city) = LOWER(:hometownCity))
             AND (:currentCity IS NULL OR LOWER(p.current_city) = LOWER(:currentCity))

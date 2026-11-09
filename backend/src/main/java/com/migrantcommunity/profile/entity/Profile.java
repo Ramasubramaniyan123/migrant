@@ -17,7 +17,6 @@ import java.time.LocalDate;
 public class Profile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -58,7 +57,8 @@ public class Profile {
     @Column(name = "location_accuracy_km")
     private Double locationAccuracyKm;
 
-    @Column(name = "privacy_settings", columnDefinition = "JSONB")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "privacy_settings")
     private String privacySettings;
 
     @Column(name = "discovery_enabled")

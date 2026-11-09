@@ -39,6 +39,31 @@ public class FileStorageService {
         this.maxSizeBytes = maxSizeBytes;
     }
 
+    private static final int SNIFF_BYTES = 12;
+
+    /** Detects the real image type from magic bytes; returns the canonical MIME type or null. */
+    private static String detectImageType(byte[] header) {
+        if (header.length >= 3
+                && (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
+            return "image/jpeg";
+        }
+        if (header.length >= 8
+                && (header[0] & 0xFF) == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47
+                && header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A) {
+            return "image/png";
+        }
+        if (header.length >= 6 && header[0] == 'G' && header[1] == 'I' && header[2] == 'F'
+                && header[3] == '8' && (header[4] == '7' || header[4] == '9') && header[5] == 'a') {
+            return "image/gif";
+        }
+        if (header.length >= 12
+                && header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F'
+                && header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
+            return "image/webp";
+        }
+        return null;
+    }
+
     public String store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("File is required");
@@ -46,11 +71,22 @@ public class FileStorageService {
         if (file.getSize() > maxSizeBytes) {
             throw new BadRequestException("File exceeds maximum size of " + (maxSizeBytes / 1024 / 1024) + "MB");
         }
-        String contentType = file.getContentType();
-        Set<String> extensions = contentType != null ? ALLOWED_TYPES.get(contentType.toLowerCase()) : null;
+        // Never trust the client-provided Content-Type; verify the actual bytes.
+        byte[] header;
+        try (InputStream in = file.getInputStream()) {
+            header = in.readNBytes(SNIFF_BYTES);
+        } catch (IOException ex) {
+            throw new BadRequestException("Unable to read uploaded file");
+        }
+        String detectedType = detectImageType(header);
+        Set<String> extensions = detectedType != null ? ALLOWED_TYPES.get(detectedType) : null;
         if (extensions == null) {
-            throw new BadRequestException("Unsupported file type: " + contentType
-                    + ". Allowed: JPEG, PNG, WebP, GIF");
+            throw new BadRequestException("Unsupported file type. Allowed: JPEG, PNG, WebP, GIF");
+        }
+        String declaredType = file.getContentType();
+        if (declaredType != null && !declaredType.isBlank()
+                && !detectedType.equalsIgnoreCase(declaredType.trim())) {
+            throw new BadRequestException("File content does not match declared type " + declaredType);
         }
         try {
             Files.createDirectories(root);
