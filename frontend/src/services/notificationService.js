@@ -1,26 +1,43 @@
-import notificationsSeed from '@/data/notifications.json';
-import { clone } from '@/utils/helpers';
-import { mockResponse } from './api';
-let notifications = clone(notificationsSeed);
-export const notificationService = {
-  async getForUser(userId) {
-    const rows = notifications.filter(notification => notification.userId === userId).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-    return mockResponse(rows);
+import apiClient from './api/apiClient';
+
+const notificationService = {
+  // Get all notifications
+  getNotifications: async (page = 0, size = 20) => {
+    const params = new URLSearchParams({ page, size });
+    const response = await apiClient.get(`/notifications?${params.toString()}`);
+    return response.data;
   },
-  async markRead(id) {
-    const notification = notifications.find(row => row.id === id);
-    if (notification) notification.isRead = true;
-    return mockResponse(notification, 60);
+
+  // Get unread notifications
+  getUnreadNotifications: async (page = 0, size = 20) => {
+    const params = new URLSearchParams({ page, size });
+    const response = await apiClient.get(`/notifications/unread?${params.toString()}`);
+    return response.data;
   },
-  async markAllRead(userId) {
-    notifications = notifications.map(notification => notification.userId === userId ? {
-      ...notification,
-      isRead: true
-    } : notification);
-    return mockResponse(notifications.filter(row => row.userId === userId), 80);
+
+  // Get unread count
+  getUnreadCount: async () => {
+    const response = await apiClient.get('/notifications/unread/count');
+    return response.data;
   },
-  async clear(userId) {
-    notifications = notifications.filter(notification => notification.userId !== userId);
-    return mockResponse(undefined, 80);
-  }
+
+  // Mark notification as read
+  markAsRead: async (notificationId) => {
+    const response = await apiClient.put(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  // Mark all as read
+  markAllAsRead: async () => {
+    const response = await apiClient.put('/notifications/read-all');
+    return response.data;
+  },
+
+  // Delete notification
+  deleteNotification: async (notificationId) => {
+    const response = await apiClient.delete(`/notifications/${notificationId}`);
+    return response.data;
+  },
 };
+
+export default notificationService;

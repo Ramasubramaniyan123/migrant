@@ -1,54 +1,40 @@
-import { useId } from 'react';
-import { cn } from '@/utils/helpers';
-const FIELD_BASE = 'w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus-visible:outline-none dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500';
+import { forwardRef } from 'react';
 
-/** Single-line text field with label, hint and inline validation message. */
-export default function Input({
+const Input = forwardRef(({
   label,
   error,
-  hint,
-  id,
-  className,
-  ...rest
-}) {
-  const generatedId = useId();
-  const inputId = id ?? generatedId;
-  const describedById = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
-  return <div className="flex flex-col gap-1.5">
-      {label ? <label htmlFor={inputId} className="text-sm font-medium text-slate-700 dark:text-slate-300">
+  helperText,
+  icon: Icon,
+  className = '',
+  containerClassName = '',
+  ...props
+}, ref) => {
+  return (
+    <div className={`${containerClassName}`}>
+      {label && (
+        <label className="label">
           {label}
-        </label> : null}
-      <input {...rest} id={inputId} aria-invalid={error ? true : undefined} aria-describedby={describedById} className={cn(FIELD_BASE, error ? 'border-red-400 focus:border-red-500 focus-visible:ring-red-500' : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500 dark:border-slate-700 dark:focus:border-brand-400', className)} />
-      {error ? <p id={`${inputId}-error`} className="text-xs text-red-600 dark:text-red-400">
-          {error}
-        </p> : hint ? <p id={`${inputId}-hint`} className="text-xs text-slate-500 dark:text-slate-400">
-          {hint}
-        </p> : null}
-    </div>;
-}
+          {props.required && <span className="text-error ml-1">*</span>}
+        </label>
+      )}
+      <div className="relative">
+        {Icon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Icon className="h-5 w-5 text-grey" />
+          </div>
+        )}
+        <input
+          ref={ref}
+          className={`input ${Icon ? 'pl-10' : ''} ${error ? 'border-error focus:ring-error' : ''} ${className}`}
+          {...props}
+        />
+      </div>
+      {error && <p className="mt-1 text-sm text-error">{error}</p>}
+      {helperText && !error && <p className="mt-1 text-sm text-grey">{helperText}</p>}
+    </div>
+  );
+});
 
-/** Multi-line text field matching the `Input` styling. */
-export function Textarea({
-  label,
-  error,
-  hint,
-  id,
-  className,
-  rows = 4,
-  ...rest
-}) {
-  const generatedId = useId();
-  const textareaId = id ?? generatedId;
-  const describedById = error ? `${textareaId}-error` : hint ? `${textareaId}-hint` : undefined;
-  return <div className="flex flex-col gap-1.5">
-      {label ? <label htmlFor={textareaId} className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {label}
-        </label> : null}
-      <textarea {...rest} id={textareaId} rows={rows} aria-invalid={error ? true : undefined} aria-describedby={describedById} className={cn(FIELD_BASE, 'resize-y', error ? 'border-red-400 focus:border-red-500 focus-visible:ring-red-500' : 'border-slate-300 focus:border-brand-500 focus-visible:ring-brand-500 dark:border-slate-700 dark:focus:border-brand-400', className)} />
-      {error ? <p id={`${textareaId}-error`} className="text-xs text-red-600 dark:text-red-400">
-          {error}
-        </p> : hint ? <p id={`${textareaId}-hint`} className="text-xs text-slate-500 dark:text-slate-400">
-          {hint}
-        </p> : null}
-    </div>;
-}
+Input.displayName = 'Input';
+
+export default Input;

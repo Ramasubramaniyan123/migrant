@@ -1,47 +1,78 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { toUserSummary, userService } from '@/services/userService';
-import { useAuthContext } from './AuthContext';
-const UserContext = createContext(undefined);
-export function UserProvider({
-  children
-}) {
-  const {
-    user
-  } = useAuthContext();
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
+import { createContext, useState, useContext, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import profileService from '../services/profileService';
+
+const UserContext = createContext(null);
+
+export const UserProvider = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchProfile = async () => {
+    if (!isAuthenticated) return;
+
+    setLoading(true);
+    setError(null);
     try {
-      const rows = await userService.getUsers();
-      setUsers(rows);
+      const data = await profileService.getProfileDetails();
+      setProfile(data);
+    } catch (err) {
+      setError(err.message);
+      console.error('Failed to fetch profile:', err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  };
+
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
-  const summaries = useMemo(() => {
-    const origin = user?.profile.latitude !== undefined && user?.profile.longitude !== undefined ? {
-      latitude: user.profile.latitude,
-      longitude: user.profile.longitude
-    } : undefined;
-    return users.map(row => toUserSummary(row, origin ? {
-      from: origin
-    } : {}));
-  }, [user, users]);
-  const value = useMemo(() => ({
-    users,
-    isLoading,
-    refresh,
-    getUserById: id => users.find(row => row.id === id),
-    getSummaryById: id => summaries.find(row => row.id === id)
-  }), [isLoading, refresh, summaries, users]);
+    if (isAuthenticated) {
+      fetchProfile();
+    } else {
+      setProfile(null);
+    }
+  }, [isAuthenticated]);
+
+  const updateProfile = async (data) => {
+    try {
+      const updated = await profileService.updateProfile(data);
+      setProfile(updated);
+      return updated;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updatePrivacy = async (settings) => {
+    try {
+      const updated = await profileService.updatePrivacy(settings);
+      setProfile(updated);
+      return updated;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const value = {
+    profile,
+    loading,
+    error,
+    fetchProfile,
+    updateProfile,
+    updatePrivacy,
+    setProfile,
+  };
+
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
-}
-export function useUserContext() {
+};
+
+export const useUser = () => {
   const context = useContext(UserContext);
-  if (!context) throw new Error('useUserContext must be used inside a UserProvider');
+  if (!context) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
   return context;
-}
+};
+
+export default UserContext;

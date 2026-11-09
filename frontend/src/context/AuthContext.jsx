@@ -1,83 +1,124 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { authService } from '@/services/authService';
-import { userService } from '@/services/userService';
-const AuthContext = createContext(undefined);
-export function AuthProvider({
-  children
-}) {
+import { createContext, useState, useContext, useEffect } from 'react';
+import authService from '../services/authService';
+import adminAuthService from '../services/adminAuthService';
+
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [admin, setAdmin] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+
   useEffect(() => {
-    const session = authService.getCurrentSession();
-    setUser(session?.user ?? null);
-    setIsLoading(false);
+    // Check for existing session
+    const initAuth = async () => {
+      try {
+        // Check user auth
+        if (authService.isAuthenticated()) {
+          const userData = authService.getUser();
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
+
+        // Check admin auth
+        if (adminAuthService.isAuthenticated()) {
+          const adminData = adminAuthService.getAdmin();
+          setAdmin(adminData);
+          setIsAdminAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
-  const persist = useCallback(next => {
-    authService.updateStoredUser(next);
-    setUser(next);
-  }, []);
-  const login = useCallback(async payload => {
-    setIsLoading(true);
-    setError(null);
+
+  const login = async (email, password) => {
     try {
-      const session = await authService.login(payload);
-      persist(session.user);
-      return session.user;
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Unable to sign in';
-      setError(message);
-      throw cause;
-    } finally {
-      setIsLoading(false);
+      const response = await authService.login(email, password);
+      const userData = { userId: response.userId, email: response.email, role: response.role };
+      setUser(userData);
+      setIsAuthenticated(true);
+      return response;
+    } catch (error) {
+      throw error;
     }
-  }, [persist]);
-  const register = useCallback(async payload => {
-    setIsLoading(true);
-    setError(null);
+  };
+
+  const register = async (data) => {
     try {
-      const session = await authService.register(payload);
-      persist(session.user);
-      return session.user;
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Unable to create account';
-      setError(message);
-      throw cause;
-    } finally {
-      setIsLoading(false);
+      const response = await authService.register(data);
+      const userData = { userId: response.userId, email: response.email, role: response.role };
+      setUser(userData);
+      setIsAuthenticated(true);
+      return response;
+    } catch (error) {
+      throw error;
     }
-  }, [persist]);
-  const logout = useCallback(async () => {
-    await authService.logout();
-    setUser(null);
-  }, []);
-  const updateProfile = useCallback(async patch => {
-    if (!user) return;
-    const updated = await userService.updateProfile(user.id, patch);
-    persist(updated);
-  }, [persist, user]);
-  const completeOnboarding = useCallback(async patch => {
-    if (!user) return;
-    const updated = await userService.completeOnboarding(user.id, patch);
-    persist(updated);
-  }, [persist, user]);
-  const value = useMemo(() => ({
+  };
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const adminLogin = async (email, password) => {
+    try {
+      const response = await adminAuthService.login(email, password);
+      setAdmin(response.admin);
+      setIsAdminAuthenticated(true);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const adminLogout = async () => {
+    try {
+      await adminAuthService.logout();
+    } catch (error) {
+      console.error('Admin logout error:', error);
+    } finally {
+      setAdmin(null);
+      setIsAdminAuthenticated(false);
+    }
+  };
+
+  const value = {
     user,
-    isAuthenticated: Boolean(user),
-    isAdmin: user?.role === 'ADMIN',
-    isLoading,
-    error,
+    admin,
+    loading,
+    isAuthenticated,
+    isAdminAuthenticated,
     login,
     register,
     logout,
-    updateProfile,
-    completeOnboarding,
-    clearError: () => setError(null)
-  }), [completeOnboarding, error, isLoading, login, logout, register, updateProfile, user]);
+    adminLogin,
+    adminLogout,
+    setUser,
+    setAdmin,
+  };
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-export function useAuthContext() {
+};
+
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuthContext must be used inside an AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
-}
+};
+
+export default AuthContext;

@@ -1,72 +1,88 @@
-import connectionsSeed from '@/data/connections.json';
-import { clone } from '@/utils/helpers';
-import { mockResponse, nextId } from './api';
+import apiClient from './api/apiClient';
 
-/**
- * In-memory connection store seeded from `src/data/connections.json`.
- * Kept module-scoped so screens stay in sync during a session.
- */
-let connections = clone(connectionsSeed);
-export const connectionService = {
-  async getForUser(userId) {
-    return mockResponse(connections.filter(connection => connection.requesterId === userId || connection.receiverId === userId));
+const connectionService = {
+  // Send connection request
+  sendRequest: async (receiverId) => {
+    const response = await apiClient.post('/connections/request', { receiverId });
+    return response.data;
   },
-  async getReceivedRequests(userId) {
-    return mockResponse(connections.filter(connection => connection.receiverId === userId && connection.status === 'PENDING'));
+
+  // Accept connection request
+  acceptRequest: async (connectionId) => {
+    const response = await apiClient.post(`/connections/${connectionId}/accept`);
+    return response.data;
   },
-  async getSentRequests(userId) {
-    return mockResponse(connections.filter(connection => connection.requesterId === userId && connection.status === 'PENDING'));
+
+  // Reject connection request
+  rejectRequest: async (connectionId) => {
+    const response = await apiClient.post(`/connections/${connectionId}/reject`);
+    return response.data;
   },
-  async getAccepted(userId) {
-    return mockResponse(connections.filter(connection => connection.status === 'ACCEPTED' && (connection.requesterId === userId || connection.receiverId === userId)));
+
+  // Cancel sent connection request
+  cancelRequest: async (connectionId) => {
+    const response = await apiClient.delete(`/connections/${connectionId}/cancel`);
+    return response.data;
   },
-  async sendRequest(requesterId, receiverId, matchScore, matchedBy) {
-    const existing = connections.find(connection => connection.requesterId === requesterId && connection.receiverId === receiverId || connection.requesterId === receiverId && connection.receiverId === requesterId);
-    if (existing) {
-      existing.status = 'PENDING';
-      existing.updatedAt = new Date().toISOString();
-      return mockResponse(existing);
-    }
-    const now = new Date().toISOString();
-    const created = {
-      id: nextId(connections),
-      requesterId,
-      receiverId,
-      status: 'PENDING',
-      matchScore,
-      matchedBy,
-      createdAt: now,
-      updatedAt: now
-    };
-    connections = [...connections, created];
-    return mockResponse(created);
+
+  // Remove connection
+  removeConnection: async (connectionId) => {
+    const response = await apiClient.delete(`/connections/${connectionId}`);
+    return response.data;
   },
-  async updateStatus(connectionId, status) {
-    const connection = connections.find(row => row.id === connectionId);
-    if (!connection) throw new Error(`Connection ${connectionId} not found`);
-    connection.status = status;
-    connection.updatedAt = new Date().toISOString();
-    return mockResponse(connection);
+
+  // Get connections
+  getConnections: async (status = '', page = 0, size = 20) => {
+    const params = new URLSearchParams({ page, size });
+    if (status) params.append('status', status);
+    
+    const response = await apiClient.get(`/connections?${params.toString()}`);
+    return response.data;
   },
-  async acceptRequest(connectionId) {
-    return this.updateStatus(connectionId, 'ACCEPTED');
+
+  // Get pending requests (received)
+  getPendingRequests: async (page = 0, size = 20) => {
+    const params = new URLSearchParams({ page, size });
+    const response = await apiClient.get(`/connections/pending?${params.toString()}`);
+    return response.data;
   },
-  async rejectRequest(connectionId) {
-    return this.updateStatus(connectionId, 'REJECTED');
+
+  // Get sent requests
+  getSentRequests: async (page = 0, size = 20) => {
+    const params = new URLSearchParams({ page, size });
+    const response = await apiClient.get(`/connections/sent?${params.toString()}`);
+    return response.data;
   },
-  async cancelRequest(connectionId) {
-    connections = connections.filter(row => row.id !== connectionId);
-    return mockResponse(undefined, 120);
+
+  // Get connection count
+  getConnectionCount: async () => {
+    const response = await apiClient.get('/connections/count');
+    return response.data;
   },
-  async removeConnection(connectionId) {
-    connections = connections.filter(row => row.id !== connectionId);
-    return mockResponse(undefined, 120);
+
+  // Check if connected with user
+  checkConnection: async (userId) => {
+    const response = await apiClient.get(`/connections/check/${userId}`);
+    return response.data;
   },
-  /** Synchronous helper used by the connection context for badge states. */
-  statusBetween(userA, userB) {
-    return connections.find(connection => connection.requesterId === userA && connection.receiverId === userB || connection.requesterId === userB && connection.receiverId === userA);
+
+  // Block user
+  blockUser: async (userId, reason = '') => {
+    const response = await apiClient.post('/blocks', { userId, reason });
+    return response.data;
   },
-  connectedUserIds(userId) {
-    return connections.filter(connection => connection.status === 'ACCEPTED' && (connection.requesterId === userId || connection.receiverId === userId)).map(connection => connection.requesterId === userId ? connection.receiverId : connection.requesterId);
-  }
+
+  // Unblock user
+  unblockUser: async (userId) => {
+    const response = await apiClient.delete(`/blocks/${userId}`);
+    return response.data;
+  },
+
+  // Get blocked users
+  getBlockedUsers: async () => {
+    const response = await apiClient.get('/blocks');
+    return response.data;
+  },
 };
+
+export default connectionService;

@@ -1,39 +1,44 @@
-import { useEffect, useState } from 'react';
-import { cn } from '@/utils/helpers';
-import { getInitials } from '@/utils/formatters';
-const SIZE_CLASSES = {
-  xs: 'h-6 w-6 text-[10px]',
-  sm: 'h-8 w-8 text-xs',
-  md: 'h-10 w-10 text-sm',
-  lg: 'h-14 w-14 text-base',
-  xl: 'h-20 w-20 text-xl'
+import { User } from 'lucide-react';
+
+const Avatar = ({ 
+  src, 
+  alt = 'User avatar', 
+  size = 'md', 
+  online = false,
+  className = '' 
+}) => {
+  const sizes = {
+    xs: 'w-6 h-6',
+    sm: 'w-8 h-8',
+    md: 'w-10 h-10',
+    lg: 'w-12 h-12',
+    xl: 'w-16 h-16',
+    '2xl': 'w-20 h-20',
+  };
+
+  const iconSizes = {
+    xs: 'w-3 h-3',
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6',
+    xl: 'w-8 h-8',
+    '2xl': 'w-10 h-10',
+  };
+
+  return (
+    <div className={`relative inline-block ${className}`}>
+      <div className={`${sizes[size]} rounded-full overflow-hidden bg-lavender flex items-center justify-center`}>
+        {src ? (
+          <img src={src} alt={alt} className="w-full h-full object-cover" />
+        ) : (
+          <User className={`${iconSizes[size]} text-navy`} />
+        )}
+      </div>
+      {online && (
+        <span className="absolute bottom-0 right-0 block w-3 h-3 bg-success rounded-full border-2 border-white"></span>
+      )}
+    </div>
+  );
 };
-const PALETTE = ['bg-brand-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-violet-500', 'bg-cyan-500', 'bg-indigo-500'];
 
-/** Stable palette index so the same name always gets the same fallback colour. */
-function colorFor(name) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1) {
-    hash = hash * 31 + name.charCodeAt(i) | 0;
-  }
-  return PALETTE[Math.abs(hash) % PALETTE.length];
-}
-
-/** User avatar that falls back to deterministic initials when no image is available. */
-export default function Avatar({
-  name,
-  src,
-  size = 'md',
-  className
-}) {
-  const [hasError, setHasError] = useState(false);
-  useEffect(() => {
-    setHasError(false);
-  }, [src]);
-  if (src && !hasError) {
-    return <img src={src} alt={name} onError={() => setHasError(true)} className={cn('rounded-full object-cover', SIZE_CLASSES[size], className)} />;
-  }
-  return <span role="img" aria-label={name} className={cn('inline-flex items-center justify-center rounded-full font-semibold text-white', colorFor(name), SIZE_CLASSES[size], className)}>
-      {getInitials(name)}
-    </span>;
-}
+export default Avatar;

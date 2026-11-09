@@ -1,53 +1,77 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
-export const USE_MOCK_DATA = (import.meta.env.VITE_USE_MOCK_DATA ?? 'true') === 'true';
-export const APP_NAME = 'Migrant Community Platform';
-export const STORAGE_KEYS = {
-  authUser: 'mcp.auth.user',
-  authToken: 'mcp.auth.token',
-  onboarding: 'mcp.onboarding',
-  language: 'mcp.ui.language',
-  theme: 'mcp.ui.theme'
+export const CONNECTION_STATUS = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
 };
-export const ROUTES = {
-  landing: '/',
-  login: '/login',
-  register: '/register',
-  forgotPassword: '/forgot-password',
-  onboarding: '/onboarding',
-  dashboard: '/dashboard',
-  discover: '/discover',
-  hometown: '/hometown',
-  communities: '/communities',
-  communityDetails: id => `/communities/${id}`,
-  connections: '/connections',
-  messages: '/messages',
-  profile: '/profile',
-  editProfile: '/profile/edit',
-  userProfile: id => `/profile/${id}`,
-  notifications: '/notifications',
-  settings: '/settings',
-  admin: '/admin',
-  adminUsers: '/admin/users',
-  adminReports: '/admin/reports',
-  adminCommunities: '/admin/communities'
+
+export const USER_STATUS = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  DEACTIVATED: 'DEACTIVATED',
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
 };
-export const PROFICIENCY_LABELS = {
-  BEGINNER: 'Beginner',
-  INTERMEDIATE: 'Intermediate',
-  ADVANCED: 'Advanced',
-  NATIVE: 'Native'
+
+export const ADMIN_ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  MODERATOR: 'MODERATOR',
+  ANALYST: 'ANALYST',
+  SUPPORT: 'SUPPORT',
 };
-export const MATCH_REASON_LABELS = {
-  HOMETOWN: 'Same hometown',
-  LANGUAGE: 'Shared language',
-  LOCATION: 'Nearby',
-  INTERESTS: 'Shared interests'
+
+export const NOTIFICATION_TYPES = {
+  CONNECTION_REQUEST: 'CONNECTION_REQUEST',
+  CONNECTION_ACCEPTED: 'CONNECTION_ACCEPTED',
+  MESSAGE: 'MESSAGE',
+  COMMUNITY_INVITATION: 'COMMUNITY_INVITATION',
+  EVENT_REMINDER: 'EVENT_REMINDER',
+  POST_REACTION: 'POST_REACTION',
+  COMMENT: 'COMMENT',
+  SYSTEM: 'SYSTEM',
 };
-export const NOTIFICATION_LABELS = {
-  CONNECTION_REQUEST: 'Connection request',
-  MESSAGE: 'New message',
-  COMMUNITY_INVITE: 'Community invite',
-  POST_LIKE: 'Post liked',
-  COMMENT: 'New comment'
+
+export const REPORT_CATEGORIES = {
+  SPAM: 'SPAM',
+  HARASSMENT: 'HARASSMENT',
+  INAPPROPRIATE_CONTENT: 'INAPPROPRIATE_CONTENT',
+  FALSE_INFORMATION: 'FALSE_INFORMATION',
+  OTHER: 'OTHER',
 };
-export const INTEREST_OPTIONS = ['Cooking', 'Music', 'Cricket', 'Football', 'Travel', 'Fitness', 'Movies', 'Reading', 'Photography', 'Tech', 'Language exchange', 'Volunteering', 'Study groups', 'Job hunting', 'Parenting'];
+
+export const PROFICIENCY_LEVELS = [
+  'NATIVE',
+  'FLUENT',
+  'INTERMEDIATE',
+  'BASIC',
+];
+
+export const GENDERS = [
+  'Male',
+  'Female',
+  'Non-binary',
+  'Prefer not to say',
+  'Other',
+];
+
+export const INTEREST_CATEGORIES = [
+  'Sports',
+  'Music',
+  'Art',
+  'Technology',
+  'Travel',
+  'Food',
+  'Reading',
+  'Movies',
+  'Gaming',
+  'Fitness',
+  'Photography',
+  'Cooking',
+  'Fashion',
+  'Nature',
+  'Volunteering',
+];
+
+export const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 20,
+  DEFAULT_PAGE: 0,
+};

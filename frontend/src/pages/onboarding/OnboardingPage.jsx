@@ -1,166 +1,221 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '@/components/common/Button';
-import { useAuth } from '@/hooks/useAuth';
-import { ROUTES } from '@/utils/constants';
-import BasicInfoStep from './BasicInfoStep';
-import HometownStep from './HometownStep';
-import InterestsStep from './InterestsStep';
-import LanguageStep from './LanguageStep';
-import LocationStep from './LocationStep';
-const TOTAL_STEPS = 5;
-const STEP_TITLES = ['About you', 'Languages', 'Hometown', 'Location', 'Interests'];
+import { User, MapPin, Globe, Heart, ChevronRight, ChevronLeft } from 'lucide-react';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
+import Textarea from '../../components/common/Textarea';
+import Card from '../../components/common/Card';
+import profileService from '../../services/profileService';
+import { GENDERS, PROFICIENCY_LEVELS } from '../../utils/constants';
 
-/** Seeds the wizard from the signed-in user's existing profile where available. */
-function buildInitialForm(user) {
-  const profile = user?.profile;
-  const primaryLanguageId = profile?.languages.find(entry => entry.isPrimary)?.languageId;
-  return {
-    firstName: profile?.firstName ?? '',
-    lastName: profile?.lastName ?? '',
-    dateOfBirth: profile?.dateOfBirth ?? '',
-    gender: profile?.gender ?? '',
-    bio: profile?.bio ?? '',
-    languageIds: profile?.languages.map(entry => entry.languageId) ?? [],
-    primaryLanguageId,
-    hometownCountry: profile?.hometownCountry ?? '',
-    hometownCity: profile?.hometownCity ?? '',
-    currentCountry: profile?.currentCountry ?? '',
-    currentCity: profile?.currentCity ?? '',
-    latitude: profile?.latitude,
-    longitude: profile?.longitude,
-    shareExactLocation: profile?.privacy.showExactLocation ?? false,
-    interests: profile?.interests ?? []
-  };
-}
-
-/** Minimal per-step requirements used to gate the Next button. */
-function isStepValid(step, data) {
-  switch (step) {
-    case 0:
-      return Boolean(data.firstName.trim() && data.lastName.trim());
-    case 1:
-      return data.languageIds.length > 0;
-    case 2:
-      return Boolean(data.hometownCity.trim() && data.hometownCountry.trim());
-    case 3:
-      return Boolean(data.currentCity.trim() && data.currentCountry.trim());
-    case 4:
-      return data.interests.length > 0;
-    default:
-      return true;
-  }
-}
-
-/** Multi-step onboarding wizard shown right after registration. */
-export default function OnboardingPage() {
+const OnboardingPage = () => {
   const navigate = useNavigate();
-  const {
-    user,
-    completeOnboarding
-  } = useAuth();
-  const [form, setForm] = useState(() => buildInitialForm(user));
-  const [step, setStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  useEffect(() => {
-    if (!user) navigate(ROUTES.login, {
-      replace: true
-    });
-  }, [user, navigate]);
-  const handleChange = useCallback(patch => {
-    setForm(current => ({
-      ...current,
-      ...patch
-    }));
-  }, []);
-  const canProceed = isStepValid(step, form);
-  const isLastStep = step === TOTAL_STEPS - 1;
-  const progress = (step + 1) / TOTAL_STEPS * 100;
-  async function handleFinish() {
-    if (!user) {
-      navigate(ROUTES.login, {
-        replace: true
-      });
-      return;
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    gender: '',
+    bio: '',
+    hometownCountry: 'India',
+    hometownCity: '',
+    currentCity: '',
+  });
+
+  const totalSteps = 3;
+
+  const handleNext = () => {
+    if (step < totalSteps) {
+      setStep(step + 1);
     }
-    const patch = {
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      dateOfBirth: form.dateOfBirth || undefined,
-      gender: form.gender || undefined,
-      bio: form.bio.trim() || undefined,
-      hometownCity: form.hometownCity.trim(),
-      hometownCountry: form.hometownCountry.trim(),
-      currentCity: form.currentCity.trim(),
-      currentCountry: form.currentCountry.trim(),
-      latitude: form.latitude,
-      longitude: form.longitude,
-      interests: form.interests,
-      languages: form.languageIds.map(id => ({
-        languageId: id,
-        proficiency: 'INTERMEDIATE',
-        isPrimary: id === form.primaryLanguageId
-      })),
-      privacy: {
-        ...user.profile.privacy,
-        showExactLocation: form.shareExactLocation
-      }
-    };
-    setIsSubmitting(true);
+  };
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
     try {
-      await completeOnboarding(patch);
-      navigate(ROUTES.dashboard, {
-        replace: true
-      });
+      await profileService.updateProfile(formData);
+      navigate('/app/dashboard');
+    } catch (error) {
+      console.error('Onboarding error:', error);
+      alert('Failed to save profile. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
-  }
-  function handleNext() {
-    if (isLastStep) {
-      void handleFinish();
-      return;
-    }
-    setStep(current => Math.min(current + 1, TOTAL_STEPS - 1));
-  }
-  function renderStep() {
+  };
+
+  const renderStep = () => {
     switch (step) {
-      case 0:
-        return <BasicInfoStep data={form} onChange={handleChange} />;
       case 1:
-        return <LanguageStep data={form} onChange={handleChange} />;
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <User className="w-12 h-12 text-terracotta mx-auto mb-3" />
+              <h2 className="text-2xl font-bold text-navy">Tell us about yourself</h2>
+              <p className="text-grey mt-2">Let's start with the basics</p>
+            </div>
+
+            <Input
+              label="First Name"
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              required
+              placeholder="Your first name"
+            />
+
+            <Input
+              label="Last Name"
+              value={formData.lastName}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              required
+              placeholder="Your last name"
+            />
+
+            <Input
+              type="date"
+              label="Date of Birth"
+              value={formData.dateOfBirth}
+              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+              required
+            />
+
+            <Select
+              label="Gender"
+              value={formData.gender}
+              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+              options={GENDERS.map(g => ({ value: g, label: g }))}
+              placeholder="Select your gender"
+            />
+
+            <Textarea
+              label="Bio (Optional)"
+              value={formData.bio}
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              placeholder="Tell us a bit about yourself..."
+              rows={3}
+            />
+          </div>
+        );
+
       case 2:
-        return <HometownStep data={form} onChange={handleChange} />;
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <MapPin className="w-12 h-12 text-terracotta mx-auto mb-3" />
+              <h2 className="text-2xl font-bold text-navy">Where are you from?</h2>
+              <p className="text-grey mt-2">Help us connect you with people from your hometown</p>
+            </div>
+
+            <Input
+              label="Hometown City"
+              value={formData.hometownCity}
+              onChange={(e) => setFormData({ ...formData, hometownCity: e.target.value })}
+              required
+              placeholder="e.g., Mumbai, Delhi, Bangalore"
+            />
+
+            <Input
+              label="Hometown Country"
+              value={formData.hometownCountry}
+              onChange={(e) => setFormData({ ...formData, hometownCountry: e.target.value })}
+              required
+              placeholder="e.g., India"
+            />
+
+            <Input
+              label="Current City"
+              value={formData.currentCity}
+              onChange={(e) => setFormData({ ...formData, currentCity: e.target.value })}
+              required
+              placeholder="e.g., Gurugram"
+              helperText="Where do you currently live?"
+            />
+          </div>
+        );
+
       case 3:
-        return <LocationStep data={form} onChange={handleChange} />;
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <Heart className="w-12 h-12 text-terracotta mx-auto mb-3" />
+              <h2 className="text-2xl font-bold text-navy">Almost done!</h2>
+              <p className="text-grey mt-2">Review your information and complete setup</p>
+            </div>
+
+            <Card className="bg-lavender">
+              <h3 className="font-semibold text-navy mb-3">Your Profile Summary</h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="text-grey">Name:</span> {formData.firstName} {formData.lastName}</p>
+                <p><span className="text-grey">Hometown:</span> {formData.hometownCity}, {formData.hometownCountry}</p>
+                <p><span className="text-grey">Current City:</span> {formData.currentCity}</p>
+              </div>
+            </Card>
+
+            <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
+              <p className="font-medium mb-1">Next Steps:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Add languages you speak</li>
+                <li>Set your interests</li>
+                <li>Discover people from your hometown</li>
+              </ul>
+            </div>
+          </div>
+        );
+
       default:
-        return <InterestsStep data={form} onChange={handleChange} />;
+        return null;
     }
-  }
-  return <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-      <div className="mb-6">
-        <p className="text-sm font-medium text-brand-700">Setting up your profile</p>
-        <h1 className="page-title mt-1">Let&apos;s help people find you</h1>
-        <p className="muted mt-1">
-          Step {step + 1} of {TOTAL_STEPS} · {STEP_TITLES[step]}
-        </p>
-      </div>
+  };
 
-      <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-        <div className="h-full rounded-full bg-brand-600 transition-all duration-300" style={{
-        width: `${progress}%`
-      }} />
-      </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-lavender to-offwhite flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl">
+        {/* Progress bar */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-navy">Step {step} of {totalSteps}</span>
+            <span className="text-sm text-grey">{Math.round((step / totalSteps) * 100)}% Complete</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-terracotta h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(step / totalSteps) * 100}%` }}
+            />
+          </div>
+        </div>
 
-      <div className="card">{renderStep()}</div>
+        {/* Step content */}
+        {renderStep()}
 
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <Button type="button" variant="ghost" disabled={step === 0 || isSubmitting} onClick={() => setStep(current => Math.max(current - 1, 0))}>
-          Back
-        </Button>
-        <Button type="button" disabled={!canProceed} isLoading={isSubmitting} onClick={handleNext}>
-          {isLastStep ? 'Finish and explore' : 'Next'}
-        </Button>
-      </div>
-    </div>;
-}
+        {/* Navigation buttons */}
+        <div className="flex gap-3 mt-8">
+          {step > 1 && (
+            <Button variant="outline" onClick={handleBack} icon={ChevronLeft}>
+              Back
+            </Button>
+          )}
+
+          {step < totalSteps ? (
+            <Button fullWidth onClick={handleNext} className="ml-auto">
+              Next
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button fullWidth onClick={handleSubmit} loading={loading} className="ml-auto">
+              Complete Setup
+            </Button>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+export default OnboardingPage;

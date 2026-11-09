@@ -1,22 +1,21 @@
-import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from '@/context/ThemeContext';
-import { AuthProvider } from '@/context/AuthContext';
-import { ConnectionProvider } from '@/context/ConnectionContext';
-import { NotificationProvider } from '@/context/NotificationContext';
-import { UserProvider } from '@/context/UserContext';
-import AppRoutes from '@/routes/AppRoutes';
-export default function App() {
-  return <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <UserProvider>
-            <ConnectionProvider>
-              <NotificationProvider>
-                <AppRoutes />
-              </NotificationProvider>
-            </ConnectionProvider>
-          </UserProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>;
+import { AuthProvider } from './context/AuthContext';
+import { UserProvider } from './context/UserContext';
+import { NotificationProvider } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
+import AppRoutes from './routes/AppRoutes';
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <UserProvider>
+          <NotificationProvider>
+            <AppRoutes />
+          </NotificationProvider>
+        </UserProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
+
+export default App;

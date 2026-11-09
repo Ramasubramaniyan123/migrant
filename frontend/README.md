@@ -1,80 +1,205 @@
-# Frontend
+# Migrant Community Platform - Frontend
 
-React 18 + TypeScript single-page application for the Migrant Community Platform, built with Vite and styled with Tailwind CSS.
+A modern React application for connecting migrants with their hometown communities, language speakers, and local networks.
 
-## Prerequisites
+## Tech Stack
 
-- **Node.js 18+** and npm
+- **Framework**: React 18
+- **Build Tool**: Vite
+- **Language**: JavaScript (ES6+)
+- **Styling**: Tailwind CSS
+- **Routing**: React Router DOM v6
+- **HTTP Client**: Axios
+- **State Management**: Context API
+- **Icons**: Lucide React
+- **Charts**: Recharts
+- **Forms**: React Hook Form + Zod
 
-## Install and run
+## Project Structure
+
+```
+frontend/
+├── public/              # Static assets
+├── src/
+│   ├── assets/         # Images, icons, illustrations
+│   ├── components/     # Reusable components
+│   │   ├── common/    # Buttons, inputs, cards, modals
+│   │   ├── layout/    # Layouts for public, user, admin
+│   │   ├── shared/    # Shared across features
+│   │   ├── charts/    # Chart components
+│   │   └── widgets/   # Dashboard widgets
+│   ├── pages/          # Page components
+│   │   ├── landing/   # Landing page
+│   │   ├── auth/      # Login, register, verify
+│   │   ├── onboarding/ # User onboarding flow
+│   │   ├── dashboard/  # User dashboard
+│   │   ├── discover/   # Discover people
+│   │   ├── hometown/   # Hometown connections
+│   │   ├── communities/ # Community features
+│   │   ├── connections/ # Connection management
+│   │   ├── messages/    # Messaging
+│   │   ├── profile/     # User profile
+│   │   ├── notifications/ # Notifications
+│   │   ├── settings/    # User settings
+│   │   └── admin/       # Admin portal
+│   ├── services/       # API services
+│   │   ├── api/        # API client
+│   │   ├── authService.js
+│   │   ├── userService.js
+│   │   ├── communityService.js
+│   │   └── ...
+│   ├── context/        # React contexts
+│   │   ├── AuthContext.jsx
+│   │   ├── UserContext.jsx
+│   │   └── NotificationContext.jsx
+│   ├── hooks/          # Custom hooks
+│   ├── routes/         # Route configuration
+│   ├── data/           # Static data
+│   ├── utils/          # Utility functions
+│   ├── styles/         # Global styles
+│   ├── App.jsx         # Root component
+│   └── main.jsx        # Entry point
+├── .env.example        # Environment variables template
+├── index.html          # HTML template
+├── package.json        # Dependencies
+├── vite.config.js      # Vite configuration
+├── tailwind.config.js  # Tailwind configuration
+└── README.md           # This file
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Backend API running on http://localhost:8080
+
+### Installation
+
+1. **Clone the repository** (if not already done)
+   ```bash
+   cd migrant-community-platform/frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Setup environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` and configure:
+   ```env
+   VITE_API_BASE_URL=http://localhost:8080/api/v1
+   ```
+
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+   Frontend will be available at `http://localhost:5173`
+
+### Build for Production
 
 ```bash
-cd frontend
-npm install
-npm run dev
+npm run build
 ```
 
-The dev server starts on **port 5173** at `http://localhost:5173`.
+The build output will be in the `dist/` directory.
 
-Other scripts:
+### Preview Production Build
 
 ```bash
-npm run build     # type-check and produce a production build
-npm run preview   # preview the production build
-npm run lint      # run ESLint
+npm run preview
 ```
 
-The Vite dev server proxies `/api` requests to the Spring Boot backend at `http://localhost:8080`.
+## Features
 
-## Environment variables
+### User Portal
+- Landing page with platform introduction
+- User authentication (register, login, email verification)
+- Interactive onboarding flow
+- Personalized dashboard
+- Discover people by hometown, language, interests
+- Community management (join, create, participate)
+- Connection requests and management
+- Real-time messaging
+- Event discovery and registration
+- Profile and privacy settings
+- Notifications
 
-Copy `.env.example` to `.env` and adjust as needed:
+### Admin Portal
+- Admin dashboard with analytics
+- User management (search, verify, suspend)
+- Community moderation
+- Content management
+- Event management
+- Reports and moderation queue
+- Language and location management
+- Administrator management
+- Audit logs
+- Platform settings
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_API_BASE_URL` | Base URL of the backend REST API (default `http://localhost:8080/api`). |
-| `VITE_USE_MOCK_DATA` | When `true`, services read from the local mock JSON in `src/data/` instead of calling the API. |
+## API Integration
 
-## Folder structure
+The frontend communicates with the Spring Boot backend API:
 
-```
-frontend/src
-├── context/        # React context providers (Auth, User, Connection, Notification)
-├── data/           # mock JSON data used when VITE_USE_MOCK_DATA=true
-├── hooks/          # reusable React hooks (useAuth, useDiscovery, ...)
-├── routes/         # route configuration and guards (AppRoutes, ProtectedRoute, AdminRoute)
-├── services/       # API/mock data access layer (authService, discoveryService, ...)
-├── styles/         # global CSS, design variables and animations
-├── types/          # shared TypeScript type definitions
-├── utils/          # helpers, formatters, validators and distance calculator
-├── App.tsx         # root component wiring providers and routes
-├── main.tsx        # application entry point
-└── vite-env.d.ts   # Vite environment typings
-```
+- **Base URL**: `http://localhost:8080/api/v1`
+- **Authentication**: JWT tokens via Authorization header
+- **CORS**: Configured for localhost development
 
-> Note: `routes/AppRoutes.tsx` already imports screen components from a `pages/`
-> directory and shared layout components from a `components/` directory. Those two
-> directories are referenced by the routing but are not yet present in the repository.
+All API calls go through centralized services in `src/services/`.
 
-## Demo credentials
+## Design System
 
-| Role | Email | Password |
-|------|-------|----------|
-| User | `aarav.sharma@example.com` | `password123` |
-| Admin | `admin@migrant.app` | `password123` |
+### Color Palette
+- **Navy (#202B45)**: Primary brand color
+- **Terracotta (#D97757)**: Accent and CTA
+- **Lavender (#E9E6F5)**: Soft backgrounds
+- **Beige (#F0E9DD)**: Warm neutrals
+- **Offwhite (#F8F7F4)**: Base background
 
-## Screens
+### Typography
+- Font: Inter
+- Consistent hierarchy
+- Accessible contrast ratios
 
-- **Landing** — public marketing page
-- **Auth** — login, register and forgot-password
-- **Onboarding** — first-run setup for new users
-- **Dashboard** — overview of activity
-- **Discover** — find nearby people to connect with
-- **Hometown Match** — connect with people from your hometown
-- **Communities** — browse language communities and a community detail view
-- **Connections** — manage connection requests and connections
-- **Messages** — conversations list and chat view
-- **Profile** — own profile, edit profile and other users' profiles
-- **Notifications** — activity notifications
-- **Settings** — account and app settings
-- **Admin** — admin dashboard, user management, report management and community management
+### Components
+- Rounded cards (12px radius)
+- Soft shadows
+- Clean spacing system
+- Responsive design (mobile-first)
+
+## Routing
+
+- `/` - Landing page
+- `/login` - User login
+- `/register` - User registration
+- `/onboarding` - New user onboarding
+- `/app/*` - User portal (authenticated)
+- `/admin/*` - Admin portal (admin roles only)
+
+## State Management
+
+- **AuthContext**: Authentication state and user session
+- **UserContext**: User profile and preferences
+- **NotificationContext**: Real-time notifications
+- **ThemeContext**: UI theme preferences
+
+## Development Guidelines
+
+1. **Component Structure**: Keep components small and focused
+2. **API Integration**: Always use service layer, never direct axios calls
+3. **Error Handling**: Handle loading, success, error states
+4. **Accessibility**: Use semantic HTML and ARIA labels
+5. **Responsiveness**: Mobile-first approach
+6. **Code Style**: Follow ESLint configuration
+
+## License
+
+Proprietary - All rights reserved
