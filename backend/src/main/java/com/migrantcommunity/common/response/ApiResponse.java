@@ -1,11 +1,13 @@
 package com.migrantcommunity.common.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.Instant;
 
 public class ApiResponse<T> {
     private boolean success;
     private String message;
     private T data;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant timestamp;
     private String path;
 

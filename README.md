@@ -341,6 +341,7 @@ mvn test                         # Run tests
 ```env
 VITE_API_BASE_URL=http://localhost:8080/api/v1
 VITE_ENV=development
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
 ```
 
 **Backend** (environment or `application.yml`):
@@ -351,6 +352,7 @@ DB_USERNAME=postgres
 DB_PASSWORD=your-password
 ADMIN_BOOTSTRAP_EMAIL=admin@example.com
 ADMIN_BOOTSTRAP_PASSWORD=your-secure-password
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
 ```
 
 ---

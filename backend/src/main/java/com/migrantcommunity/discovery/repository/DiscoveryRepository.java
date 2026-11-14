@@ -1,6 +1,6 @@
 package com.migrantcommunity.discovery.repository;
 
-import org.springframework.data.domain.Pageable;
+import com.migrantcommunity.user.entity.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +11,7 @@ import java.util.List;
  * PostGIS-backed discovery queries over user_profiles.current_location
  * (geometry(Point,4326), queried as geography for metric distances).
  */
-public interface DiscoveryRepository extends Repository<DiscoveryRow, Void> {
+public interface DiscoveryRepository extends Repository<User, Long> {
 
     String FILTERS = """
             AND u.id <> :userId
@@ -40,8 +40,8 @@ public interface DiscoveryRepository extends Repository<DiscoveryRow, Void> {
                    p.hometown_country AS hometownCountry,
                    p.privacy_settings AS privacySettings,
                    CASE WHEN p.current_location IS NULL THEN NULL
-                        ELSE ROUND(ST_Distance(p.current_location::geography,
-                              ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography) / 1000.0, 1)
+                        ELSE ROUND((ST_Distance(p.current_location::geography,
+                              ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography) / 1000.0)::numeric, 1)::double precision
                    END AS distanceKm
             FROM users u
             JOIN user_profiles p ON p.user_id = u.id
@@ -52,6 +52,7 @@ public interface DiscoveryRepository extends Repository<DiscoveryRow, Void> {
                            :radiusMeters)))
             """ + FILTERS + """
             ORDER BY distanceKm ASC NULLS LAST, u.id ASC
+            LIMIT :limit OFFSET :offset
             """, nativeQuery = true)
     List<DiscoveryRow> search(
             @Param("userId") Long userId,
@@ -63,7 +64,8 @@ public interface DiscoveryRepository extends Repository<DiscoveryRow, Void> {
             @Param("currentCity") String currentCity,
             @Param("languageId") Long languageId,
             @Param("interest") String interest,
-            Pageable pageable);
+            @Param("limit") int limit,
+            @Param("offset") long offset);
 
     @Query(value = """
             SELECT COUNT(*)

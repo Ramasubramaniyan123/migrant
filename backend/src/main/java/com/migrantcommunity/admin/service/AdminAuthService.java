@@ -62,30 +62,37 @@ public class AdminAuthService {
         this.appBaseUrl = appBaseUrl;
     }
 
-    @PostConstruct
+  @PostConstruct
     void ensureBootstrapAdmin() {
+        // Skip bootstrap if credentials not provided
+        if (bootstrapEmail.isBlank() || bootstrapPassword.isBlank()) {
+            log.info("Admin bootstrap skipped - credentials not configured");
+            return;
+        }
         if (bootstrapEmail.isBlank() != bootstrapPassword.isBlank()) {
             throw new IllegalStateException("Configure both admin bootstrap email and password");
-        }
-        if (bootstrapPassword.isBlank()) {
-            return;
         }
         if (bootstrapPassword.length() < 12) {
             throw new IllegalStateException("Admin bootstrap password must be at least 12 characters");
         }
         String email = bootstrapEmail.trim().toLowerCase(Locale.ROOT);
-        if (administratorRepository.existsByEmail(email)) {
-            return;
+        
+        try {
+            if (administratorRepository.existsByEmail(email)) {
+                return;
+            }
+            com.migrantcommunity.admin.entity.Administrator admin = new com.migrantcommunity.admin.entity.Administrator();
+            admin.setEmail(email);
+            admin.setPasswordHash(passwordEncoder.encode(bootstrapPassword));
+            admin.setFirstName("Platform");
+            admin.setLastName("Administrator");
+            admin.setRole(AdminRole.SUPER_ADMIN);
+            admin.setStatus(AdminStatus.ACTIVE);
+            administratorRepository.save(admin);
+            log.info("Bootstrap super admin '{}' created", email);
+        } catch (Exception e) {
+            log.warn("Could not create bootstrap admin (tables may not exist yet): {}", e.getMessage());
         }
-        com.migrantcommunity.admin.entity.Administrator admin = new com.migrantcommunity.admin.entity.Administrator();
-        admin.setEmail(email);
-        admin.setPasswordHash(passwordEncoder.encode(bootstrapPassword));
-        admin.setFirstName("Platform");
-        admin.setLastName("Administrator");
-        admin.setRole(AdminRole.SUPER_ADMIN);
-        admin.setStatus(AdminStatus.ACTIVE);
-        administratorRepository.save(admin);
-        log.info("Bootstrap super admin '{}' created", email);
     }
 
     @Transactional(readOnly = true)

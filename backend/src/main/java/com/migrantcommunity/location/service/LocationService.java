@@ -21,14 +21,14 @@ public class LocationService {
     }
 
     public LocationResponse approximateLocation() {
-        Profile profile = profileRepository.findByUserId(currentUserProvider.requireUserId())
+        Profile profile = profileRepository.findByUser_Id(currentUserProvider.requireUserId())
                 .orElse(null);
-        if (profile == null || profile.getCurrentLocation() == null) {
+        if (profile == null || profile.getCurrentLocationLat() == null || profile.getCurrentLocationLng() == null) {
             return new LocationResponse(0, 0, 0, null);
         }
         // Coarsen to ~1km grid to avoid exposing precise coordinates.
-        double lat = Math.round(profile.getCurrentLocation().getY() * 100.0) / 100.0;
-        double lng = Math.round(profile.getCurrentLocation().getX() * 100.0) / 100.0;
+        double lat = Math.round(profile.getCurrentLocationLat() * 100.0) / 100.0;
+        double lng = Math.round(profile.getCurrentLocationLng() * 100.0) / 100.0;
         return new LocationResponse(lat, lng,
                 profile.getLocationAccuracyKm() != null ? profile.getLocationAccuracyKm() : 1.0,
                 profile.getCurrentCity());

@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     Optional<Profile> findByUserId(Long userId);
 
+    Optional<Profile> findByUser_Id(Long userId);
+
     @org.springframework.data.jpa.repository.Query(
             "SELECT p.currentCity, COUNT(p) FROM Profile p WHERE p.currentCity IS NOT NULL GROUP BY p.currentCity")
     List<Object[]> countUsersByCity();

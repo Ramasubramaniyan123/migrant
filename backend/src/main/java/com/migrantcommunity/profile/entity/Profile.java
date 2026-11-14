@@ -4,15 +4,13 @@ import com.migrantcommunity.user.entity.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.locationtech.jts.geom.Point;
 
 import java.time.Instant;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "user_profiles", indexes = {
-        @Index(name = "idx_user_profiles_user_id", columnList = "user_id", unique = true),
-        @Index(name = "idx_user_profiles_location", columnList = "current_location")
+        @Index(name = "idx_user_profiles_location", columnList = "current_location_lat,current_location_lng")
 })
 public class Profile {
 
@@ -51,8 +49,11 @@ public class Profile {
     @Column(name = "current_city", length = 100)
     private String currentCity;
 
-    @Column(name = "current_location")
-    private Point currentLocation;
+    @Column(name = "current_location_lat")
+    private Double currentLocationLat;
+
+    @Column(name = "current_location_lng")
+    private Double currentLocationLng;
 
     @Column(name = "location_accuracy_km")
     private Double locationAccuracyKm;
@@ -77,8 +78,8 @@ public class Profile {
 
     public Profile(Long id, User user, String firstName, String lastName, LocalDate dateOfBirth, String gender,
                    String bio, String profilePictureUrl, String hometownCountry, String hometownCity,
-                   String currentCity, Point currentLocation, Double locationAccuracyKm, String privacySettings,
-                   boolean discoveryEnabled, Instant createdAt, Instant updatedAt) {
+                   String currentCity, Double currentLocationLat, Double currentLocationLng, Double locationAccuracyKm,
+                   String privacySettings, boolean discoveryEnabled, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.user = user;
         this.firstName = firstName;
@@ -90,12 +91,18 @@ public class Profile {
         this.hometownCountry = hometownCountry;
         this.hometownCity = hometownCity;
         this.currentCity = currentCity;
-        this.currentLocation = currentLocation;
+        this.currentLocationLat = currentLocationLat;
+        this.currentLocationLng = currentLocationLng;
         this.locationAccuracyKm = locationAccuracyKm;
         this.privacySettings = privacySettings;
         this.discoveryEnabled = discoveryEnabled;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public Profile(User user) {
+        this.user = user;
+        this.discoveryEnabled = true;
     }
 
     public Long getId() { return id; }
@@ -120,8 +127,10 @@ public class Profile {
     public void setHometownCity(String hometownCity) { this.hometownCity = hometownCity; }
     public String getCurrentCity() { return currentCity; }
     public void setCurrentCity(String currentCity) { this.currentCity = currentCity; }
-    public Point getCurrentLocation() { return currentLocation; }
-    public void setCurrentLocation(Point currentLocation) { this.currentLocation = currentLocation; }
+    public Double getCurrentLocationLat() { return currentLocationLat; }
+    public void setCurrentLocationLat(Double currentLocationLat) { this.currentLocationLat = currentLocationLat; }
+    public Double getCurrentLocationLng() { return currentLocationLng; }
+    public void setCurrentLocationLng(Double currentLocationLng) { this.currentLocationLng = currentLocationLng; }
     public Double getLocationAccuracyKm() { return locationAccuracyKm; }
     public void setLocationAccuracyKm(Double locationAccuracyKm) { this.locationAccuracyKm = locationAccuracyKm; }
     public String getPrivacySettings() { return privacySettings; }

@@ -2,22 +2,34 @@
 target/
 *.class
 .mvn/
+mvnw
+mvnw.cmd
 
 # ---- Node ----
 node_modules/
 dist/
+dist-ssr/
 *.local
+.cache/
+.temp/
+package-lock.json
 
 # ---- Environment files ----
 .env
 .env.local
+.env.*.local
 backend/.env
+frontend/.env
 
 # ---- IDE ----
 .idea/
-.vscode/*
+.vscode/
 !.vscode/launch.json
 *.iml
+*.swp
+*.swo
+*~
+.kiro/
 
 # ---- OS ----
 .DS_Store
@@ -25,3 +37,16 @@ Thumbs.db
 
 # ---- Logs ----
 *.log
+
+# ---- Docker ----
+docker-compose.override.yml
+
+# ---- Build artifacts ----
+*.jar
+*.war
+*.ear
+
+# ---- Test coverage ----
+coverage/
+.nyc_output/
+jacoco.exec

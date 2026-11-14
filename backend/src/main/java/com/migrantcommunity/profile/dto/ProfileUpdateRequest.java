@@ -12,5 +12,6 @@ public record ProfileUpdateRequest(
         @Size(max = 50) String gender,
         @Size(max = 2000) String bio,
         @Size(max = 100) String hometownCountry,
-        @Size(max = 100) String hometownCity) {
+        @Size(max = 100) String hometownCity,
+        @Size(max = 100) String currentCity) {
 }

@@ -237,10 +237,22 @@ public class ConnectionService {
         score = score.add(new BigDecimal(sharedLanguages * 10));
 
         // Nearby location: +15 points (within 50km)
-        if (profile1.getCurrentLocation() != null && profile2.getCurrentLocation() != null) {
-            double distance = profile1.getCurrentLocation().distance(profile2.getCurrentLocation());
-            // Convert from degrees to km (rough approximation)
-            double distanceKm = distance * 111.32; // 1 degree ≈ 111.32 km at equator
+        if (profile1.getCurrentLocationLat() != null && profile1.getCurrentLocationLng() != null &&
+            profile2.getCurrentLocationLat() != null && profile2.getCurrentLocationLng() != null) {
+            double lat1 = profile1.getCurrentLocationLat();
+            double lng1 = profile1.getCurrentLocationLng();
+            double lat2 = profile2.getCurrentLocationLat();
+            double lng2 = profile2.getCurrentLocationLng();
+            
+            // Haversine formula for distance in km
+            double R = 6371; // Earth radius in km
+            double dLat = Math.toRadians(lat2 - lat1);
+            double dLng = Math.toRadians(lng2 - lng1);
+            double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                       Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                       Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            double distanceKm = R * c;
             
             if (distanceKm < 50) {
                 score = score.add(new BigDecimal("15"));
@@ -271,7 +283,8 @@ public class ConnectionService {
             return "LANGUAGE";
         }
 
-        if (profile1.getCurrentLocation() != null && profile2.getCurrentLocation() != null) {
+        if (profile1.getCurrentLocationLat() != null && profile1.getCurrentLocationLng() != null &&
+            profile2.getCurrentLocationLat() != null && profile2.getCurrentLocationLng() != null) {
             return "LOCATION";
         }
 

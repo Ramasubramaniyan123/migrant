@@ -99,4 +99,20 @@ public class ProfileController {
         profileService.updateProfilePicture(body.get("imageUrl"));
         return ResponseEntity.ok(ApiResponse.ok(null, "Profile picture updated"));
     }
+
+    @PostMapping("/interests")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Add an interest to the user's profile")
+    public ResponseEntity<ApiResponse<Void>> addInterest(@RequestParam String interest) {
+        profileService.addInterest(interest);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Interest added"));
+    }
+
+    @DeleteMapping("/interests/{interest}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Remove an interest from the user's profile")
+    public ResponseEntity<ApiResponse<Void>> removeInterest(@PathVariable String interest) {
+        profileService.removeInterest(interest);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Interest removed"));
+    }
 }

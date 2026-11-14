@@ -27,10 +27,15 @@ public class EmailService {
 
     public EmailService(JavaMailSender mailSender,
                         @Value("${spring.mail.from:${EMAIL_FROM:noreply@migrantcommunity.local}}") String fromAddress,
-                        @Value("${app.email.enabled:true}") boolean enabled) {
+                        @Value("${app.email.enabled:true}") boolean enabled,
+                        @Value("${spring.mail.host:}") String mailHost) {
         this.mailSender = mailSender;
         this.fromAddress = fromAddress;
-        this.enabled = enabled;
+        // Auto-disable if no SMTP host is configured
+        this.enabled = enabled && mailHost != null && !mailHost.isBlank();
+        if (enabled && (mailHost == null || mailHost.isBlank())) {
+            log.warn("Email is enabled but spring.mail.host is not configured — email sending is disabled");
+        }
     }
 
     /**

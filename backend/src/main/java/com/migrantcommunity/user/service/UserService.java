@@ -75,7 +75,7 @@ public class UserService {
 
     public UserResponse getUserResponse(Long userId) {
         User user = getUserById(userId);
-        Profile profile = profileRepository.findByUserId(userId).orElse(null);
+        Profile profile = profileRepository.findByUser_Id(userId).orElse(null);
         
         String fullName = "";
         if (profile != null && profile.getFirstName() != null) {
@@ -103,7 +103,7 @@ public class UserService {
 
 
     public Profile getUserProfile(Long userId) {
-        return profileRepository.findByUserId(userId)
+        return profileRepository.findByUser_Id(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile", "userId", userId));
     }
 }

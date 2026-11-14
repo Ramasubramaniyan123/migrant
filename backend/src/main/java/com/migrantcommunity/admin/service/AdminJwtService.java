@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Set;
@@ -24,8 +23,8 @@ public class AdminJwtService {
     private final Set<String> revokedTokenIds = ConcurrentHashMap.newKeySet();
 
     public AdminJwtService(
-            @Value("${jwt.secret:}") String configuredSecret,
-            @Value("${jwt.expiration:86400000}") long expirationMillis) {
+            @Value("${jwt.secret}") String configuredSecret,
+            @Value("${jwt.expiration:900000}") long expirationMillis) {
         if (expirationMillis <= 0) {
             throw new IllegalArgumentException("JWT expiration must be positive");
         }
@@ -64,15 +63,15 @@ public class AdminJwtService {
     }
 
     private SecretKey createSigningKey(String configuredSecret) {
-        byte[] keyBytes;
         if (configuredSecret == null || configuredSecret.isBlank()) {
-            keyBytes = new byte[32];
-            new SecureRandom().nextBytes(keyBytes);
-        } else {
-            keyBytes = configuredSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            throw new IllegalArgumentException(
+                    "jwt.secret must not be empty. Set JWT_SECRET in your environment.");
         }
+        byte[] keyBytes = configuredSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
-            throw new IllegalArgumentException("JWT secret must contain at least 32 bytes");
+            throw new IllegalArgumentException(
+                    "jwt.secret must be at least 32 bytes (256 bits). Current length: "
+                    + keyBytes.length + " bytes.");
         }
         return Keys.hmacShaKeyFor(keyBytes);
     }

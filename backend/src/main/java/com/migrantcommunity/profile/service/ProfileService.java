@@ -18,10 +18,6 @@ import com.migrantcommunity.profile.entity.UserInterest;
 import com.migrantcommunity.profile.repository.ProfileRepository;
 import com.migrantcommunity.user.entity.User;
 import com.migrantcommunity.user.repository.UserRepository;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +26,6 @@ import java.util.List;
 @Service
 @Transactional
 public class ProfileService {
-
-    private static final GeometryFactory GEOMETRY_FACTORY =
-            new GeometryFactory(new PrecisionModel(), 4326);
 
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
@@ -88,9 +81,9 @@ public class ProfileService {
                         .toList();
         Double lat = null;
         Double lng = null;
-        if (profile.getCurrentLocation() != null) {
-            lng = profile.getCurrentLocation().getX();
-            lat = profile.getCurrentLocation().getY();
+        if (profile.getCurrentLocationLat() != null && profile.getCurrentLocationLng() != null) {
+            lat = profile.getCurrentLocationLat();
+            lng = profile.getCurrentLocationLng();
         }
         return new ProfileDetailsResponse(
                 user.getId(), user.getEmail(),
@@ -137,9 +130,8 @@ public class ProfileService {
     public ProfileDetailsResponse updateLocation(LocationUpdateRequest request) {
         User user = currentUserProvider.requireUser();
         Profile profile = getOrCreateProfile(user);
-        Point point = GEOMETRY_FACTORY.createPoint(
-                new Coordinate(request.longitude(), request.latitude()));
-        profile.setCurrentLocation(point);
+        profile.setCurrentLocationLat(request.latitude());
+        profile.setCurrentLocationLng(request.longitude());
         if (request.accuracyKm() != null) {
             profile.setLocationAccuracyKm(request.accuracyKm());
         }
@@ -198,11 +190,27 @@ public class ProfileService {
         userRepository.save(user);
     }
 
+    public void addInterest(String interest) {
+        User user = currentUserProvider.requireUser();
+        Profile profile = getOrCreateProfile(user);
+        // Check if interest already exists
+        if (userInterestRepository.existsByUserIdAndInterest(user.getId(), interest)) {
+            throw new BadRequestException("Interest already added to profile");
+        }
+        // Create interest
+        UserInterest userInterest = new UserInterest(user, interest);
+        userInterestRepository.save(userInterest);
+    }
+
+    public void removeInterest(String interest) {
+        User user = currentUserProvider.requireUser();
+        userInterestRepository.deleteByUserIdAndInterest(user.getId(), interest);
+    }
+
     private Profile getOrCreateProfile(User user) {
-        return profileRepository.findByUserId(user.getId())
+        return profileRepository.findByUser_Id(user.getId())
                 .orElseGet(() -> {
-                    Profile p = new Profile();
-                    p.setUser(user);
+                    Profile p = new Profile(user);
                     return profileRepository.save(p);
                 });
     }

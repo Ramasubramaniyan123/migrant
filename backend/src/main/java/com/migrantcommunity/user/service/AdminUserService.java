@@ -131,7 +131,7 @@ public class AdminUserService {
     }
 
     private PlatformUser toDto(User user) {
-        Profile profile = user.getProfile() != null ? user.getProfile() : profileRepository.findByUserId(user.getId()).orElse(null);
+        Profile profile = user.getProfile() != null ? user.getProfile() : profileRepository.findByUser_Id(user.getId()).orElse(null);
         List<UserLanguage> userLanguages = userLanguageRepository.findByUserId(user.getId());
         String motherTongue = userLanguages.stream()
                 .filter(UserLanguage::isPrimary).findFirst()

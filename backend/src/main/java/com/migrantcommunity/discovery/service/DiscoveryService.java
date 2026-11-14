@@ -15,7 +15,6 @@ import com.migrantcommunity.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,7 +56,7 @@ public class DiscoveryService {
                                          Long languageId, String interest,
                                          int page, int size) {
         User me = currentUserProvider.requireUser();
-        Profile myProfile = profileRepository.findByUserId(me.getId()).orElse(null);
+        Profile myProfile = profileRepository.findByUser_Id(me.getId()).orElse(null);
 
         double[] center = resolveCenter(myProfile, latitude, longitude);
         double radius = radiusKm != null ? radiusKm : DEFAULT_RADIUS_KM;
@@ -68,11 +67,14 @@ public class DiscoveryService {
         double lat = spatial ? center[0] : 0;
         double lng = spatial ? center[1] : 0;
 
-        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        long offset = (long) safePage * safeSize;
+        PageRequest pageable = PageRequest.of(safePage, safeSize);
 
         List<DiscoveryRow> rows = discoveryRepository.search(
                 me.getId(), lat, lng, spatial, radius * 1000.0,
-                hometownCity, currentCity, languageId, interest, pageable);
+                hometownCity, currentCity, languageId, interest, safeSize, offset);
         long total = discoveryRepository.countSearch(
                 me.getId(), lat, lng, spatial, radius * 1000.0,
                 hometownCity, currentCity, languageId, interest);
@@ -94,22 +96,25 @@ public class DiscoveryService {
     /** Hometown-based matching: people sharing the requester's hometown. */
     public Page<DiscoveredUser> discoverByHometown(String hometownCity, int page, int size) {
         User me = currentUserProvider.requireUser();
-        Profile myProfile = profileRepository.findByUserId(me.getId()).orElse(null);
+        Profile myProfile = profileRepository.findByUser_Id(me.getId()).orElse(null);
         String city = hometownCity != null && !hometownCity.isBlank()
                 ? hometownCity
                 : (myProfile != null ? myProfile.getHometownCity() : null);
         if (city == null || city.isBlank()) {
             throw new BadRequestException("hometownCity is required");
         }
-        double[] center = myProfile != null && myProfile.getCurrentLocation() != null
-                ? new double[]{myProfile.getCurrentLocation().getY(), myProfile.getCurrentLocation().getX()}
+        double[] center = myProfile != null && myProfile.getCurrentLocationLat() != null && myProfile.getCurrentLocationLng() != null
+                ? new double[]{myProfile.getCurrentLocationLat(), myProfile.getCurrentLocationLng()}
                 : null;
-        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        long offset = (long) safePage * safeSize;
+        PageRequest pageable = PageRequest.of(safePage, safeSize);
         List<DiscoveryRow> rows = discoveryRepository.search(
                 me.getId(),
                 center != null ? center[0] : 0, center != null ? center[1] : 0,
                 center != null, Double.MAX_VALUE / 4,
-                city, null, null, null, pageable);
+                city, null, null, null, safeSize, offset);
         long total = discoveryRepository.countSearch(
                 me.getId(),
                 center != null ? center[0] : 0, center != null ? center[1] : 0,
@@ -132,8 +137,8 @@ public class DiscoveryService {
         if (latitude != null && longitude != null) {
             return new double[]{latitude, longitude};
         }
-        if (myProfile != null && myProfile.getCurrentLocation() != null) {
-            return new double[]{myProfile.getCurrentLocation().getY(), myProfile.getCurrentLocation().getX()};
+        if (myProfile != null && myProfile.getCurrentLocationLat() != null && myProfile.getCurrentLocationLng() != null) {
+            return new double[]{myProfile.getCurrentLocationLat(), myProfile.getCurrentLocationLng()};
         }
         return null;
     }
