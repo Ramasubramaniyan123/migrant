@@ -113,6 +113,10 @@ public class CommunityService {
     public CommunityDetailsResponse update(Long communityId, UpdateCommunityRequest request) {
         Community community = getCommunity(communityId);
         requireManager(community);
+        // Visibility changes expose or hide all community content; restrict to owner.
+        if (request.publicCommunity() != null) {
+            requireOwner(community);
+        }
         if (request.name() != null) community.setName(request.name().trim());
         if (request.description() != null) community.setDescription(request.description());
         if (request.locationCountry() != null) community.setLocationCountry(request.locationCountry());

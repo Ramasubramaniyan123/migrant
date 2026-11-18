@@ -1,35 +1,97 @@
+import { useEffect, useState, useCallback } from 'react'
+import { discoveryService } from '../../services/discovery/discoveryService'
+import { connectionService } from '../../services/connections/connectionService'
+import { errorMessage } from '../../services/api/apiClient'
+import { PersonCard } from '../../components/ui/PersonCard'
+import { LoadingState, ErrorState, EmptyState } from '../../components/ui/States'
+
+const INTERESTS = ['Travel', 'Food', 'Music', 'Sports', 'Art', 'Photography', 'Cooking', 'Fitness', 'Reading', 'Technology']
+
 export const InterestDiscovery = () => {
+  const [interest, setInterest] = useState('')
+  const [people, setPeople] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [searched, setSearched] = useState(false)
+  const [error, setError] = useState('')
+  const [connecting, setConnecting] = useState(null)
+
+  const search = useCallback(async (i) => {
+    if (!i) return
+    setLoading(true)
+    setError('')
+    setSearched(true)
+    try {
+      const page = await discoveryService.suggestions({ interest: i, size: 24 })
+      setPeople(page.items || [])
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { if (interest) search(interest) }, [interest, search])
+
+  const connect = async (userId) => {
+    setConnecting(userId)
+    try {
+      await connectionService.sendRequest(userId)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setConnecting(null)
+    }
+  }
+
   return (
-    <section className="py-8 bg-elevated surface rounded-2xl border border-border">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <header className="flex flex-col items-start gap-4 mb-8">
-          <h2 className="font-display text-3xl font-bold">Interest Discovery</h2>
-          <p className="font-body text-token-text-secondary">
-            Find people who share your hobbies and passions.
-          </p>
-        </header>
+    <section>
+      <header className="mb-6">
+        <h2 className="font-display text-2xl font-bold">Interest discovery</h2>
+        <p className="mt-1 text-sm text-ink-2">Find people who share your hobbies and passions.</p>
+      </header>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Interest chips */}
-          <div className="grid grid-cols-2 gap-2">
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Travel</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Food</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Music</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Sports</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Art</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Photography</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Cooking</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Fitness</span>
-            <span className="px-3 py-1.5 rounded-full border text-xs hover:bg-primary hover:text-white transition-colors">Reading</span>
-          </div>
-        </div>
-
-        <div className="mt-8 pt-8 border-t border-border">
-          <a href="#" className="text-token-accent font-medium hover:underline">
-            View Interest-Based Communities
-          </a>
-        </div>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {INTERESTS.map((i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setInterest(i)}
+            aria-pressed={interest === i}
+            className={`chip ${interest === i ? 'chip-active' : ''}`}
+          >
+            {i}
+          </button>
+        ))}
       </div>
+
+      {error && <div className="mb-4"><ErrorState message={error} /></div>}
+
+      {loading ? (
+        <LoadingState />
+      ) : !searched ? (
+        <EmptyState title="Pick an interest" description="Select an interest above to find like-minded people." />
+      ) : people.length === 0 ? (
+        <EmptyState title="No matches" description={`No members found for "${interest}" yet.`} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {people.map((p) => (
+            <PersonCard
+              key={p.userId}
+              person={p}
+              action={
+                <button
+                  type="button"
+                  className="btn-outline btn-sm w-full"
+                  disabled={connecting === p.userId}
+                  onClick={() => connect(p.userId)}
+                >
+                  {connecting === p.userId ? 'Sending…' : 'Connect'}
+                </button>
+              }
+            />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

@@ -1,57 +1,76 @@
+import { useEffect, useState, useCallback } from 'react'
+import { communityService } from '../../services/communities/communityService'
+import { errorMessage } from '../../services/api/apiClient'
 import { CommunityCard } from '../community/CommunityCard'
+import { LoadingState, ErrorState, EmptyState } from '../../components/ui/States'
+import { PageHeader } from '../../components/ui/PageHeader'
 
 export const Communities = () => {
+  const [communities, setCommunities] = useState([])
+  const [query, setQuery] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+
+  const load = useCallback(async (p = page, q = query) => {
+    setLoading(true)
+    setError('')
+    try {
+      const result = await communityService.list({ query: q || undefined, page: p, size: 12 })
+      setCommunities(result.items || [])
+      setTotalPages(result.totalPages || 1)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }, [page, query])
+
+  useEffect(() => { load(0, query) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <section className="py-8 bg-elevated surface rounded-2xl border border-border">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <header className="flex flex-col items-start gap-4 mb-8">
-          <h2 className="font-display text-3xl font-bold">Communities</h2>
-          <p className="font-body text-token-text-secondary">
-            Join communities based on shared interests and regional identity.
-          </p>
-        </header>
+    <div className="mx-auto max-w-6xl">
+      <PageHeader title="Communities" description="Join communities based on shared interests and regional identity." />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <CommunityCard
-            id={1}
-            name="Bangalore Tech Circle"
-            cover="/assets/community1.jpg"
-            description="A community for tech professionals in Bangalore"
-            memberCount={247}
-            hometown="Bangalore, India"
-          />
-          <CommunityCard
-            id={2}
-            name="Mumbai Foodies"
-            cover="/assets/community2.jpg"
-            description="Food lovers exploring Mumbai's culinary scene"
-            memberCount={156}
-            hometown="Mumbai, India"
-          />
-          <CommunityCard
-            id={3}
-            name="Chennai Culture Club"
-            cover="/assets/community3.jpg"
-            description="Preserving and celebrating Tamil culture"
-            memberCount={89}
-            hometown="Chennai, India"
-          />
-          <CommunityCard
-            id={4}
-            name="Hyderabad Hikers"
-            cover="/assets/community4.jpg"
-            description="Outdoor enthusiasts exploring Hyderabad"
-            memberCount={63}
-            hometown="Hyderabad, India"
-          />
-        </div>
+      <form
+        className="mb-6 flex gap-2"
+        onSubmit={(e) => { e.preventDefault(); setPage(0); load(0, query) }}
+      >
+        <input
+          className="input max-w-sm"
+          placeholder="Search communities…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search communities"
+        />
+        <button type="submit" className="btn-outline">Search</button>
+      </form>
 
-        <div className="mt-8 text-right">
-          <a href="#" className="text-token-accent font-medium hover:underline">
-            Browse All Communities
-          </a>
-        </div>
-      </div>
-    </section>
+      {loading ? (
+        <LoadingState />
+      ) : error ? (
+        <ErrorState message={error} onRetry={() => load()} />
+      ) : communities.length === 0 ? (
+        <EmptyState title="No communities found" description="Try a different search, or check back later." />
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {communities.map((c) => <CommunityCard key={c.id} community={c} />)}
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <button type="button" className="btn-outline btn-sm" disabled={page === 0} onClick={() => { setPage(page - 1); load(page - 1) }}>
+                Previous
+              </button>
+              <span className="text-sm text-ink-2">Page {page + 1} of {totalPages}</span>
+              <button type="button" className="btn-outline btn-sm" disabled={page >= totalPages - 1} onClick={() => { setPage(page + 1); load(page + 1) }}>
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   )
 }

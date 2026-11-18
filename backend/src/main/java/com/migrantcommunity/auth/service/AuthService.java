@@ -6,12 +6,16 @@ import com.migrantcommunity.auth.dto.UserSummary;
 import com.migrantcommunity.auth.mapper.AuthMapper;
 import com.migrantcommunity.common.email.EmailService;
 import com.migrantcommunity.common.exception.BadRequestException;
+import com.migrantcommunity.common.exception.ForbiddenException;
 import com.migrantcommunity.common.exception.ResourceNotFoundException;
+import com.migrantcommunity.common.exception.ServiceUnavailableException;
 import com.migrantcommunity.profile.entity.Profile;
 import com.migrantcommunity.profile.repository.ProfileRepository;
 import com.migrantcommunity.security.EmailVerificationToken;
 import com.migrantcommunity.security.EmailVerificationTokenRepository;
 import com.migrantcommunity.security.LoginAttemptService;
+import com.migrantcommunity.security.OtpService;
+import com.migrantcommunity.security.PasswordResetAttemptService;
 import com.migrantcommunity.security.PasswordResetToken;
 import com.migrantcommunity.security.PasswordResetTokenRepository;
 import com.migrantcommunity.security.RefreshToken;
@@ -68,6 +72,8 @@ public class AuthService {
     private final EmailService emailService;
     private final ProfileRepository profileRepository;
     private final LoginAttemptService loginAttemptService;
+    private final OtpService otpService;
+    private final PasswordResetAttemptService resetAttemptService;
     private final String appBaseUrl;
     private final String googleClientId;
 
@@ -83,6 +89,8 @@ public class AuthService {
                        PasswordEncoder passwordEncoder, JwtService jwtService, AuthMapper authMapper,
                        EmailService emailService, ProfileRepository profileRepository,
                        LoginAttemptService loginAttemptService,
+                       OtpService otpService,
+                       PasswordResetAttemptService resetAttemptService,
                        @Value("${app.base-url:http://localhost:5173}") String appBaseUrl,
                        @Value("${google.client-id:}") String googleClientId) {
         this.userRepository = userRepository;
@@ -97,6 +105,8 @@ public class AuthService {
         this.emailService = emailService;
         this.profileRepository = profileRepository;
         this.loginAttemptService = loginAttemptService;
+        this.otpService = otpService;
+        this.resetAttemptService = resetAttemptService;
         this.appBaseUrl = appBaseUrl;
     }
 
@@ -121,6 +131,7 @@ public class AuthService {
         user.setRole(com.migrantcommunity.common.enums.UserRole.USER);
         user.setActive(true);
         user.setVerified(false);
+        user.setAccountStatus(com.migrantcommunity.common.enums.UserStatus.PENDING_VERIFICATION);
 
         // Create profile and set bidirectional relationship before saving
         Profile profile = new Profile();
@@ -131,10 +142,9 @@ public class AuthService {
         user = userRepository.save(user);
 
         sendVerificationEmail(user);
-
-        String accessToken = jwtService.issueAccessToken(user);
-        String refreshToken = issueRefreshToken(user, null, null);
-        return authMapper.toResponse(user, accessToken, refreshToken);
+        // Tokens are issued only after email verification so unverified
+        // accounts cannot call authenticated APIs.
+        return authMapper.toResponse(user, null, null);
     }
 
     public AuthResponse login(String email, String password) {
@@ -156,6 +166,10 @@ public class AuthService {
                     throw new BadRequestException("Invalid credentials");
                 });
                 
+        if (!user.isVerified()
+                || user.getAccountStatus() == com.migrantcommunity.common.enums.UserStatus.PENDING_VERIFICATION) {
+            throw new BadRequestException("Please verify your email before signing in");
+        }
         if (!user.isActive()
                 || user.getAccountStatus() != com.migrantcommunity.common.enums.UserStatus.ACTIVE) {
             throw new BadRequestException("Account is suspended");
@@ -209,9 +223,15 @@ public class AuthService {
             // Save user with cascade which will also persist the profile
             user = userRepository.save(user);
         } else {
-            // Update existing user's info if needed
-            if (!user.isVerified()) {
+            if (!user.isActive()
+                    || user.getAccountStatus() == com.migrantcommunity.common.enums.UserStatus.SUSPENDED
+                    || user.getAccountStatus() == com.migrantcommunity.common.enums.UserStatus.DEACTIVATED) {
+                throw new ForbiddenException("Account is suspended");
+            }
+            if (!user.isVerified()
+                    || user.getAccountStatus() == com.migrantcommunity.common.enums.UserStatus.PENDING_VERIFICATION) {
                 user.setVerified(true);
+                user.setAccountStatus(com.migrantcommunity.common.enums.UserStatus.ACTIVE);
                 user.setUpdatedAt(Instant.now());
                 userRepository.save(user);
             }
@@ -238,7 +258,14 @@ public class AuthService {
     public AuthResponse refresh(String refreshToken) {
         RefreshToken stored = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new BadRequestException("Invalid refresh token"));
-        if (stored.isRevoked() || stored.isExpired()) {
+        if (stored.isRevoked()) {
+            // Reuse of a rotated token indicates theft: revoke the whole family.
+            refreshTokenRepository.revokeAllByUser(stored.getUser());
+            userSessionRepository.findByUserAndRevokedFalse(stored.getUser())
+                    .forEach(session -> session.setRevoked(true));
+            throw new BadRequestException("Refresh token is expired or revoked");
+        }
+        if (stored.isExpired()) {
             throw new BadRequestException("Refresh token is expired or revoked");
         }
         User user = stored.getUser();
@@ -261,39 +288,76 @@ public class AuthService {
     }
 
     public void forgotPassword(String email) {
+        if (!emailService.isEnabled()) {
+            throw new ServiceUnavailableException("Email delivery is temporarily unavailable");
+        }
         userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
-            // Cooldown: reject if a valid OTP was issued within the last 60 seconds
-            resetTokenRepository.findLatestByUserId(user.getId()).ifPresent(existing -> {
-                if (existing.isUsable()) {
-                    long secondsSinceCreated = Instant.now().getEpochSecond() - existing.getCreatedAt().getEpochSecond();
-                    if (secondsSinceCreated < RESET_OTP_COOLDOWN_SECONDS) {
-                        throw new BadRequestException(
-                            "Please wait " + (RESET_OTP_COOLDOWN_SECONDS - secondsSinceCreated) + " seconds before requesting a new code.");
-                    }
-                }
-            });
+            // Cooldown: silently skip resend if a usable OTP was issued within
+            // the last 60 seconds. Must not throw — an error here would reveal
+            // that the email is registered (account enumeration).
+            boolean onCooldown = resetTokenRepository.findLatestByUserId(user.getId())
+                    .map(existing -> existing.isUsable()
+                            && Instant.now().getEpochSecond() - existing.getCreatedAt().getEpochSecond()
+                                    < RESET_OTP_COOLDOWN_SECONDS)
+                    .orElse(false);
+            if (onCooldown) {
+                return;
+            }
 
             // Invalidate all previous tokens for this user
             resetTokenRepository.deleteByUserId(user.getId());
 
+            IssuedOtp issued = issueUniqueOtp();
             PasswordResetToken token = new PasswordResetToken();
             token.setUser(user);
-            token.setToken(generateOtp());
+            token.setToken(issued.hash());
             token.setExpiresAt(Instant.now().plus(RESET_OTP_TTL_MINUTES, ChronoUnit.MINUTES));
             resetTokenRepository.save(token);
 
-            emailService.send(user.getEmail(), "Your password reset code",
-                    "Hello,\n\nYour password reset code is:\n\n    " + token.getToken()
+            // The plaintext OTP only ever exists in the outgoing email.
+            boolean delivered = emailService.send(user.getEmail(), "Your password reset code",
+                    "Hello,\n\nYour password reset code is:\n\n    " + issued.otp()
                             + "\n\nThis code expires in " + RESET_OTP_TTL_MINUTES + " minutes."
                             + "\n\nIf you did not request this, ignore this email.");
+            if (!delivered) {
+                throw new ServiceUnavailableException("Email delivery is temporarily unavailable");
+            }
         });
         // Always return success to avoid account enumeration.
     }
 
+    private record IssuedOtp(String otp, String hash) {
+    }
+
+    /** Generates an OTP whose keyed hash is unique across all pending tokens. */
+    private IssuedOtp issueUniqueOtp() {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String otp = generateOtp();
+            String hash = otpService.hash(otp);
+            if (!resetTokenRepository.existsByToken(hash)) {
+                return new IssuedOtp(otp, hash);
+            }
+        }
+        throw new IllegalStateException("Unable to issue a unique password reset code");
+    }
+
     public void resetPassword(String tokenValue, String newPassword) {
-        PasswordResetToken token = resetTokenRepository.findByToken(tokenValue)
+        resetPassword(tokenValue, newPassword, null);
+    }
+
+    public void resetPassword(String tokenValue, String newPassword, String clientIp) {
+        resetAttemptService.checkAllowed(clientIp);
+        if (tokenValue == null || !tokenValue.matches("\\d{6}")) {
+            throw new BadRequestException("Invalid or expired reset token");
+        }
+        if (!PASSWORD_PATTERN.matcher(newPassword).matches()) {
+            throw new BadRequestException(
+                "Password must be 8-128 characters with at least one uppercase, one lowercase, one digit, and one special character (@#$%^&+=!)"
+            );
+        }
+        PasswordResetToken token = resetTokenRepository.findByToken(otpService.hash(tokenValue))
                 .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
-        if (!token.isUsable()) {
+        if (!token.isUsable() || !otpService.matches(tokenValue, token.getToken())) {
             throw new BadRequestException("Invalid or expired reset token");
         }
         User user = token.getUser();
@@ -302,6 +366,7 @@ public class AuthService {
 
         token.setUsedAt(Instant.now());
         resetTokenRepository.save(token);
+        resetAttemptService.reset(clientIp);
 
         // Invalidate all outstanding sessions after a credential change.
         refreshTokenRepository.findByUser(user).forEach(rt -> rt.setRevoked(true));
@@ -309,7 +374,7 @@ public class AuthService {
                 .forEach(session -> session.setRevoked(true));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void verifyEmail(String tokenValue) {
         EmailVerificationToken token = verificationTokenRepository.findByToken(tokenValue)
                 .orElseThrow(() -> new ResourceNotFoundException("Verification token not found"));
@@ -318,6 +383,7 @@ public class AuthService {
         }
         User user = token.getUser();
         user.setVerified(true);
+        user.setAccountStatus(com.migrantcommunity.common.enums.UserStatus.ACTIVE);
         userRepository.save(user);
         token.setUsedAt(Instant.now());
         verificationTokenRepository.save(token);
@@ -337,9 +403,12 @@ public class AuthService {
         verificationTokenRepository.save(token);
 
         String link = appBaseUrl + "/verify-email?token=" + token.getToken();
-        emailService.send(user.getEmail(), "Verify your Migrant Community account",
+        boolean delivered = emailService.send(user.getEmail(), "Verify your Migrant Community account",
                 "Hello,\n\nConfirm your email address to activate your account:\n\n" + link
                         + "\n\nThis link expires in " + VERIFICATION_TOKEN_TTL_HOURS + " hours.");
+        if (!delivered && emailService.isEnabled()) {
+            throw new ServiceUnavailableException("Email delivery is temporarily unavailable");
+        }
     }
 
     private String issueRefreshToken(User user, String ipAddress, String userAgent) {
@@ -399,11 +468,14 @@ public class AuthService {
 
             JSONObject claims = new JSONObject(response.body());
             String issuer = claims.optString("iss");
+            long exp = claims.optLong("exp", 0L);
+            boolean expired = exp > 0 && Instant.ofEpochSecond(exp).isBefore(Instant.now());
             if (!googleClientId.equals(claims.optString("aud"))
                     || (!issuer.equals("accounts.google.com") && !issuer.equals("https://accounts.google.com"))
-                    || !claims.optBoolean("email_verified")
+                    || !isGoogleEmailVerified(claims)
                     || claims.optString("email").isBlank()
-                    || claims.optString("sub").isBlank()) {
+                    || claims.optString("sub").isBlank()
+                    || expired) {
                 throw new BadRequestException("Google ID token claims are invalid");
             }
             return claims;
@@ -413,5 +485,13 @@ public class AuthService {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Google ID token verification was interrupted", e);
         }
+    }
+
+    static boolean isGoogleEmailVerified(JSONObject claims) {
+        Object value = claims.opt("email_verified");
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        return "true".equalsIgnoreCase(String.valueOf(value));
     }
 }

@@ -51,6 +51,7 @@ public class DiscoveryService {
      * privacy settings. Blocked users and non-discoverable profiles are excluded
      * in SQL.
      */
+    @SuppressWarnings("null")
     public Page<DiscoveredUser> discover(Double radiusKm, Double latitude, Double longitude,
                                          String hometownCity, String currentCity,
                                          Long languageId, String interest,
@@ -64,8 +65,8 @@ public class DiscoveryService {
             throw new BadRequestException("radiusKm must be between 0 and " + (int) MAX_RADIUS_KM);
         }
         boolean spatial = center != null;
-        double lat = spatial ? center[0] : 0;
-        double lng = spatial ? center[1] : 0;
+        double lat = center != null ? center[0] : 0;
+        double lng = center != null ? center[1] : 0;
 
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
@@ -94,6 +95,7 @@ public class DiscoveryService {
     }
 
     /** Hometown-based matching: people sharing the requester's hometown. */
+    @SuppressWarnings("null")
     public Page<DiscoveredUser> discoverByHometown(String hometownCity, int page, int size) {
         User me = currentUserProvider.requireUser();
         Profile myProfile = profileRepository.findByUser_Id(me.getId()).orElse(null);

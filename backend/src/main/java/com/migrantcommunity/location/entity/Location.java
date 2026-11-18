@@ -2,7 +2,6 @@ package com.migrantcommunity.location.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.locationtech.jts.geom.Point;
 
 import java.time.Instant;
 
@@ -41,9 +40,6 @@ public class Location {
     @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "location", columnDefinition = "geometry(Point,4326)")
-    private Point location;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Location parent;
@@ -71,8 +67,6 @@ public class Location {
     public void setLatitude(Double latitude) { this.latitude = latitude; }
     public Double getLongitude() { return longitude; }
     public void setLongitude(Double longitude) { this.longitude = longitude; }
-    public Point getLocation() { return location; }
-    public void setLocation(Point location) { this.location = location; }
     public Location getParent() { return parent; }
     public void setParent(Location parent) { this.parent = parent; }
     public Instant getCreatedAt() { return createdAt; }

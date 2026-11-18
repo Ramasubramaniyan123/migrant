@@ -2,7 +2,6 @@ package com.migrantcommunity.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import com.migrantcommunity.user.entity.User;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,7 +38,7 @@ public class JwtService {
                 .id(UUID.randomUUID().toString())
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(issuedAt.plusMillis(expirationMillis)))
-                .signWith(signingKey, SignatureAlgorithm.HS256)
+                .signWith(signingKey)
                 .compact();
     }
 
@@ -53,7 +52,7 @@ public class JwtService {
                 .id(UUID.randomUUID().toString())
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(issuedAt.plusMillis(refreshExpirationMillis)))
-                .signWith(signingKey, SignatureAlgorithm.HS256)
+                .signWith(signingKey)
                 .compact();
     }
 

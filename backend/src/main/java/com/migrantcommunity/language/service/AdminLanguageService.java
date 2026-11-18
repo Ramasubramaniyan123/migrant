@@ -74,6 +74,7 @@ public class AdminLanguageService {
     public static record LangStats(long total, long active, long totalUsers) {}
 
     @Transactional(readOnly = true)
+    @SuppressWarnings("null")
     public LangStats getStats() {
         List<com.migrantcommunity.language.entity.Language> all = languageRepository.findAll();
         long totalUsers = all.stream().mapToLong(l -> userLanguageRepository.countByLanguageId(l.getId())).sum();

@@ -1,95 +1,111 @@
-import { EditButton } from '../settings/ProfileSettings'
+import { useEffect, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import { MapPin, Pencil } from 'lucide-react'
+import { profileService } from '../../services/users/userService'
+import { errorMessage } from '../../services/api/apiClient'
+import { Avatar } from '../../components/ui/Avatar'
+import { LoadingState, ErrorState } from '../../components/ui/States'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { formatDate } from '../../utils/format'
 
 export const Profile = () => {
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      setProfile(await profileService.details())
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  if (loading) return <LoadingState />
+  if (error) return <ErrorState message={error} onRetry={load} />
+  if (!profile) return null
+
+  const name = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email
+  const location = [
+    profile.privacy?.showCurrentCity !== false ? profile.currentCity : null,
+    profile.privacy?.showHometown !== false ? profile.hometownCity : null,
+  ].filter(Boolean).join(' · ')
+
   return (
-    <section className="py-8 bg-elevated surface rounded-2xl border border-border">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Profile Sidebar */}
-          <div>
-            {/* Profile Image */}
-            <div className="relative w-full h-64 rounded-2xl overflow-hidden mb-6 md:mb-8">
-              <img
-                src="/assets/profile.jpg"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-              <button className="absolute bottom-3 right-3 rounded-full bg-primary p-2">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22s8-4 8-10V5l-8-8-8 8v7c0 6 8 10 8 10z"/>
-                </svg>
-              </button>
-            </div>
+    <div className="mx-auto max-w-4xl">
+      <PageHeader
+        title={name}
+        description={profile.email}
+        actions={<Link to="/app/settings" className="btn-outline btn-sm"><Pencil className="h-4 w-4" /> Edit profile</Link>}
+      />
 
-            {/* Member since */}
-            <div className="mb-6">
-              <p className="text-token-text-caption">Member since 2024</p>
-              <p className="font-medium text-token-text-primary">247 connections</p>
-            </div>
-
-            {/* Followers/Following */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="font-display text-xl font-bold">1,247</p>
-                <p className="text-token-text-caption">Followers</p>
-              </div>
-              <div>
-                <p className="font-display text-xl font-bold">892</p>
-                <p className="text-token-text-caption">Following</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile Actions */}
-          <EditButton />
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="card flex flex-col items-center p-6 text-center">
+          <Avatar name={name} src={profile.profilePictureUrl} size="xl" />
+          <h2 className="mt-4 font-display text-xl font-semibold">{name}</h2>
+          {profile.createdAt && <p className="mt-1 text-xs text-ink-3">Member since {formatDate(profile.createdAt)}</p>}
+          {location && (
+            <p className="mt-2 flex items-center gap-1.5 text-sm text-ink-2">
+              <MapPin className="h-4 w-4 text-accent" /> {location}
+            </p>
+          )}
         </div>
 
-        {/* Main Profile Content */}
         <div className="space-y-6">
-          {/* About Section */}
-          <div>
-            <h2 className="font-display text-2xl font-bold mb-4">About Me</h2>
-            <p className="text-token-text-secondary line-clamp-4">
-              Software engineer who moved from Bangalore to Seattle in 2023. Love exploring new cuisines, hiking the Cascades, and staying connected with my roots through technology and community.
-            </p>
-          </div>
+          <section className="card p-6">
+            <h3 className="mb-3 font-display text-lg font-semibold">About</h3>
+            {profile.bio ? (
+              <p className="whitespace-pre-line text-sm text-ink-2">{profile.bio}</p>
+            ) : (
+              <p className="text-sm text-ink-3">No bio yet. <Link to="/app/settings" className="link">Add one</Link></p>
+            )}
+          </section>
 
-          {/* Hometown */}
-          <div>
-            <h2 className="font-display text-2xl font-bold mb-4">Hometown</h2>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 rounded-2xl overflow-hidden bg-gradient-to-br from-terracotta to-copper">
-                <div className="p-4">
-                  <p className="font-medium text-token-text-caption">Bangalore, India</p>
-                  <p className="text-token-text-muted text-xs">Karnataka</p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <section className="card p-6">
+              <h3 className="mb-3 font-display text-lg font-semibold">Hometown</h3>
+              {profile.hometownCity || profile.hometownCountry ? (
+                <p className="text-sm text-ink-2">
+                  {[profile.hometownCity, profile.hometownCountry].filter(Boolean).join(', ')}
+                </p>
+              ) : (
+                <p className="text-sm text-ink-3">Not set</p>
+              )}
+            </section>
+            <section className="card p-6">
+              <h3 className="mb-3 font-display text-lg font-semibold">Languages</h3>
+              {profile.languages?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.languages.map((l) => (
+                    <span key={l.languageId} className="chip">
+                      {l.name}{l.proficiency ? ` · ${l.proficiency}` : ''}{l.primary ? ' ★' : ''}
+                    </span>
+                  ))}
                 </div>
+              ) : (
+                <p className="text-sm text-ink-3">No languages added</p>
+              )}
+            </section>
+          </div>
+
+          <section className="card p-6">
+            <h3 className="mb-3 font-display text-lg font-semibold">Interests</h3>
+            {profile.interests?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {profile.interests.map((i) => <span key={i} className="chip">{i}</span>)}
               </div>
-              <svg className="w-6 h-6 text-token-text flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </div>
-          </div>
-
-          {/* Languages */}
-          <div>
-            <h2 className="font-display text-2xl font-bold mb-4">Languages</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <span className="px-3 py-1 rounded border bg-primary/10 text-primary">English</span>
-              <span className="px-3 py-1 rounded border bg-primary/10 text-primary">Hindi</span>
-              <span className="px-3 py-1 rounded border bg-primary/10 text-primary">Kannada</span>
-            </div>
-          </div>
-
-          {/* Communities */}
-          <div>
-            <h2 className="font-display text-2xl font-bold mb-4"> Communities</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <span className="px-3 py-1 rounded border bg-surface-primary border border-border text-sm">Bangalore Tech Circle</span>
-              <span className="px-3 py-1 rounded border bg-surface-primary border border-border text-sm">Mumbai Foodies</span>
-            </div>
-          </div>
+            ) : (
+              <p className="text-sm text-ink-3">No interests yet</p>
+            )}
+          </section>
         </div>
       </div>
-    </section>
+    </div>
   )
 }

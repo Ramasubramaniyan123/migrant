@@ -3,6 +3,7 @@ package com.migrantcommunity.auth.controller;
 import com.migrantcommunity.auth.dto.AuthResponse;
 import com.migrantcommunity.auth.service.AuthService;
 import com.migrantcommunity.common.response.ApiResponse;
+import com.migrantcommunity.security.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,16 +13,18 @@ import org.springframework.web.bind.annotation.*;
 public class OAuthController {
 
     private final AuthService authService;
+    private final ClientIpResolver clientIpResolver;
 
-    public OAuthController(AuthService authService) {
+    public OAuthController(AuthService authService, ClientIpResolver clientIpResolver) {
         this.authService = authService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @PostMapping("/google")
     public ResponseEntity<ApiResponse<AuthResponse>> handleGoogleOAuth(
             @RequestBody GoogleOAuthRequest request,
             HttpServletRequest httpRequest) {
-        String clientIp = getClientIp(httpRequest);
+        String clientIp = clientIpResolver.resolve(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
 
         AuthResponse response = authService.authenticateWithGoogle(
@@ -31,14 +34,6 @@ public class OAuthController {
         );
 
         return ResponseEntity.ok(ApiResponse.ok(response, "Successfully authenticated with Google"));
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 
     public record GoogleOAuthRequest(String idToken) {}

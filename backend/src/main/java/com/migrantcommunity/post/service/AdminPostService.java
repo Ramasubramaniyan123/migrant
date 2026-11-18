@@ -44,6 +44,7 @@ public class AdminPostService {
     }
 
     @Transactional(readOnly = true)
+    @SuppressWarnings("null")
     public List<Post> flagged() {
         Set<Long> flaggedIds = contentFlagRepository.findByStatusOrderByCreatedAtDesc("OPEN").stream()
                 .filter(f -> "POST".equalsIgnoreCase(f.getTargetType()))

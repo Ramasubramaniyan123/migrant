@@ -19,7 +19,7 @@ public class LanguageService {
 
     public List<LanguageResponse> allLanguages() {
         return languageRepository.findAll().stream()
-                .map(l -> new LanguageResponse(l.getCode(), l.getName(), l.getNativeName()))
+                .map(l -> new LanguageResponse(l.getId(), l.getCode(), l.getName(), l.getNativeName()))
                 .toList();
     }
 }

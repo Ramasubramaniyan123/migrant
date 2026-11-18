@@ -95,7 +95,7 @@ public class AdminAuthService {
         }
     }
 
-    @Transactional(readOnly = true)
+    // Not read-only: login persists lastLoginAt.
     public AdminLoginResponse login(AdminLoginRequest req) {
         if (req == null || req.email() == null || req.password() == null) {
             throw new BadCredentialsException("Invalid email or password");

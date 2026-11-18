@@ -185,6 +185,9 @@ public class PostService {
                 .map(this::toCommentResponse);
     }
 
+    private static final java.util.Set<String> ALLOWED_REACTION_TYPES =
+            java.util.Set.of("LIKE", "LOVE", "CELEBRATE", "SUPPORT");
+
     public void react(Long postId, String type) {
         User me = currentUserProvider.requireUser();
         Post post = getPost(postId);
@@ -192,10 +195,14 @@ public class PostService {
         if (reactionRepository.existsByPostIdAndUserId(postId, me.getId())) {
             throw new BadRequestException("Already reacted to this post");
         }
+        String reactionType = type != null ? type.trim().toUpperCase() : "LIKE";
+        if (!ALLOWED_REACTION_TYPES.contains(reactionType)) {
+            throw new BadRequestException("Unsupported reaction type: " + type);
+        }
         Reaction reaction = new Reaction();
         reaction.setPost(post);
         reaction.setUser(me);
-        reaction.setType(type != null ? type : "LIKE");
+        reaction.setType(reactionType);
         reactionRepository.save(reaction);
         post.incrementLikeCount();
         postRepository.save(post);
@@ -265,6 +272,7 @@ public class PostService {
         return user.getEmail().split("@")[0];
     }
 
+    @SuppressWarnings("null")
     private PostDetailsResponse toDetails(Post p, Long viewerId) {
         List<String> images = postImageRepository.findByPostIdOrderBySortOrderAsc(p.getId())
                 .stream().map(PostImage::getImageUrl).toList();

@@ -48,7 +48,7 @@ public class ProfileService {
         this.currentUserProvider = currentUserProvider;
     }
 
-    @Transactional(readOnly = true)
+    // Not read-only: getOrCreateProfile may persist a missing profile.
     public ProfileResponse currentProfile() {
         Profile profile = getOrCreateProfile(currentUserProvider.requireUser());
         List<String> languages = userLanguageRepository.findByUserId(profile.getUser().getId())
@@ -66,7 +66,8 @@ public class ProfileService {
                 languages);
     }
 
-    @Transactional(readOnly = true)
+    // Not read-only: getOrCreateProfile may persist a missing profile.
+    @SuppressWarnings("null")
     public ProfileDetailsResponse getProfileDetails() {
         User user = currentUserProvider.requireUser();
         Profile profile = getOrCreateProfile(user);
@@ -192,7 +193,7 @@ public class ProfileService {
 
     public void addInterest(String interest) {
         User user = currentUserProvider.requireUser();
-        Profile profile = getOrCreateProfile(user);
+        getOrCreateProfile(user);
         // Check if interest already exists
         if (userInterestRepository.existsByUserIdAndInterest(user.getId(), interest)) {
             throw new BadRequestException("Interest already added to profile");

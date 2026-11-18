@@ -287,7 +287,6 @@ All API services are fully integrated and ready to use:
 - `/app/settings` - Settings
 
 ### Admin Routes (Role-Based Protected)
-- `/admin/login` - Admin login
 - `/admin/dashboard` - Admin dashboard
 - `/admin/users` - User management
 - `/admin/communities` - Community management

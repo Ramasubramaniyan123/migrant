@@ -130,6 +130,7 @@ public class AdminUserService {
         }
     }
 
+    @SuppressWarnings("null")
     private PlatformUser toDto(User user) {
         Profile profile = user.getProfile() != null ? user.getProfile() : profileRepository.findByUser_Id(user.getId()).orElse(null);
         List<UserLanguage> userLanguages = userLanguageRepository.findByUserId(user.getId());

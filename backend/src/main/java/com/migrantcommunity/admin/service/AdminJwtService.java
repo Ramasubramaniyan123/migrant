@@ -1,65 +1,74 @@
 package com.migrantcommunity.admin.service;
 
+import com.migrantcommunity.admin.entity.AdminRevokedToken;
+import com.migrantcommunity.admin.repository.AdminRevokedTokenRepository;
 import com.migrantcommunity.common.enums.AdminRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AdminJwtService {
 
     private final SecretKey signingKey;
     private final long expirationMillis;
-    private final Set<String> revokedTokenIds = ConcurrentHashMap.newKeySet();
+    private final AdminRevokedTokenRepository revokedTokenRepository;
 
     public AdminJwtService(
             @Value("${jwt.secret}") String configuredSecret,
-            @Value("${jwt.expiration:900000}") long expirationMillis) {
+            @Value("${jwt.expiration:900000}") long expirationMillis,
+            AdminRevokedTokenRepository revokedTokenRepository) {
         if (expirationMillis <= 0) {
             throw new IllegalArgumentException("JWT expiration must be positive");
         }
         this.expirationMillis = expirationMillis;
         this.signingKey = createSigningKey(configuredSecret);
+        this.revokedTokenRepository = revokedTokenRepository;
     }
 
     public String issueToken(String email, AdminRole role) {
         Instant issuedAt = Instant.now();
         return Jwts.builder()
-                .setSubject(email)
+                .subject(email)
                 .claim("role", role.name())
                 .claim("tokenUse", "admin")
-                .setId(UUID.randomUUID().toString())
-                .setIssuedAt(Date.from(issuedAt))
-                .setExpiration(Date.from(issuedAt.plusMillis(expirationMillis)))
-                .signWith(signingKey, SignatureAlgorithm.HS256)
+                .id(UUID.randomUUID().toString())
+                .issuedAt(Date.from(issuedAt))
+                .expiration(Date.from(issuedAt.plusMillis(expirationMillis)))
+                .signWith(signingKey)
                 .compact();
     }
 
     public Claims parse(String token) {
         return Jwts.parser()
-                .setSigningKey(signingKey)
+                .verifyWith(signingKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
+    @Transactional(readOnly = true)
     public boolean isRevoked(String tokenId) {
-        return revokedTokenIds.contains(tokenId);
+        return tokenId != null && revokedTokenRepository.existsByJti(tokenId);
     }
 
+    /** Revokes a token until its natural expiry; expired rows are purged. */
+    @Transactional
     public void revoke(String token) {
         Claims claims = parse(token);
-        revokedTokenIds.add(claims.getId());
+        Instant expiresAt = claims.getExpiration() != null
+                ? claims.getExpiration().toInstant()
+                : Instant.now().plusMillis(expirationMillis);
+        revokedTokenRepository.save(new AdminRevokedToken(claims.getId(), expiresAt));
+        revokedTokenRepository.deleteExpired(Instant.now());
     }
 
     private SecretKey createSigningKey(String configuredSecret) {

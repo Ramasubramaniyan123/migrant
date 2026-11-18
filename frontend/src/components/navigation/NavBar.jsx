@@ -1,62 +1,224 @@
-import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
-import { Menu } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Menu, X, Sun, Moon, Monitor, LogOut, User as UserIcon, LayoutDashboard, Bell } from 'lucide-react'
+import { useTheme, useAuth } from '../../contexts'
+import { adminAuthService } from '../../services/admin/adminService'
+import { adminTokenStore } from '../../services/api/adminClient'
+import { displayNameFromEmail } from '../../utils/format'
 
-export const NavBar = ({ isPublic = false, mode = 'light', setTheme, children }) => {
-  const [theme, setThemeMode] = useState(mode)
-  const location = useLocation()
+const PUBLIC_LINKS = [
+  { to: '/', label: 'Home' },
+  { to: '/about', label: 'About' },
+  { to: '/features', label: 'Features' },
+  { to: '/contact', label: 'Contact' },
+]
 
-  const handleThemeToggle = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
-    setThemeMode(newTheme)
-    setTheme(newTheme)
+const USER_LINKS = [
+  { to: '/app/home', label: 'Home' },
+  { to: '/app/discover', label: 'Discover' },
+  { to: '/app/communities', label: 'Communities' },
+  { to: '/app/feed', label: 'Feed' },
+  { to: '/app/events', label: 'Events' },
+]
+
+const ADMIN_LINKS = [
+  { to: '/admin/dashboard', label: 'Dashboard' },
+  { to: '/admin/users', label: 'Users' },
+  { to: '/admin/communities', label: 'Communities' },
+  { to: '/admin/moderation', label: 'Moderation' },
+  { to: '/admin/analytics', label: 'Analytics' },
+]
+
+const linkClass = ({ isActive }) =>
+  `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+    isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-hover hover:text-ink'
+  }`
+
+export const NavBar = ({ variant = 'public', user = null, adminUser = null }) => {
+  const { mode, setThemeMode, toggleTheme } = useTheme()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  const links = variant === 'admin' ? ADMIN_LINKS : variant === 'user' ? USER_LINKS : PUBLIC_LINKS
+  const isAuthed = variant !== 'public'
+
+  useEffect(() => {
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setUserMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [])
+
+  const handleLogout = async () => {
+    setUserMenuOpen(false)
+    setMobileOpen(false)
+    if (variant === 'admin') {
+      try { await adminAuthService.logout() } catch { /* ignore */ }
+      adminTokenStore.clear()
+      navigate('/login')
+    } else {
+      await logout()
+      navigate('/')
+    }
   }
 
+  const ThemeIcon = mode === 'dark' ? Moon : mode === 'light' ? Sun : Monitor
+
   return (
-    <nav className="border-b border-border fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto h-16 flex items-center px-4">
-        {/* Brand Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-            <span className="text-text-primary font-bold text-lg">MC</span>
+    <header className="sticky top-0 z-50 border-b border-line bg-canvas/90 backdrop-blur">
+      <nav className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4" aria-label="Main navigation">
+        <Link to={variant === 'admin' ? '/admin/dashboard' : '/'} className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-display text-lg font-bold text-accent-ink">
+            M
+          </span>
+          <span className="font-display text-lg font-bold text-ink">
+            {variant === 'admin' ? 'Admin' : 'Migrant Community'}
+          </span>
+        </Link>
+
+        <div className="ml-4 hidden items-center gap-1 md:flex">
+          {links.map((l) => (
+            <NavLink key={l.to} to={l.to} className={linkClass} end={l.to === '/'}>
+              {l.label}
+            </NavLink>
+          ))}
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          {/* Theme control */}
+          <div className="flex items-center rounded-lg border border-line p-0.5" role="group" aria-label="Theme">
+            {[
+              { m: 'light', Icon: Sun, label: 'Light' },
+              { m: 'dark', Icon: Moon, label: 'Dark' },
+              { m: 'system', Icon: Monitor, label: 'System' },
+            ].map(({ m, Icon, label }) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setThemeMode(m)}
+                aria-label={`${label} theme`}
+                aria-pressed={mode === m}
+                className={`rounded-md p-1.5 transition-colors ${
+                  mode === m ? 'bg-accent-soft text-accent' : 'text-ink-3 hover:text-ink'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
           </div>
-          <Link to="/" className="text-primary font-display text-xl font-semibold hover:no-underline">
-            Migrant Community
-          </Link>
-        </div>
 
-        {/* Right side: Theme toggle and actions */}
-        <div className="ml-auto flex items-center gap-4">
-          {/* Theme toggle button */}
-          <button
-            onClick={handleThemeToggle}
-            className={`p-2 rounded-lg transition-colors hover:bg-hover ${theme === 'light' ? 'bg-hover text-token-text' : 'bg-token-text'}`}
-            aria-label="Toggle theme"
-          >
-            {theme === 'light' ? (
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.394 7.313a9.06 9.06 0 0 0-2.828-2.828c-.59.488-1.223.987-1.886 1.354L13 12.108l-1.617-1.617a9.06 9.06 0 0 0-1.354-1.886c-.488-.59-.987-1.223-1.354-1.886-2.828-2.828a9.054 9.054 0 0 0-2.828 2.828c.488.59 1.223.987 1.886 1.354L7 12.108l1.617 1.617a9.06 9.06 0 0 0 1.354 1.886c.59-.488.987-1.223 1.354-1.886L2.394 7.313a9.059 9.059 0 0 0 0 6.414c.59.488 1.223.987 1.886 1.354l1.886.626a9.047 9.047 0 0 0 1.118.387 8.981 8.981 0 0 1 2.588 0 9.062 9.062 0 0 0 1.53-1.085c.376-.628.526-1.303.526-2.05 0-1.518-.963-2.837-2.29-3.355ZM4.996 15.558l1.81 1.81c.265.265.608.432.95.432.79 0 1.485-.504 1.71-.967.468-.818.432-1.73.432-2.163l-1.11-1.11a10.016 10.016 0 0 1-1.53-1.085c-.376.628-.526 1.303-.526 2.05 0 1.518.963 2.837 2.29 3.355l1.11 1.11c-.036.533-.108.793-.174 1.163l1.81 1.81c-.158.519-.35.946-.582 1.316a3.955 3.955 0 0 1-.832.318 3.969 3.969 0 0 1-.318-.83c.056-.655.05-1.432.02-2.108l-1.81-1.81c-.527-.527-.8-.986-1.08-1.313a10.023 10.023 0 0 0-1.367-.618Z"/>
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21 12.79a9 9 0 1 1-8.53 2.946L21 2M3.65 3.65a6.997 6.997 0 0 0 0 9.898l2.828 2.828A7 7 0 0 0 20.82 17H4c.36-2.618 3.032-5 6.6-5Zm5.175-7.277c-.616.616-1.607.616-2.223 0L3.65 13.65a6.993 6.993 0 0 0 0 9.898l2.828 2.828c.783.783 2.043.783 2.827 0l2.828-2.828a6.986 6.986 0 0 0-1.71-4.948H10.5a.5.5 0 0 1-.3-.1l-.3-.3a.5.5 0 0 1-.1-.3l-.3-.3a.5.5 0 0 1-.1-.3l-.3-.3a.5.5 0 0 1-.1-.3l-.4-.4c-.06-.16-.08-.33-.08-.5v-.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v3.5a.5.5 0 0 1-1 .5h-3a.5.5 0 0 1-.5-.5v-2.828c0-.367-.147-.717-.42-1.01L17 5.087a.5.5 0 0 1 .338.182l-.3.3a.5.5 0 0 1-.1.3l-.3.3a.5.5 0 0 1-.1.3l-.3.3a.5.5 0 0 1-.1.3l-.3-.3a.5.5 0 0 1-.1-.3l-.3-.3a.5.5 0 0 1-.1-.3l-.3-.3a.5.5 0 0 1-.1-.3Z"/>
-              </svg>
-            )}
-          </button>
-
-          {/* Mobile menu button (for public layout) */}
-          {isPublic && (
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-hover"
-              onClick={() => window.alert('Menu opened')}
-              aria-label="Open menu"
+          {variant === 'user' && (
+            <Link
+              to="/app/notifications"
+              className="hidden rounded-lg p-2 text-ink-2 hover:bg-hover md:block"
+              aria-label="Notifications"
             >
-              <Menu className="w-6 h-6" />
-            </button>
+              <Bell className="h-5 w-5" />
+            </Link>
           )}
+
+          {isAuthed ? (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((o) => !o)}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-hover"
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-bold text-brand-ink">
+                  {(displayNameFromEmail(user?.email) || adminUser?.name || adminUser?.email || '?')[0].toUpperCase()}
+                </span>
+                <span className="hidden max-w-[140px] truncate text-sm font-medium text-ink md:block">
+                  {user ? displayNameFromEmail(user.email) : (adminUser?.name || adminUser?.email)}
+                </span>
+              </button>
+              {userMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-line bg-surface shadow-lift"
+                >
+                  {variant === 'user' && (
+                    <>
+                      <MenuLink to="/app/profile" icon={UserIcon} label="Profile" onClick={() => setUserMenuOpen(false)} />
+                      <MenuLink to="/app/settings" icon={LayoutDashboard} label="Settings" onClick={() => setUserMenuOpen(false)} />
+                    </>
+                  )}
+                  {variant === 'admin' && (
+                    <MenuLink to="/admin/profile" icon={UserIcon} label="Admin profile" onClick={() => setUserMenuOpen(false)} />
+                  )}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-danger hover:bg-hover"
+                  >
+                    <LogOut className="h-4 w-4" /> Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="hidden items-center gap-2 md:flex">
+              <Link to="/login" className="btn-ghost btn-sm">Sign in</Link>
+              <Link to="/register" className="btn-accent btn-sm">Get started</Link>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="rounded-lg p-2 text-ink-2 hover:bg-hover md:hidden"
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {mobileOpen && (
+        <div className="border-t border-line bg-surface md:hidden">
+          <div className="space-y-1 px-4 py-3">
+            {links.map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                end={l.to === '/'}
+                className={({ isActive }) =>
+                  `block rounded-lg px-3 py-2 text-sm font-medium ${
+                    isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-hover'
+                  }`
+                }
+                onClick={() => setMobileOpen(false)}
+              >
+                {l.label}
+              </NavLink>
+            ))}
+            {!isAuthed && (
+              <div className="flex gap-2 pt-2">
+                <Link to="/login" className="btn-outline flex-1" onClick={() => setMobileOpen(false)}>Sign in</Link>
+                <Link to="/register" className="btn-accent flex-1" onClick={() => setMobileOpen(false)}>Get started</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </header>
   )
 }
+
+const MenuLink = ({ to, icon: Icon, label, onClick }) => (
+  <Link
+    to={to}
+    role="menuitem"
+    onClick={onClick}
+    className="flex items-center gap-2 px-4 py-2.5 text-sm text-ink hover:bg-hover"
+  >
+    <Icon className="h-4 w-4 text-ink-3" /> {label}
+  </Link>
+)

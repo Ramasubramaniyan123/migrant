@@ -157,6 +157,7 @@ public class AdminModerationService {
         }
     }
 
+    @SuppressWarnings("null")
     private String resolveTargetContent(com.migrantcommunity.moderation.entity.Report r) {
         if (r.getTargetType() == null || r.getTargetId() == null) return null;
         return switch (r.getTargetType()) {

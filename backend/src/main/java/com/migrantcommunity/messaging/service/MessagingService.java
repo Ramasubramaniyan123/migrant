@@ -134,13 +134,8 @@ public class MessagingService {
                 .orElseThrow(() -> new ForbiddenException("You are not a member of this conversation"));
         membership.setLastReadAt(Instant.now());
         memberRepository.save(membership);
-        // Mark messages from others as read for this member.
-        messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId, Pageable.unpaged())
-                .forEach(m -> {
-                    if (!m.getSender().getId().equals(me.getId()) && !m.isRead()) {
-                        m.setRead(true);
-                    }
-                });
+        // Mark messages from others as read for this member in one query.
+        messageRepository.markIncomingMessagesRead(conversationId, me.getId());
     }
 
     @Transactional(readOnly = true)

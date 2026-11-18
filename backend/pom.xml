@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.8</version>
+        <version>4.0.9</version>
         <relativePath/>
     </parent>
 
@@ -84,20 +84,18 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Spring Boot 4 modular auto-configuration: enables Flyway migration
+             on startup. Without this module flyway-core is on the classpath but
+             no migrations ever run. -->
         <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-spatial</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>net.postgis</groupId>
-            <artifactId>postgis-jdbc</artifactId>
-            <version>2023.1.0</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+            <version>12.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -186,7 +184,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20231013</version>
+            <version>20260719</version>
         </dependency>
     </dependencies>
 
@@ -202,10 +200,22 @@
                 <configuration>
                     <url>${DB_URL:jdbc:postgresql://localhost:5432/migrant_community}</url>
                     <user>${DB_USERNAME:postgres}</user>
-                    <password>${DB_PASSWORD:Password@Postgres@Password}</password>
+                    <password>${DB_PASSWORD}</password>
                     <locations>classpath:db/migration</locations>
                     <baselineOnMigrate>true</baselineOnMigrate>
                     <baselineVersion>0</baselineVersion>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Pin JVM timezone: the PostgreSQL JDBC driver forwards it as
+                         the session TimeZone, and "Asia/Calcutta" (JDK<23 name) is
+                         rejected by the server. UTC is valid everywhere. -->
+                    <systemPropertyVariables>
+                        <user.timezone>UTC</user.timezone>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>

@@ -1,20 +1,30 @@
-import { Routes, Route } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 import { LandingPage } from '../features/landing/LandingPage'
-import { Auth } from '../features/auth/Auth'
-import { Privacy } from '../features/privacy/Privacy'
-import { Terms } from '../features/terms/Terms'
+import { AboutPage } from '../features/about/AboutPage'
+import { FeaturesPage } from '../features/features/FeaturesPage'
+import { ContactPage } from '../features/contact/ContactPage'
+import { LoginPage } from '../features/auth/LoginPage'
+import { RegisterPage } from '../features/auth/RegisterPage'
+import { VerifyEmailPage } from '../features/auth/VerifyEmailPage'
+import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from '../features/auth/ResetPasswordPage'
+import { PrivacyPage } from '../features/privacy/Privacy'
+import { TermsPage } from '../features/terms/Terms'
+import { NotFoundPage } from '../features/not-found/NotFoundPage'
 
-export const PublicRoutes = () => (
-  <Routes>
-    <Route path="/" element={<LandingPage />} />
-    <Route path="/about" element={<LandingPage />} />
-    <Route path="/features" element={<LandingPage />} />
-    <Route path="/contact" element={<LandingPage />} />
-    <Route path="/login" element={<Auth />} />
-    <Route path="/register" element={<Auth />} />
-    <Route path="/verify-email" element={<Auth />} />
-    <Route path="/forgot-password" element={<Auth />} />
-    <Route path="/privacy" element={<Privacy />} />
-    <Route path="/terms" element={<Terms />} />
-  </Routes>
+export const PublicRoutes = (
+  <>
+    <Route index element={<LandingPage />} />
+    <Route path="about" element={<AboutPage />} />
+    <Route path="features" element={<FeaturesPage />} />
+    <Route path="contact" element={<ContactPage />} />
+    <Route path="login" element={<LoginPage />} />
+    <Route path="register" element={<RegisterPage />} />
+    <Route path="verify-email" element={<VerifyEmailPage />} />
+    <Route path="forgot-password" element={<ForgotPasswordPage />} />
+    <Route path="reset-password" element={<ResetPasswordPage />} />
+    <Route path="privacy" element={<PrivacyPage />} />
+    <Route path="terms" element={<TermsPage />} />
+    <Route path="*" element={<NotFoundPage />} />
+  </>
 )

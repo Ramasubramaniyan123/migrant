@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { PublicLayout } from './layouts/PublicLayout'
+import { UserLayout } from './layouts/UserLayout'
+import { AdminLayout } from './layouts/AdminLayout'
 import { PublicRoutes } from './routes/PublicRoutes'
 import { UserRoutes } from './routes/UserRoutes'
 import { AdminRoutes } from './routes/AdminRoutes'
@@ -7,11 +10,21 @@ import { AdminRoute } from './guards/AdminRoute'
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
-        <Route path="/*" element={<PublicRoutes />} />
-        <Route path="/app/*" element={<PrivateRoute><UserRoutes /></PrivateRoute>} />
-        <Route path="/admin/*" element={<AdminRoute><AdminRoutes /></AdminRoute>} />
+        <Route element={<PublicLayout />}>
+          {PublicRoutes}
+        </Route>
+        <Route element={<PrivateRoute />}>
+          <Route path="app" element={<UserLayout />}>
+            {UserRoutes}
+          </Route>
+        </Route>
+        <Route element={<AdminRoute />}>
+          <Route path="admin" element={<AdminLayout />}>
+            {AdminRoutes}
+          </Route>
+        </Route>
       </Routes>
     </Router>
   )

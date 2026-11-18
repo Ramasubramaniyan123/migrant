@@ -1,20 +1,43 @@
-import { useState } from 'react'
-import { useTheme, useAuth } from '../contexts'
+import { Suspense } from 'react'
+import { NavLink, Outlet } from 'react-router-dom'
+import { adminTokenStore } from '../services/api/adminClient'
 import { NavBar } from '../components/navigation/NavBar'
 import { AdminSidebar } from '../components/navigation/AdminSidebar'
 
-export const AdminLayout = ({ children }) => {
-  const { setThemeMode } = useTheme()
-  const { user } = useAuth()
-  const [theme, setTheme] = useState('light')
+const MOBILE_LINKS = [
+  '/admin/dashboard', '/admin/users', '/admin/communities', '/admin/posts',
+  '/admin/moderation', '/admin/reports', '/admin/events', '/admin/notifications',
+  '/admin/languages', '/admin/locations', '/admin/connections', '/admin/audit-logs',
+  '/admin/analytics', '/admin/settings', '/admin/profile', '/admin/administrators',
+].map((to) => ({ to, label: to.replace('/admin/', '').replace(/-/g, ' ') }))
+
+export const AdminLayout = () => {
+  const session = adminTokenStore.get()
 
   return (
-    <div className="min-h-screen bg-elevated-surface text-token-text-primary dark:bg-dark-dark dark:text-dark-text">
-      <NavBar isAdmin mode={theme} setTheme={setThemeMode} user={user} />
-      <div className="flex min-h-screen">
-        <AdminSidebar theme={theme} />
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-          {children}
+    <div className="flex min-h-screen flex-col bg-canvas text-ink">
+      <NavBar variant="admin" adminUser={session?.admin || null} />
+      <div className="flex flex-1">
+        <AdminSidebar />
+        <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
+          <nav className="mb-4 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Admin quick navigation">
+            {MOBILE_LINKS.map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                className={({ isActive }) =>
+                  `whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+                    isActive ? 'border-accent bg-accent-soft text-accent' : 'border-line text-ink-2'
+                  }`
+                }
+              >
+                {l.label}
+              </NavLink>
+            ))}
+          </nav>
+          <Suspense fallback={<div className="py-16 text-center text-sm text-ink-3">Loading…</div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

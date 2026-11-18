@@ -1,55 +1,89 @@
-export const Reports = () => {
-  return (
-    <section className="py-8 bg-elevated surface rounded-2xl border border-border">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <header className="flex flex-col items-start gap-4 mb-8">
-          <h2 className="font-display text-3xl font-bold">Reports</h2>
-          <p className="font-body text-token-text-secondary">
-            Manage reported content.
-          </p>
-        </header>
+import { useEffect, useState, useCallback } from 'react'
+import { adminReportService } from '../../../services/admin/adminService'
+import { errorMessage } from '../../../services/api/apiClient'
+import { AdminHeader, AdminTable, StatusBadge, asArray } from '../components/AdminUI'
+import { ReportDetailPanel } from '../moderation/Moderation'
+import { formatDateTime } from '../../../utils/format'
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th className="p-3 border-b font-medium text-token-text-caption">Report ID</th>
-                <th className="p-3 border-b font-medium text-token-text-caption">Reported By</th>
-                <th className="p-3 border-b font-medium text-token-text-caption">Content</th>
-                <th className="p-3 border-b font-medium text-token-text-caption">Reason</th>
-                <th className="p-3 border-b font-medium text-token-text-caption">Status</th>
-                <th className="p-3 border-b font-medium text-token-text-caption">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b">
-                <td className="p-3">RPT-001</td>
-                <td className="p-3">User123</td>
-                <td className="p-3">Post: "Unauthorized content"</p>
-                <td className="p-3">Inappropriate content</td>
-                <td className="p-3">
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-warning/10 text-warning">Pending</span>
-                </td>
-                <td className="p-3">
-                  <button className="px-2 py-1 rounded border text-token-secondary text-sm">Review</button>
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="p-3">RPT-002</td>
-                <td className="p-3">User456</td>
-                <td className="p-3">Comment: "Spam"</p>
-                <td className="p-3">Spam</td>
-                <td className="p-3">
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-success/10 text-success">Resolved</span>
-                </td>
-                <td className="p-3">
-                  <button className="px-2 py-1 rounded border text-token-secondary text-sm">Mark resolved</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+export const Reports = () => {
+  const [filters, setFilters] = useState({ status: 'ALL', category: 'ALL' })
+  const [reports, setReports] = useState([])
+  const [categories, setCategories] = useState([])
+  const [selectedId, setSelectedId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const list = asArray(await adminReportService.reports(filters))
+      setReports(list)
+      setCategories((prev) => {
+        const known = new Set(prev)
+        list.forEach((r) => r.category && known.add(r.category))
+        return [...known].sort()
+      })
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setLoading(false)
+    }
+  }, [filters])
+
+  useEffect(() => { load() }, [load])
+
+  const set = (k, v) => setFilters((f) => ({ ...f, [k]: v }))
+
+  return (
+    <div>
+      <AdminHeader title="Reports" description="All user-submitted reports with full detail." />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <select className="input max-w-[180px]" value={filters.status} onChange={(e) => set('status', e.target.value)}>
+          {['ALL', 'PENDING', 'UNDER_REVIEW', 'RESOLVED', 'DISMISSED'].map((s) => (
+            <option key={s} value={s}>{s === 'ALL' ? 'All statuses' : s.replace(/_/g, ' ')}</option>
+          ))}
+        </select>
+        <select className="input max-w-[200px]" value={filters.category} onChange={(e) => set('category', e.target.value)}>
+          <option value="ALL">All categories</option>
+          {categories.map((c) => <option key={c} value={c}>{c.replace(/_/g, ' ')}</option>)}
+        </select>
       </div>
-    </section>
+
+      <AdminTable
+        rows={reports}
+        loading={loading} error={error} onRetry={load}
+        emptyTitle="No reports" emptyDescription="No reports match the current filters."
+        columns={[
+          { key: 'id', label: 'Report', render: (r) => <span className="font-medium">#{r.id}</span> },
+          { key: 'target', label: 'Target', render: (r) => (
+            <span className="block max-w-sm">
+              <span>{r.targetType} #{r.targetId}</span>
+              {r.targetPreview && <span className="mt-0.5 line-clamp-2 block text-xs text-ink-3">{r.targetPreview}</span>}
+            </span>
+          )},
+          { key: 'reporter', label: 'Reported by', render: (r) => r.reporterName || '—' },
+          { key: 'category', label: 'Category', render: (r) => r.category ? r.category.replace(/_/g, ' ') : '—' },
+          { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+          { key: 'created', label: 'Created', render: (r) => formatDateTime(r.createdAt) },
+        ]}
+        actions={(r) => (
+          <button
+            type="button"
+            className={selectedId === r.id ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}
+            onClick={() => setSelectedId(selectedId === r.id ? null : r.id)}
+          >
+            {selectedId === r.id ? 'Hide' : 'Details'}
+          </button>
+        )}
+      />
+
+      {selectedId && !loading && (
+        <div className="card mt-4 p-5">
+          <h2 className="mb-3 font-display text-base font-semibold">Report #{selectedId}</h2>
+          <ReportDetailPanel reportId={selectedId} />
+        </div>
+      )}
+    </div>
   )
 }

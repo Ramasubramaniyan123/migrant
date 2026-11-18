@@ -1,58 +1,43 @@
-export const TrustSection = () => {
-  return (
-    <section className="py-24 md:py-32 bg-token-background">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <div className="grid max-w-2xl mx-auto text-center mb-16">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-            Trusted by Migrants Worldwide
-          </h2>
-          <p className="font-body text-token-text-secondary">
-            A safe, inclusive space designed to help you feel at home wherever you are.
-          </p>
-        </div>
+import { ShieldCheck, BadgeCheck, HeartHandshake } from 'lucide-react'
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="px-4 py-8 rounded-2xl bg-surface-primary border border-border">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-8-8 8v7c0 6 8 10 8 10z"/>
-                <path d="M9 10v6m4 4v4m3-3H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"/>
-              </svg>
-            </div>
-            <h3 className="font-medium text-token-text-caption">Safe & Private</h3>
-            <p className="text-token-text-muted text-sm">
-              Your privacy is protected with industry-standard security.
-            </p>
-          </div>
+const ITEMS = [
+  {
+    icon: ShieldCheck,
+    title: 'Safe & private',
+    text: 'Your privacy is protected. Location sharing is always approximate and under your control.',
+  },
+  {
+    icon: BadgeCheck,
+    title: 'Authentic community',
+    text: 'Real people, real connections — built for migrants supporting migrants.',
+  },
+  {
+    icon: HeartHandshake,
+    title: 'Community first',
+    text: "We're here to help you connect, belong and thrive in your new home.",
+  },
+]
 
-          <div className="px-4 py-8 rounded-2xl bg-surface-primary border border-border">
-            <div className="w-12 h-12 rounded-lg bg-information/10 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-information" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                <line x1="9" y1="9" x2="9.01" y2="9"/>
-                <line x1="15" y1="9" x2="15.01" y2="9"/>
-              </svg>
-            </div>
-            <h3 className="font-medium text-token-text-caption">Verified Profiles</h3>
-            <p className="text-token-text-muted text-sm">
-              Authentic communities with real connections.
-            </p>
-          </div>
-
-          <div className="px-4 py-8 rounded-2xl bg-surface-primary border border-border">
-            <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2v4m0 12v-4m-8-2h16m-8-8h16V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4m0 12h8m-4-4h8m-8 8V5"/>
-              </svg>
-            </div>
-            <h3 className="font-medium text-token-text-caption">Community First</h3>
-            <p className="text-token-text-muted text-sm">
-              We're here to help you connect and belong.
-            </p>
-          </div>
-        </div>
+export const TrustSection = () => (
+  <section className="border-y border-line bg-surface-alt/50 py-20 md:py-24">
+    <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-display text-3xl font-bold md:text-4xl">A space you can trust</h2>
+        <p className="mt-4 text-ink-2">
+          Designed to be safe, inclusive and genuinely useful for people on the move.
+        </p>
       </div>
-    </section>
-  )
-}
+      <div className="mt-12 grid gap-6 md:grid-cols-3">
+        {ITEMS.map(({ icon: Icon, title, text }) => (
+          <div key={title} className="card p-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+              <Icon className="h-6 w-6" />
+            </div>
+            <h3 className="font-medium">{title}</h3>
+            <p className="mt-2 text-sm text-ink-2">{text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+)

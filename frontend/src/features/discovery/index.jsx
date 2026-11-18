@@ -1,0 +1,5 @@
+export { Discover } from './Discover'
+export { PeopleDiscovery } from './PeopleDiscovery'
+export { HometownDiscovery } from './HometownDiscovery'
+export { InterestDiscovery } from './InterestDiscovery'
+export { LanguageDiscovery } from './LanguageDiscovery'

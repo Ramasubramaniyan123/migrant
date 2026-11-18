@@ -38,10 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authorization.substring(7).trim();
         try {
             Claims claims = jwtService.parse(token);
-            // Only user access tokens may authenticate API requests; refresh and
-            // admin-portal tokens are rejected.
-            if ("refresh".equals(claims.get("type", String.class))
-                    || "admin".equals(claims.get("tokenUse", String.class))) {
+            // Only user access tokens may authenticate API requests.
+            if (!"user".equals(claims.get("tokenUse", String.class))
+                    || "refresh".equals(claims.get("type", String.class))) {
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
                 return;

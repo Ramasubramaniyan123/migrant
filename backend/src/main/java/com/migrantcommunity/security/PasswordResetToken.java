@@ -20,7 +20,8 @@ public class PasswordResetToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, unique = true, length = 6)
+    /** Stores the keyed OTP hash (HMAC-SHA256 hex), never the plaintext OTP. */
+    @Column(nullable = false, unique = true, length = 64)
     private String token;
 
     @Column(name = "expires_at", nullable = false)

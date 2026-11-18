@@ -7,29 +7,12 @@ ALTER TABLE user_languages ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TI
 ALTER TABLE conversation_members ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now();
 ALTER TABLE notifications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;
 
--- 1. user_profiles: entity uses user_id as PK (@MapsId) and a PostGIS geography column.
+-- 1. user_profiles: entity uses user_id as PK (@MapsId).
 ALTER TABLE user_profiles DROP CONSTRAINT IF EXISTS user_profiles_pkey;
 ALTER TABLE user_profiles DROP COLUMN IF EXISTS id;
-ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS current_location geometry(Point, 4326);
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS discovery_enabled BOOLEAN DEFAULT true;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS current_city VARCHAR(100);
 ALTER TABLE user_profiles ADD PRIMARY KEY (user_id);
--- Backfill geography from legacy lat/lng columns when present.
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns
-               WHERE table_name = 'user_profiles' AND column_name = 'current_location_lat') THEN
-        DROP INDEX IF EXISTS idx_user_profiles_location;
-        UPDATE user_profiles
-        SET current_location = ST_SetSRID(ST_MakePoint(current_location_lng, current_location_lat), 4326)
-        WHERE current_location IS NULL
-          AND current_location_lat IS NOT NULL
-          AND current_location_lng IS NOT NULL;
-        ALTER TABLE user_profiles DROP COLUMN current_location_lat;
-        ALTER TABLE user_profiles DROP COLUMN current_location_lng;
-    END IF;
-END $$;
-CREATE INDEX IF NOT EXISTS idx_user_profiles_geo ON user_profiles USING GIST (current_location);
 
 -- 2. Refresh tokens (entity RefreshToken already mapped; table was missing).
 CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -112,13 +95,12 @@ CREATE TABLE IF NOT EXISTS locations (
     city VARCHAR(100),
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
-    location geometry(Point, 4326),
     parent_id BIGINT REFERENCES locations(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_locations_type ON locations(type);
 CREATE INDEX IF NOT EXISTS idx_locations_name ON locations(name);
-CREATE INDEX IF NOT EXISTS idx_locations_geo ON locations USING GIST (location);
+CREATE INDEX IF NOT EXISTS idx_locations_lat_lng ON locations (latitude, longitude);
 
 -- 9. Community invitations.
 CREATE TABLE IF NOT EXISTS community_invitations (

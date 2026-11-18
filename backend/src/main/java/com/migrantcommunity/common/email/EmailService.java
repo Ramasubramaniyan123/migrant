@@ -38,6 +38,10 @@ public class EmailService {
         }
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     /**
      * Sends a plain-text email. Returns true only when SMTP accepted the
      * message; returns false (and logs) when mail is disabled or delivery fails.

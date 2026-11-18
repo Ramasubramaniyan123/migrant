@@ -80,7 +80,7 @@ public class FileStorageService {
         }
         String detectedType = detectImageType(header);
         Set<String> extensions = detectedType != null ? ALLOWED_TYPES.get(detectedType) : null;
-        if (extensions == null) {
+        if (detectedType == null || extensions == null) {
             throw new BadRequestException("Unsupported file type. Allowed: JPEG, PNG, WebP, GIF");
         }
         String declaredType = file.getContentType();

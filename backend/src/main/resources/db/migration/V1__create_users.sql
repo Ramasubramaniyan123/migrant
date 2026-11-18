@@ -1,6 +1,3 @@
--- Enable PostGIS extension
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 -- Users table (Authentication and account details)
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -36,4 +33,4 @@ CREATE TABLE user_profiles (
 -- Create indexes
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
-CREATE INDEX idx_user_profiles_location ON user_profiles USING GIST (ST_MakePoint(current_location_lng, current_location_lat));
+CREATE INDEX idx_user_profiles_location ON user_profiles (current_location_lat, current_location_lng);

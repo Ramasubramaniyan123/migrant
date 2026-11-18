@@ -1,0 +1,13 @@
+{
+  "admin": {
+    "id": "1",
+    "name": "Platform Administrator",
+    "email": "migrantcommunity2@gmail.com",
+    "role": "SUPER_ADMIN",
+    "status": "ACTIVE",
+    "avatarUrl": null,
+    "lastLoginAt": "2026-11-17T11:27:53.000081600Z",
+    "createdAt": "2026-11-16T13:26:24.682297Z"
+  },
+  "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtaWdyYW50Y29tbXVuaXR5MkBnbWFpbC5jb20iLCJyb2xlIjoiU1VQRVJfQURNSU4iLCJ0b2tlblVzZSI6ImFkbWluIiwianRpIjoiZTA5ZmNmN2QtYWY5NC00NDUyLTg0ODgtODI0Zjc0YjcyNTQzIiwiaWF0IjoxNzk0OTE0ODczLCJleHAiOjE3OTUwMDEyNzN9.Efnnnm5jhgHnyDLawigIk1p2QQOFNS23NcWv2VJxRquF9pVYGPY3_iy2erTHXuhCAScLfiQ7OtSXLMAGsNqH8Q"
+}

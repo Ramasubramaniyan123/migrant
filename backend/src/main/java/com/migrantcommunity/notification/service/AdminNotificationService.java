@@ -67,6 +67,7 @@ public class AdminNotificationService {
         return toDto(platformNotificationRepository.save(record));
     }
 
+    @SuppressWarnings("null")
     private List<User> selectRecipients(BroadcastAudience audience) {
         return switch (audience) {
             case ALL -> userRepository.findAll();

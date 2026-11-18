@@ -1,13 +1,23 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts'
+import { LoadingState } from '../components/ui/States'
 
-export const PrivateRoute = ({ children }) => {
-  const { user } = useAuth()
+export const PrivateRoute = () => {
+  const { user, loading } = useAuth()
   const location = useLocation()
 
-  if (!user) {
-    return <Navigate to="/app/login" state={{ from: location }} replace />
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <LoadingState label="Restoring your session…" />
+      </div>
+    )
   }
 
-  return children
+  if (!user) {
+    const from = location.pathname + location.search
+    return <Navigate to="/login" state={{ from }} replace />
+  }
+
+  return <Outlet />
 }

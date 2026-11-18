@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,7 +32,7 @@ class RateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        rateLimitFilter = new RateLimitFilter();
+        rateLimitFilter = new RateLimitFilter(new ClientIpResolver());
     }
 
     @Test

@@ -35,7 +35,6 @@ public class UploadController {
     }
 
     @GetMapping("/files/{filename}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Resource> file(@PathVariable String filename) {
         try {
             var path = storageService.resolve(filename);

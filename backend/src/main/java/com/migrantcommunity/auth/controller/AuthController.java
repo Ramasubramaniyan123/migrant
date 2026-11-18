@@ -9,6 +9,7 @@ import com.migrantcommunity.auth.dto.ForgotPasswordRequest;
 import com.migrantcommunity.auth.dto.UserSummary;
 import com.migrantcommunity.auth.service.AuthService;
 import com.migrantcommunity.common.response.ApiResponse;
+import com.migrantcommunity.security.ClientIpResolver;
 import com.migrantcommunity.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +21,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final ClientIpResolver clientIpResolver;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, ClientIpResolver clientIpResolver) {
         this.authService = authService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @PostMapping("/register")
@@ -34,7 +37,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest req,
                                                            jakarta.servlet.http.HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(
-                authService.login(req.email(), req.password(), clientIp(request), request.getHeader("User-Agent")),
+                authService.login(req.email(), req.password(), clientIpResolver.resolve(request), request.getHeader("User-Agent")),
                 "Logged in"));
     }
 
@@ -61,14 +64,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(null, "If the account exists, a verification email was sent"));
     }
 
-    private static String clientIp(jakarta.servlet.http.HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
-
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
         authService.forgotPassword(req.email());
@@ -76,8 +71,9 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
-        authService.resetPassword(req.token(), req.newPassword());
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest req,
+                                                           jakarta.servlet.http.HttpServletRequest request) {
+        authService.resetPassword(req.token(), req.newPassword(), clientIpResolver.resolve(request));
         return ResponseEntity.ok(ApiResponse.ok(null, "Password reset"));
     }
 

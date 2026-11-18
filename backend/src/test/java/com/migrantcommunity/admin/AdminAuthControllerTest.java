@@ -1,8 +1,11 @@
 package com.migrantcommunity.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.migrantcommunity.admin.dto.Administrator;
+import com.migrantcommunity.admin.service.AdminAuthService;
 import com.migrantcommunity.admin.service.AdminJwtService;
 import com.migrantcommunity.common.enums.AdminRole;
+import com.migrantcommunity.common.enums.AdminStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,6 +35,9 @@ class AdminAuthControllerTest {
 
     @Autowired
     private AdminJwtService jwtService;
+
+    @Autowired
+    private AdminAuthService adminAuthService;
 
     @Test
     void loginReturnsOk() throws Exception {
@@ -65,6 +71,9 @@ class AdminAuthControllerTest {
 
     @Test
     void administratorManagementRequiresSuperAdminRole() throws Exception {
+        Administrator analyst = adminAuthService.createAdmin(
+                "Test Analyst", "analyst@example.com", AdminRole.ANALYST);
+        adminAuthService.updateAdminStatus(analyst.id(), AdminStatus.ACTIVE);
         String analystToken = jwtService.issueToken("analyst@example.com", AdminRole.ANALYST);
 
         mockMvc.perform(get("/v1/admin/administrators")

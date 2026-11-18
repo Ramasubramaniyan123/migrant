@@ -8,10 +8,31 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 /**
- * PostGIS-backed discovery queries over user_profiles.current_location
- * (geometry(Point,4326), queried as geography for metric distances).
+ * Discovery queries over user_profiles.current_location_lat/lng.
+ * Distances are computed with the haversine formula in plain PostgreSQL.
  */
 public interface DiscoveryRepository extends Repository<User, Long> {
+
+    // Haversine distance in kilometres between the profile coordinates and the
+    // supplied centre point. Returns NULL when the profile has no coordinates.
+    String DISTANCE_KM = """
+            CASE WHEN p.current_location_lat IS NULL OR p.current_location_lng IS NULL THEN NULL
+                 ELSE ROUND((6371.0088 * 2 * ASIN(LEAST(1.0, SQRT(
+                     POWER(SIN(RADIANS(p.current_location_lat - :latitude) / 2), 2)
+                     + COS(RADIANS(:latitude)) * COS(RADIANS(p.current_location_lat))
+                     * POWER(SIN(RADIANS(p.current_location_lng - :longitude) / 2), 2)
+                 ))))::numeric, 1)::double precision
+            END
+            """;
+
+    // Same haversine distance in metres, used for the radius filter.
+    String DISTANCE_M = """
+            6371.0088 * 2 * ASIN(LEAST(1.0, SQRT(
+                POWER(SIN(RADIANS(p.current_location_lat - :latitude) / 2), 2)
+                + COS(RADIANS(:latitude)) * COS(RADIANS(p.current_location_lat))
+                * POWER(SIN(RADIANS(p.current_location_lng - :longitude) / 2), 2)
+            ))) * 1000.0
+            """;
 
     String FILTERS = """
             AND u.id <> :userId
@@ -39,17 +60,15 @@ public interface DiscoveryRepository extends Repository<User, Long> {
                    p.hometown_city AS hometownCity,
                    p.hometown_country AS hometownCountry,
                    p.privacy_settings AS privacySettings,
-                   CASE WHEN p.current_location IS NULL THEN NULL
-                        ELSE ROUND((ST_Distance(p.current_location::geography,
-                              ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography) / 1000.0)::numeric, 1)::double precision
-                   END AS distanceKm
+            """ + DISTANCE_KM + """
+            AS distanceKm
             FROM users u
             JOIN user_profiles p ON p.user_id = u.id
             WHERE (:spatial = false
-                   OR (p.current_location IS NOT NULL
-                       AND ST_DWithin(p.current_location::geography,
-                           ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
-                           :radiusMeters)))
+                   OR (p.current_location_lat IS NOT NULL
+                       AND p.current_location_lng IS NOT NULL
+                       AND """ + " " + DISTANCE_M + " " + """
+                       <= :radiusMeters))
             """ + FILTERS + """
             ORDER BY distanceKm ASC NULLS LAST, u.id ASC
             LIMIT :limit OFFSET :offset
@@ -72,10 +91,10 @@ public interface DiscoveryRepository extends Repository<User, Long> {
             FROM users u
             JOIN user_profiles p ON p.user_id = u.id
             WHERE (:spatial = false
-                   OR (p.current_location IS NOT NULL
-                       AND ST_DWithin(p.current_location::geography,
-                           ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
-                           :radiusMeters)))
+                   OR (p.current_location_lat IS NOT NULL
+                       AND p.current_location_lng IS NOT NULL
+                       AND """ + " " + DISTANCE_M + " " + """
+                       <= :radiusMeters))
             """ + FILTERS, nativeQuery = true)
     long countSearch(
             @Param("userId") Long userId,

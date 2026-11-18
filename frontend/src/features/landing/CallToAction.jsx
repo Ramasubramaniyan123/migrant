@@ -1,24 +1,28 @@
-export const CallToAction = () => {
-  return (
-    <section className="py-24 md:py-32 bg-gradient-to-b from-primary/10 to-transparent">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <div className="relative flex flex-col items-center text-center">
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            Ready to Find Your Community?
-          </h2>
-          <p className="font-body text-token-text-secondary text-lg md:text-xl max-w-2xl mb-8">
-            Join thousands of migrants who have found their people. Your journey starts here.
+import { Link } from 'react-router-dom'
+
+export const CallToAction = () => (
+  <section className="py-20 md:py-28">
+    <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="card relative overflow-hidden px-6 py-16 text-center md:px-16">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(40rem 20rem at 50% -20%, var(--color-accent-soft), transparent 65%)',
+          }}
+        />
+        <div className="relative">
+          <h2 className="font-display text-4xl font-bold md:text-5xl">Ready to find your people?</h2>
+          <p className="mx-auto mt-4 max-w-xl text-ink-2">
+            Create a free account and start connecting with your community today.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="btn-primary px-8 py-4 font-medium text-lg hover:opacity-90 transition-opacity">
-              Create Free Account
-            </button>
-            <button className="btn-outline px-8 py-4 font-medium text-lg border-2 hover:bg-primary transition-colors">
-              Learn More
-            </button>
+          <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
+            <Link to="/register" className="btn-accent px-8 py-3.5 text-base">Create free account</Link>
+            <Link to="/about" className="btn-outline px-8 py-3.5 text-base">Learn more</Link>
           </div>
         </div>
       </div>
-    </section>
-  )
-}
+    </div>
+  </section>
+)

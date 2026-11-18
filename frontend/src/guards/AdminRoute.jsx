@@ -1,13 +1,12 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { Navigate, Outlet } from 'react-router-dom'
+import { adminTokenStore } from '../services/api/adminClient'
 
-export const AdminRoute = ({ children }) => {
-  const { user } = useAuth()
-  const location = useLocation()
+export const AdminRoute = () => {
+  const session = adminTokenStore.get()
 
-  if (!user || user.role !== 'admin') {
-    return <Navigate to="/app" replace />
+  if (!session?.token) {
+    return <Navigate to="/login" replace />
   }
 
-  return children
+  return <Outlet />
 }
